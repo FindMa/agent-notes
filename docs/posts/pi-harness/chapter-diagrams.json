@@ -1,0 +1,2218 @@
+{
+  "revision": "eb326d265ae0b88489a6d10319307780df827cdf",
+  "preset": "doc-inline",
+  "viewBox": [
+    0,
+    0,
+    960,
+    600
+  ],
+  "style": "Existing warm paper / deep green palette; system fonts",
+  "diagrams": [
+    {
+      "chapter": 1,
+      "type": "architecture",
+      "title": "先把对象与职责分清",
+      "desc": "调用方经 SDK 创建会话，Agent 推进循环，模型提供响应，工具产生真实效果，历史负责保存记录。",
+      "caption": "模型生成动作意图，宿主工具执行动作；会话、运行状态、消息与磁盘环境分别管理。",
+      "nodes": [
+        {
+          "id": "caller",
+          "name": "调用方",
+          "sub": "创建、订阅、提交问题",
+          "x": 40,
+          "y": 96,
+          "w": 224,
+          "h": 88,
+          "section": 4,
+          "tag": "INPUT"
+        },
+        {
+          "id": "session",
+          "name": "AgentSession",
+          "sub": "资源、历史与会话策略",
+          "x": 368,
+          "y": 96,
+          "w": 224,
+          "h": 88,
+          "section": 5,
+          "tag": "SESSION",
+          "focal": true
+        },
+        {
+          "id": "agent",
+          "name": "Agent / runLoop",
+          "sub": "运行状态、工具与续轮",
+          "x": 696,
+          "y": 96,
+          "w": 224,
+          "h": 88,
+          "section": 3,
+          "tag": "CORE"
+        },
+        {
+          "id": "history",
+          "name": "SessionManager",
+          "sub": "保存历史，重建上下文",
+          "x": 40,
+          "y": 328,
+          "w": 224,
+          "h": 96,
+          "section": 2,
+          "tag": "STATE",
+          "store": true
+        },
+        {
+          "id": "tools",
+          "name": "宿主工具",
+          "sub": "读取文件或调用外部服务",
+          "x": 368,
+          "y": 328,
+          "w": 224,
+          "h": 96,
+          "section": 2,
+          "tag": "TOOLS"
+        },
+        {
+          "id": "model",
+          "name": "模型接入",
+          "sub": "Provider / API adapter",
+          "x": 696,
+          "y": 328,
+          "w": 224,
+          "h": 96,
+          "section": 6,
+          "tag": "MODEL"
+        }
+      ],
+      "edges": [
+        {
+          "from": "caller",
+          "to": "session",
+          "points": [
+            [
+              264,
+              140
+            ],
+            [
+              368,
+              140
+            ]
+          ],
+          "label": {
+            "text": "创建会话",
+            "x": 280,
+            "y": 112,
+            "w": 72,
+            "h": 20
+          }
+        },
+        {
+          "from": "session",
+          "to": "agent",
+          "points": [
+            [
+              592,
+              140
+            ],
+            [
+              696,
+              140
+            ]
+          ],
+          "label": {
+            "text": "交给循环",
+            "x": 608,
+            "y": 112,
+            "w": 72,
+            "h": 20
+          }
+        },
+        {
+          "from": "agent",
+          "to": "model",
+          "points": [
+            [
+              768,
+              184
+            ],
+            [
+              768,
+              328
+            ]
+          ],
+          "label": {
+            "text": "请求",
+            "x": 776,
+            "y": 220,
+            "w": 48,
+            "h": 20
+          }
+        },
+        {
+          "from": "model",
+          "to": "agent",
+          "points": [
+            [
+              848,
+              328
+            ],
+            [
+              848,
+              184
+            ]
+          ],
+          "label": {
+            "text": "响应",
+            "x": 856,
+            "y": 268,
+            "w": 48,
+            "h": 20
+          },
+          "dashed": true
+        },
+        {
+          "from": "agent",
+          "to": "tools",
+          "points": [
+            [
+              696,
+              164
+            ],
+            [
+              648,
+              164
+            ],
+            [
+              648,
+              376
+            ],
+            [
+              592,
+              376
+            ]
+          ],
+          "label": {
+            "text": "调用工具",
+            "x": 656,
+            "y": 244,
+            "w": 64,
+            "h": 20
+          }
+        },
+        {
+          "from": "session",
+          "to": "history",
+          "points": [
+            [
+              440,
+              184
+            ],
+            [
+              440,
+              256
+            ],
+            [
+              152,
+              256
+            ],
+            [
+              152,
+              328
+            ]
+          ],
+          "label": {
+            "text": "保存与重建",
+            "x": 264,
+            "y": 228,
+            "w": 88,
+            "h": 20
+          }
+        }
+      ],
+      "notes": [
+        "SDK 的初始化完成后，prompt 才启动实际工作。"
+      ],
+      "sources": [
+        [
+          "packages/coding-agent/src/core/sdk.ts",
+          411
+        ],
+        [
+          "packages/agent/src/agent.ts",
+          370
+        ]
+      ]
+    },
+    {
+      "chapter": 2,
+      "type": "sequence",
+      "title": "一个工具闭环，两次模型请求",
+      "desc": "一次 prompt 驱动模型先提出工具调用，宿主执行并回填结果，模型第二次请求才根据反馈回答。",
+      "caption": "这条代表轨迹没有排队消息或重试：2 次模型请求、1 次工具执行、2 个 turn、1 个 core run。",
+      "actors": [
+        {
+          "id": "caller",
+          "name": "调用方",
+          "sub": "prompt()",
+          "x": 100,
+          "section": 3
+        },
+        {
+          "id": "loop",
+          "name": "PI 循环",
+          "sub": "Agent / runLoop",
+          "x": 340,
+          "section": 6,
+          "focal": true
+        },
+        {
+          "id": "model",
+          "name": "模型接入",
+          "sub": "StreamFn",
+          "x": 580,
+          "section": 9
+        },
+        {
+          "id": "tool",
+          "name": "宿主工具",
+          "sub": "execute()",
+          "x": 820,
+          "section": 11
+        }
+      ],
+      "messages": [
+        {
+          "from": "caller",
+          "to": "loop",
+          "y": 152,
+          "label": "PROMPT",
+          "section": 3
+        },
+        {
+          "from": "loop",
+          "to": "model",
+          "y": 200,
+          "label": "REQUEST 1",
+          "section": 9
+        },
+        {
+          "from": "model",
+          "to": "loop",
+          "y": 248,
+          "label": "TOOL CALL",
+          "section": 11,
+          "return": true
+        },
+        {
+          "from": "loop",
+          "to": "tool",
+          "y": 296,
+          "label": "EXECUTE",
+          "labelX": 700,
+          "section": 11
+        },
+        {
+          "from": "tool",
+          "to": "loop",
+          "y": 344,
+          "label": "TOOL RESULT",
+          "labelX": 700,
+          "section": 11,
+          "return": true
+        },
+        {
+          "from": "loop",
+          "to": "model",
+          "y": 392,
+          "label": "REQUEST 2",
+          "section": 12
+        },
+        {
+          "from": "model",
+          "to": "loop",
+          "y": 440,
+          "label": "ANSWER",
+          "section": 10,
+          "return": true,
+          "focal": true
+        },
+        {
+          "from": "loop",
+          "to": "caller",
+          "y": 488,
+          "label": "RESULT",
+          "section": 15,
+          "return": true
+        }
+      ],
+      "notes": [
+        "工具函数不负责再次请求模型；续轮由 runLoop 决定。"
+      ],
+      "sources": [
+        [
+          "packages/agent/src/agent-loop.ts",
+          163
+        ],
+        [
+          "packages/agent/src/agent-loop.ts",
+          242
+        ]
+      ]
+    },
+    {
+      "chapter": 3,
+      "type": "architecture",
+      "title": "网络片段怎样变成消息与事件",
+      "desc": "厂商响应经过适配器和进程内 EventStream，循环得到完整消息，显示层接收事件并可输出 JSONL。",
+      "caption": "过程事件用于增量显示，最终消息用于后续判断。toolcall_delta 与 toolcall_end 都不表示工具已经执行。",
+      "nodes": [
+        {
+          "id": "api",
+          "name": "模型服务响应",
+          "sub": "厂商 chunk / 结束原因",
+          "x": 40,
+          "y": 100,
+          "w": 224,
+          "h": 88,
+          "section": 5,
+          "tag": "NETWORK"
+        },
+        {
+          "id": "adapter",
+          "name": "协议适配器",
+          "sub": "保留文本、工具参数与用量",
+          "x": 368,
+          "y": 100,
+          "w": 224,
+          "h": 88,
+          "section": 7,
+          "tag": "ADAPTER"
+        },
+        {
+          "id": "stream",
+          "name": "EventStream",
+          "sub": "内存事件队列 + result()",
+          "x": 696,
+          "y": 100,
+          "w": 224,
+          "h": 88,
+          "section": 12,
+          "tag": "IN PROCESS",
+          "focal": true
+        },
+        {
+          "id": "jsonl",
+          "name": "UI / JSONL 输出",
+          "sub": "序列化运行事件，跨进程交付",
+          "x": 40,
+          "y": 344,
+          "w": 224,
+          "h": 96,
+          "section": 16,
+          "tag": "OUTPUT"
+        },
+        {
+          "id": "translate",
+          "name": "流事件转换",
+          "sub": "streamAssistantResponse",
+          "x": 368,
+          "y": 344,
+          "w": 224,
+          "h": 96,
+          "section": 14,
+          "tag": "LOOP"
+        },
+        {
+          "id": "final",
+          "name": "完整模型消息",
+          "sub": "AssistantMessage / stopReason",
+          "x": 696,
+          "y": 344,
+          "w": 224,
+          "h": 96,
+          "section": 15,
+          "tag": "FINAL"
+        }
+      ],
+      "edges": [
+        {
+          "from": "api",
+          "to": "adapter",
+          "points": [
+            [
+              264,
+              144
+            ],
+            [
+              368,
+              144
+            ]
+          ],
+          "label": {
+            "text": "解析",
+            "x": 280,
+            "y": 116,
+            "w": 72,
+            "h": 20
+          }
+        },
+        {
+          "from": "adapter",
+          "to": "stream",
+          "points": [
+            [
+              592,
+              144
+            ],
+            [
+              696,
+              144
+            ]
+          ],
+          "label": {
+            "text": "PUSH",
+            "x": 608,
+            "y": 116,
+            "w": 72,
+            "h": 20
+          }
+        },
+        {
+          "from": "stream",
+          "to": "translate",
+          "points": [
+            [
+              808,
+              188
+            ],
+            [
+              808,
+              264
+            ],
+            [
+              480,
+              264
+            ],
+            [
+              480,
+              344
+            ]
+          ],
+          "label": {
+            "text": "异步消费",
+            "x": 600,
+            "y": 236,
+            "w": 80,
+            "h": 20
+          }
+        },
+        {
+          "from": "translate",
+          "to": "final",
+          "points": [
+            [
+              592,
+              392
+            ],
+            [
+              696,
+              392
+            ]
+          ],
+          "label": {
+            "text": "最终值",
+            "x": 608,
+            "y": 364,
+            "w": 72,
+            "h": 20
+          }
+        },
+        {
+          "from": "translate",
+          "to": "jsonl",
+          "points": [
+            [
+              368,
+              392
+            ],
+            [
+              264,
+              392
+            ]
+          ],
+          "label": {
+            "text": "过程事件",
+            "x": 280,
+            "y": 364,
+            "w": 72,
+            "h": 20
+          },
+          "dashed": true
+        }
+      ],
+      "notes": [
+        "本例的 EventStream 在进程内；JSONL 是对外记录格式。"
+      ],
+      "sources": [
+        [
+          "packages/agent/src/agent-loop.ts",
+          381
+        ],
+        [
+          "packages/ai/src/utils/event-stream.ts",
+          26
+        ]
+      ]
+    },
+    {
+      "chapter": 4,
+      "type": "flowchart",
+      "title": "工具准入与结果处理的先后顺序",
+      "desc": "模型调用先经过参数准备和准入检查，拒绝分支跳过执行；已执行的异常结果仍进入后处理，再形成工具结果。",
+      "caption": "准备失败或 before block 会跳过 execute 和 after；execute 抛错则先转换成错误结果，再运行已配置的 after。",
+      "nodes": [
+        {
+          "id": "intent",
+          "name": "完整 toolCall",
+          "sub": "模型提出调用意图",
+          "x": 368,
+          "y": 40,
+          "w": 224,
+          "h": 56,
+          "section": 1,
+          "shape": "terminal"
+        },
+        {
+          "id": "prepare",
+          "name": "准备与 schema 校验",
+          "sub": "查工具、整理和验证参数",
+          "x": 368,
+          "y": 136,
+          "w": 224,
+          "h": 72,
+          "section": 3
+        },
+        {
+          "id": "gate",
+          "name": "准入通过？",
+          "sub": "beforeToolCall",
+          "x": 384,
+          "y": 248,
+          "w": 192,
+          "h": 80,
+          "section": 6,
+          "shape": "diamond",
+          "focal": true
+        },
+        {
+          "id": "execute",
+          "name": "execute",
+          "sub": "真实动作；异常转为结果",
+          "x": 368,
+          "y": 368,
+          "w": 224,
+          "h": 72,
+          "section": 7
+        },
+        {
+          "id": "after",
+          "name": "afterToolCall",
+          "sub": "处理已执行的结果",
+          "x": 696,
+          "y": 368,
+          "w": 224,
+          "h": 72,
+          "section": 9
+        },
+        {
+          "id": "rejected",
+          "name": "拒绝结果",
+          "sub": "未执行，也不进入 after",
+          "x": 40,
+          "y": 368,
+          "w": 224,
+          "h": 72,
+          "section": 8
+        },
+        {
+          "id": "result",
+          "name": "ToolResult",
+          "sub": "按调用 ID 回填",
+          "x": 368,
+          "y": 472,
+          "w": 224,
+          "h": 56,
+          "section": 10,
+          "shape": "terminal"
+        }
+      ],
+      "edges": [
+        {
+          "from": "intent",
+          "to": "prepare",
+          "points": [
+            [
+              480,
+              96
+            ],
+            [
+              480,
+              136
+            ]
+          ]
+        },
+        {
+          "from": "prepare",
+          "to": "gate",
+          "points": [
+            [
+              480,
+              208
+            ],
+            [
+              480,
+              248
+            ]
+          ]
+        },
+        {
+          "from": "gate",
+          "to": "execute",
+          "points": [
+            [
+              480,
+              328
+            ],
+            [
+              480,
+              368
+            ]
+          ],
+          "label": {
+            "text": "是",
+            "x": 488,
+            "y": 336,
+            "w": 28,
+            "h": 20
+          }
+        },
+        {
+          "from": "gate",
+          "to": "rejected",
+          "points": [
+            [
+              384,
+              288
+            ],
+            [
+              152,
+              288
+            ],
+            [
+              152,
+              368
+            ]
+          ],
+          "label": {
+            "text": "否",
+            "x": 240,
+            "y": 260,
+            "w": 32,
+            "h": 20
+          }
+        },
+        {
+          "from": "prepare",
+          "to": "rejected",
+          "points": [
+            [
+              368,
+              172
+            ],
+            [
+              80,
+              172
+            ],
+            [
+              80,
+              368
+            ]
+          ],
+          "label": {
+            "text": "准备失败",
+            "x": 88,
+            "y": 220,
+            "w": 96,
+            "h": 20
+          }
+        },
+        {
+          "from": "execute",
+          "to": "after",
+          "points": [
+            [
+              592,
+              404
+            ],
+            [
+              696,
+              404
+            ]
+          ],
+          "label": {
+            "text": "执行结果",
+            "x": 608,
+            "y": 376,
+            "w": 72,
+            "h": 20
+          }
+        },
+        {
+          "from": "after",
+          "to": "result",
+          "points": [
+            [
+              808,
+              440
+            ],
+            [
+              808,
+              500
+            ],
+            [
+              592,
+              500
+            ]
+          ]
+        },
+        {
+          "from": "rejected",
+          "to": "result",
+          "points": [
+            [
+              152,
+              440
+            ],
+            [
+              152,
+              500
+            ],
+            [
+              368,
+              500
+            ]
+          ]
+        }
+      ],
+      "notes": [
+        "schema 管结构；授权与业务条件仍需要可信代码检查。"
+      ],
+      "sources": [
+        [
+          "packages/agent/src/agent-loop.ts",
+          708
+        ],
+        [
+          "packages/agent/src/agent-loop.ts",
+          821
+        ]
+      ]
+    },
+    {
+      "chapter": 5,
+      "type": "state",
+      "title": "core run 结束后，会话还可能继续",
+      "desc": "运行中的 core run 结束后交给 AgentSession 后处理，存在恢复或后续工作时再启动 core run，否则发出 agent_settled。",
+      "caption": "图展示两个结束层次。工具续轮和排队消息在运行中处理；agent_end 后还要检查外层重试、恢复和收尾扩展。",
+      "nodes": [
+        {
+          "id": "running",
+          "name": "core run 运行中",
+          "sub": "模型、工具、steering / follow-up",
+          "x": 40,
+          "y": 152,
+          "w": 240,
+          "h": 104,
+          "section": 6,
+          "shape": "state"
+        },
+        {
+          "id": "ended",
+          "name": "core run 已结束",
+          "sub": "agent_end",
+          "x": 360,
+          "y": 152,
+          "w": 224,
+          "h": 104,
+          "section": 10,
+          "shape": "state"
+        },
+        {
+          "id": "post",
+          "name": "会话后处理",
+          "sub": "重试、压缩恢复、收尾检查",
+          "x": 696,
+          "y": 152,
+          "w": 224,
+          "h": 104,
+          "section": 10,
+          "shape": "state",
+          "focal": true
+        },
+        {
+          "id": "settled",
+          "name": "本次活动收尾",
+          "sub": "agent_settled",
+          "x": 696,
+          "y": 400,
+          "w": 224,
+          "h": 96,
+          "section": 10,
+          "shape": "state"
+        }
+      ],
+      "edges": [
+        {
+          "from": "running",
+          "to": "ended",
+          "points": [
+            [
+              280,
+              204
+            ],
+            [
+              360,
+              204
+            ]
+          ],
+          "label": {
+            "text": "退出",
+            "x": 288,
+            "y": 176,
+            "w": 64,
+            "h": 20
+          }
+        },
+        {
+          "from": "ended",
+          "to": "post",
+          "points": [
+            [
+              584,
+              204
+            ],
+            [
+              696,
+              204
+            ]
+          ],
+          "label": {
+            "text": "检查",
+            "x": 608,
+            "y": 176,
+            "w": 64,
+            "h": 20
+          }
+        },
+        {
+          "from": "post",
+          "to": "settled",
+          "points": [
+            [
+              808,
+              256
+            ],
+            [
+              808,
+              400
+            ]
+          ],
+          "label": {
+            "text": "无后续工作",
+            "x": 816,
+            "y": 312,
+            "w": 96,
+            "h": 20
+          }
+        },
+        {
+          "from": "post",
+          "to": "running",
+          "points": [
+            [
+              768,
+              152
+            ],
+            [
+              768,
+              92
+            ],
+            [
+              160,
+              92
+            ],
+            [
+              160,
+              152
+            ]
+          ],
+          "label": {
+            "text": "恢复或继续",
+            "x": 384,
+            "y": 64,
+            "w": 104,
+            "h": 20
+          },
+          "dashed": true
+        },
+        {
+          "from": "running",
+          "to": "running",
+          "points": [
+            [
+              112,
+              256
+            ],
+            [
+              112,
+              348
+            ],
+            [
+              224,
+              348
+            ],
+            [
+              224,
+              256
+            ]
+          ],
+          "label": {
+            "text": "内部续轮",
+            "x": 120,
+            "y": 320,
+            "w": 96,
+            "h": 20
+          },
+          "dashed": true
+        }
+      ],
+      "notes": [
+        "abort 发取消通知；收尾、回滚和业务验收分别判断。"
+      ],
+      "sources": [
+        [
+          "packages/agent/src/agent-loop.ts",
+          286
+        ],
+        [
+          "packages/coding-agent/src/core/agent-session.ts",
+          1821
+        ]
+      ]
+    },
+    {
+      "chapter": 6,
+      "type": "flowchart",
+      "title": "先预测，再用可控实验核对",
+      "desc": "学习者先写预期，使用假模型驱动真实调度，记录事件和效果，再对照断言；不符合时回查实现并只改变一个条件。",
+      "caption": "假 StreamFn 固定模型行为，真实运行的是 harness 调度。最终文字正确，不能替代工具次数、调用 ID 和真实效果的检查。",
+      "nodes": [
+        {
+          "id": "predict",
+          "name": "写下预测",
+          "sub": "次数、顺序、输入与状态",
+          "x": 368,
+          "y": 40,
+          "w": 224,
+          "h": 64,
+          "section": 1,
+          "shape": "terminal"
+        },
+        {
+          "id": "fixture",
+          "name": "构造可控输入",
+          "sub": "假模型、工具、手动闸门",
+          "x": 368,
+          "y": 144,
+          "w": 224,
+          "h": 80,
+          "section": 2
+        },
+        {
+          "id": "run",
+          "name": "运行真实调度",
+          "sub": "收集事件与实际效果",
+          "x": 368,
+          "y": 264,
+          "w": 224,
+          "h": 80,
+          "section": 4,
+          "focal": true
+        },
+        {
+          "id": "compare",
+          "name": "符合预期？",
+          "sub": "断言与真实效果",
+          "x": 384,
+          "y": 384,
+          "w": 192,
+          "h": 80,
+          "section": 10,
+          "shape": "diamond"
+        },
+        {
+          "id": "explain",
+          "name": "解释控制位置",
+          "sub": "能指出函数和失败边界",
+          "x": 696,
+          "y": 384,
+          "w": 224,
+          "h": 80,
+          "section": 11
+        },
+        {
+          "id": "review",
+          "name": "回查实现",
+          "sub": "改一个条件，再预测",
+          "x": 40,
+          "y": 384,
+          "w": 224,
+          "h": 80,
+          "section": 10
+        }
+      ],
+      "edges": [
+        {
+          "from": "predict",
+          "to": "fixture",
+          "points": [
+            [
+              480,
+              104
+            ],
+            [
+              480,
+              144
+            ]
+          ]
+        },
+        {
+          "from": "fixture",
+          "to": "run",
+          "points": [
+            [
+              480,
+              224
+            ],
+            [
+              480,
+              264
+            ]
+          ]
+        },
+        {
+          "from": "run",
+          "to": "compare",
+          "points": [
+            [
+              480,
+              344
+            ],
+            [
+              480,
+              384
+            ]
+          ]
+        },
+        {
+          "from": "compare",
+          "to": "explain",
+          "points": [
+            [
+              576,
+              424
+            ],
+            [
+              696,
+              424
+            ]
+          ],
+          "label": {
+            "text": "符合",
+            "x": 608,
+            "y": 396,
+            "w": 64,
+            "h": 20
+          }
+        },
+        {
+          "from": "compare",
+          "to": "review",
+          "points": [
+            [
+              384,
+              424
+            ],
+            [
+              264,
+              424
+            ]
+          ],
+          "label": {
+            "text": "不符合",
+            "x": 296,
+            "y": 396,
+            "w": 64,
+            "h": 20
+          }
+        },
+        {
+          "from": "review",
+          "to": "fixture",
+          "points": [
+            [
+              152,
+              384
+            ],
+            [
+              152,
+              184
+            ],
+            [
+              368,
+              184
+            ]
+          ],
+          "label": {
+            "text": "重新预测",
+            "x": 160,
+            "y": 264,
+            "w": 96,
+            "h": 20
+          },
+          "dashed": true
+        }
+      ],
+      "notes": [
+        "这里的“通过”只针对所测机制，不能证明真实模型能力。"
+      ],
+      "sources": [
+        [
+          "packages/agent/test/agent-loop.test.ts",
+          668
+        ],
+        [
+          "packages/agent/test/agent-loop.test.ts",
+          456
+        ]
+      ]
+    },
+    {
+      "chapter": 7,
+      "type": "tree",
+      "title": "同一份 raw 历史，可以投影出不同上下文",
+      "desc": "共享历史分出旁支和当前分支，当前分支追加上下文编辑隐藏 A6，raw 记录仍全部保留。",
+      "caption": "为控制图的深度，将 S0 → U1 → A2 合并为共享历史。旁支仍保存在 raw；E7 只改变当前分支的模型可见内容。",
+      "nodes": [
+        {
+          "id": "shared",
+          "name": "共享历史至 A2",
+          "sub": "S0 → U1 → A2",
+          "x": 392,
+          "y": 72,
+          "w": 176,
+          "h": 64,
+          "section": 3,
+          "compact": true
+        },
+        {
+          "id": "u3",
+          "name": "U3",
+          "sub": "旁支用户输入",
+          "x": 120,
+          "y": 216,
+          "w": 176,
+          "h": 56,
+          "section": 4,
+          "compact": true
+        },
+        {
+          "id": "a4",
+          "name": "A4",
+          "sub": "旁支模型响应",
+          "x": 120,
+          "y": 320,
+          "w": 176,
+          "h": 56,
+          "section": 4,
+          "compact": true
+        },
+        {
+          "id": "u5",
+          "name": "U5",
+          "sub": "当前分支输入",
+          "x": 664,
+          "y": 216,
+          "w": 176,
+          "h": 56,
+          "section": 4,
+          "compact": true
+        },
+        {
+          "id": "a6",
+          "name": "A6",
+          "sub": "原始响应仍被保存",
+          "x": 664,
+          "y": 320,
+          "w": 176,
+          "h": 56,
+          "section": 5,
+          "compact": true,
+          "store": true
+        },
+        {
+          "id": "edit",
+          "name": "E7：隐藏 A6",
+          "sub": "context_edit(null)",
+          "x": 664,
+          "y": 424,
+          "w": 176,
+          "h": 56,
+          "section": 5,
+          "compact": true,
+          "focal": true
+        }
+      ],
+      "edges": [
+        {
+          "from": "shared",
+          "to": "u3",
+          "points": [
+            [
+              448,
+              136
+            ],
+            [
+              448,
+              176
+            ],
+            [
+              208,
+              176
+            ],
+            [
+              208,
+              216
+            ]
+          ],
+          "dashed": true
+        },
+        {
+          "from": "u3",
+          "to": "a4",
+          "points": [
+            [
+              208,
+              272
+            ],
+            [
+              208,
+              320
+            ]
+          ],
+          "dashed": true
+        },
+        {
+          "from": "shared",
+          "to": "u5",
+          "points": [
+            [
+              512,
+              136
+            ],
+            [
+              512,
+              176
+            ],
+            [
+              752,
+              176
+            ],
+            [
+              752,
+              216
+            ]
+          ]
+        },
+        {
+          "from": "u5",
+          "to": "a6",
+          "points": [
+            [
+              752,
+              272
+            ],
+            [
+              752,
+              320
+            ]
+          ]
+        },
+        {
+          "from": "a6",
+          "to": "edit",
+          "points": [
+            [
+              752,
+              376
+            ],
+            [
+              752,
+              424
+            ]
+          ]
+        }
+      ],
+      "notes": [
+        "当前 branch：S0 / U1 / A2 / U5 / A6 / E7",
+        "模型 projection：S0 / U1 / A2 / U5；A6 被隐藏，未被删除。"
+      ],
+      "sources": [
+        [
+          "packages/coding-agent/src/core/session-manager.ts",
+          390
+        ],
+        [
+          "packages/coding-agent/src/core/session-manager.ts",
+          543
+        ]
+      ]
+    },
+    {
+      "chapter": 8,
+      "type": "architecture",
+      "title": "旧内容变摘要，近期工具配对保留",
+      "desc": "较早消息先序列化再生成模型摘要，近期调用和结果原文保留，共同构成新投影；raw 历史仍然保存。",
+      "caption": "keepRecentTokens 是切点预算目标，不是随意截取最后 N tokens。调用与结果不能拆散；序列化和模型摘要都可能损失信息。",
+      "nodes": [
+        {
+          "id": "old",
+          "name": "较早消息",
+          "sub": "本次要总结的材料",
+          "x": 40,
+          "y": 100,
+          "w": 224,
+          "h": 88,
+          "section": 4
+        },
+        {
+          "id": "serialize",
+          "name": "序列化材料",
+          "sub": "工具文本可能先截断",
+          "x": 368,
+          "y": 100,
+          "w": 224,
+          "h": 88,
+          "section": 8
+        },
+        {
+          "id": "summary",
+          "name": "模型生成摘要",
+          "sub": "包含已有摘要与新材料",
+          "x": 696,
+          "y": 100,
+          "w": 224,
+          "h": 88,
+          "section": 7,
+          "focal": true
+        },
+        {
+          "id": "recent",
+          "name": "近期原文",
+          "sub": "保留 toolCall + toolResult",
+          "x": 40,
+          "y": 324,
+          "w": 224,
+          "h": 96,
+          "section": 5,
+          "store": true
+        },
+        {
+          "id": "projection",
+          "name": "后续模型投影",
+          "sub": "system + 摘要 + 近期原文",
+          "x": 696,
+          "y": 324,
+          "w": 224,
+          "h": 96,
+          "section": 1,
+          "store": true
+        },
+        {
+          "id": "raw",
+          "name": "raw 历史仍保留",
+          "sub": "追加 compaction，不删除旧记录",
+          "x": 368,
+          "y": 444,
+          "w": 224,
+          "h": 80,
+          "section": 1,
+          "store": true
+        }
+      ],
+      "edges": [
+        {
+          "from": "old",
+          "to": "serialize",
+          "points": [
+            [
+              264,
+              144
+            ],
+            [
+              368,
+              144
+            ]
+          ],
+          "label": {
+            "text": "准备",
+            "x": 280,
+            "y": 116,
+            "w": 72,
+            "h": 20
+          }
+        },
+        {
+          "from": "serialize",
+          "to": "summary",
+          "points": [
+            [
+              592,
+              144
+            ],
+            [
+              696,
+              144
+            ]
+          ],
+          "label": {
+            "text": "摘要请求",
+            "x": 608,
+            "y": 116,
+            "w": 72,
+            "h": 20
+          }
+        },
+        {
+          "from": "summary",
+          "to": "projection",
+          "points": [
+            [
+              808,
+              188
+            ],
+            [
+              808,
+              324
+            ]
+          ],
+          "label": {
+            "text": "摘要",
+            "x": 816,
+            "y": 236,
+            "w": 64,
+            "h": 20
+          }
+        },
+        {
+          "from": "recent",
+          "to": "projection",
+          "points": [
+            [
+              264,
+              372
+            ],
+            [
+              696,
+              372
+            ]
+          ],
+          "label": {
+            "text": "保留原文",
+            "x": 432,
+            "y": 344,
+            "w": 96,
+            "h": 20
+          }
+        },
+        {
+          "from": "old",
+          "to": "raw",
+          "points": [
+            [
+              40,
+              144
+            ],
+            [
+              16,
+              144
+            ],
+            [
+              16,
+              492
+            ],
+            [
+              368,
+              492
+            ]
+          ],
+          "label": {
+            "text": "历史记录",
+            "x": 152,
+            "y": 464,
+            "w": 96,
+            "h": 20
+          },
+          "dashed": true
+        }
+      ],
+      "notes": [
+        "raw 存在 ≠ 本次模型看见；缓存命中也不能恢复未发送的信息。"
+      ],
+      "sources": [
+        [
+          "packages/coding-agent/src/core/compaction/compaction.ts",
+          872
+        ],
+        [
+          "packages/coding-agent/src/core/compaction/utils.ts",
+          93
+        ]
+      ]
+    },
+    {
+      "chapter": 9,
+      "type": "architecture",
+      "title": "Skill 提供方法，Extension 接入执行代码",
+      "desc": "Skill 元信息引导按需读取正文，Extension 注册工具和 hook，两条路线共同影响模型和宿主的工作。",
+      "caption": "Skill 的渐进加载主要节省模型上下文。扩展初始化只登记能力，真实工具动作仍要经过执行管线。",
+      "nodes": [
+        {
+          "id": "catalog",
+          "name": "Skill 目录",
+          "sub": "名称、描述、文件位置",
+          "x": 40,
+          "y": 100,
+          "w": 224,
+          "h": 88,
+          "section": 7,
+          "tag": "KNOWLEDGE"
+        },
+        {
+          "id": "body",
+          "name": "按需读取正文",
+          "sub": "任务适用时再读步骤与附件",
+          "x": 368,
+          "y": 100,
+          "w": 224,
+          "h": 88,
+          "section": 8,
+          "tag": "READ"
+        },
+        {
+          "id": "method",
+          "name": "模型按方法工作",
+          "sub": "形成下一步工具调用意图",
+          "x": 696,
+          "y": 100,
+          "w": 224,
+          "h": 88,
+          "section": 10,
+          "tag": "MODEL"
+        },
+        {
+          "id": "extension",
+          "name": "Extension 模块",
+          "sub": "初始化工厂中的可执行代码",
+          "x": 40,
+          "y": 340,
+          "w": 224,
+          "h": 96,
+          "section": 2,
+          "tag": "CODE"
+        },
+        {
+          "id": "register",
+          "name": "注册工具与 hook",
+          "sub": "registerTool / pi.on",
+          "x": 368,
+          "y": 340,
+          "w": 224,
+          "h": 96,
+          "section": 3,
+          "tag": "REGISTER"
+        },
+        {
+          "id": "execute",
+          "name": "宿主执行管线",
+          "sub": "校验、准入、execute、结果",
+          "x": 696,
+          "y": 340,
+          "w": 224,
+          "h": 96,
+          "section": 5,
+          "tag": "EXECUTE",
+          "focal": true
+        }
+      ],
+      "edges": [
+        {
+          "from": "catalog",
+          "to": "body",
+          "points": [
+            [
+              264,
+              144
+            ],
+            [
+              368,
+              144
+            ]
+          ],
+          "label": {
+            "text": "按需加载",
+            "x": 280,
+            "y": 116,
+            "w": 72,
+            "h": 20
+          }
+        },
+        {
+          "from": "body",
+          "to": "method",
+          "points": [
+            [
+              592,
+              144
+            ],
+            [
+              696,
+              144
+            ]
+          ],
+          "label": {
+            "text": "提供步骤",
+            "x": 608,
+            "y": 116,
+            "w": 72,
+            "h": 20
+          }
+        },
+        {
+          "from": "extension",
+          "to": "register",
+          "points": [
+            [
+              264,
+              388
+            ],
+            [
+              368,
+              388
+            ]
+          ],
+          "label": {
+            "text": "登记能力",
+            "x": 280,
+            "y": 360,
+            "w": 72,
+            "h": 20
+          }
+        },
+        {
+          "from": "register",
+          "to": "execute",
+          "points": [
+            [
+              592,
+              388
+            ],
+            [
+              696,
+              388
+            ]
+          ],
+          "label": {
+            "text": "提供接口",
+            "x": 608,
+            "y": 360,
+            "w": 72,
+            "h": 20
+          }
+        },
+        {
+          "from": "method",
+          "to": "execute",
+          "points": [
+            [
+              808,
+              188
+            ],
+            [
+              808,
+              340
+            ]
+          ],
+          "label": {
+            "text": "提出调用",
+            "x": 816,
+            "y": 248,
+            "w": 88,
+            "h": 20
+          }
+        }
+      ],
+      "notes": [
+        "方法说明不自动授予权限；已加载扩展也不自动获得安全隔离。"
+      ],
+      "sources": [
+        [
+          "packages/coding-agent/src/core/skills.ts",
+          277
+        ],
+        [
+          "packages/coding-agent/src/core/extensions/loader.ts",
+          270
+        ]
+      ]
+    },
+    {
+      "chapter": 10,
+      "type": "sequence",
+      "title": "从发现外部工具，到回填一次调用结果",
+      "desc": "PI 与 MCP 服务建立连接并发现工具，注册暴露后模型提出调用意图，PI 调用服务并将结果回填。",
+      "caption": "这是初次发现与后续一次调用的代表过程。实际暴露受 direct / deferred / codemode 等策略控制，注册不等于全量直接声明。",
+      "actors": [
+        {
+          "id": "model",
+          "name": "模型",
+          "sub": "生成调用意图",
+          "x": 120,
+          "section": 1
+        },
+        {
+          "id": "pi",
+          "name": "PI 客户端",
+          "sub": "注册与适配",
+          "x": 480,
+          "section": 4,
+          "focal": true
+        },
+        {
+          "id": "mcp",
+          "name": "MCP 服务",
+          "sub": "提供外部能力",
+          "x": 840,
+          "section": 3
+        }
+      ],
+      "messages": [
+        {
+          "from": "pi",
+          "to": "mcp",
+          "y": 144,
+          "label": "INITIALIZE",
+          "section": 3
+        },
+        {
+          "from": "mcp",
+          "to": "pi",
+          "y": 184,
+          "label": "能力与版本",
+          "section": 3,
+          "return": true
+        },
+        {
+          "from": "pi",
+          "to": "mcp",
+          "y": 224,
+          "label": "TOOLS/LIST",
+          "section": 4
+        },
+        {
+          "from": "mcp",
+          "to": "pi",
+          "y": 264,
+          "label": "工具定义",
+          "section": 4,
+          "return": true
+        },
+        {
+          "from": "pi",
+          "to": "model",
+          "y": 320,
+          "label": "暴露或发现入口",
+          "section": 7
+        },
+        {
+          "from": "model",
+          "to": "pi",
+          "y": 360,
+          "label": "调用意图",
+          "section": 5
+        },
+        {
+          "from": "pi",
+          "to": "mcp",
+          "y": 400,
+          "label": "TOOLS/CALL",
+          "section": 5
+        },
+        {
+          "from": "mcp",
+          "to": "pi",
+          "y": 440,
+          "label": "执行结果",
+          "section": 6,
+          "return": true
+        },
+        {
+          "from": "pi",
+          "to": "model",
+          "y": 480,
+          "label": "工具结果回填",
+          "section": 6,
+          "return": true,
+          "focal": true
+        }
+      ],
+      "actions": [
+        {
+          "actor": "pi",
+          "y": 276,
+          "w": 176,
+          "h": 24,
+          "text": "注册 ToolDefinition",
+          "section": 4
+        }
+      ],
+      "notes": [
+        "协议方法实际拼写为 tools/list、tools/call；MCP 不替代模型—工具循环。"
+      ],
+      "sources": [
+        [
+          "packages/coding-agent/src/extensions/mcp/index.ts",
+          368
+        ],
+        [
+          "packages/mcp/src/client.ts",
+          376
+        ]
+      ]
+    },
+    {
+      "chapter": 11,
+      "type": "architecture",
+      "title": "三种委派方式，父会话等待的边界不同",
+      "desc": "父会话按需求选择普通子进程、durable 前台或 durable 后台，分别以同步工具结果、等待答案或 Reporter 后续消息交付。",
+      "caption": "三条是可选择的实现路径，不表示每次都会同时启动。普通子进程与 durable 子会话不同；独立上下文不自动隔离文件。",
+      "nodes": [
+        {
+          "id": "parent",
+          "name": "父会话",
+          "sub": "按需求选择一种委派方式",
+          "x": 40,
+          "y": 100,
+          "w": 208,
+          "h": 400,
+          "section": 1,
+          "tall": true
+        },
+        {
+          "id": "process",
+          "name": "普通子进程",
+          "sub": "另起 PI，读取 stdout JSONL",
+          "x": 360,
+          "y": 108,
+          "w": 248,
+          "h": 88,
+          "section": 2
+        },
+        {
+          "id": "sync",
+          "name": "同步工具结果",
+          "sub": "父工具等待子进程结束",
+          "x": 704,
+          "y": 108,
+          "w": 216,
+          "h": 88,
+          "section": 5
+        },
+        {
+          "id": "foreground",
+          "name": "durable 前台",
+          "sub": "task-owned 子会话",
+          "x": 360,
+          "y": 268,
+          "w": 248,
+          "h": 88,
+          "section": 7,
+          "store": true
+        },
+        {
+          "id": "answer",
+          "name": "同步答案",
+          "sub": "稳定 requestId 后 wait",
+          "x": 704,
+          "y": 268,
+          "w": 216,
+          "h": 88,
+          "section": 7
+        },
+        {
+          "id": "background",
+          "name": "durable 后台",
+          "sub": "Anchor + Reporter",
+          "x": 360,
+          "y": 428,
+          "w": 248,
+          "h": 88,
+          "section": 8,
+          "focal": true,
+          "optional": true
+        },
+        {
+          "id": "report",
+          "name": "后续 follow-up",
+          "sub": "父调用先返回，稍后报告",
+          "x": 704,
+          "y": 428,
+          "w": 216,
+          "h": 88,
+          "section": 9,
+          "optional": true
+        }
+      ],
+      "edges": [
+        {
+          "from": "parent",
+          "to": "process",
+          "points": [
+            [
+              248,
+              152
+            ],
+            [
+              360,
+              152
+            ]
+          ],
+          "label": {
+            "text": "选择",
+            "x": 280,
+            "y": 124,
+            "w": 48,
+            "h": 20
+          }
+        },
+        {
+          "from": "process",
+          "to": "sync",
+          "points": [
+            [
+              608,
+              152
+            ],
+            [
+              704,
+              152
+            ]
+          ],
+          "label": {
+            "text": "等待",
+            "x": 624,
+            "y": 124,
+            "w": 64,
+            "h": 20
+          }
+        },
+        {
+          "from": "parent",
+          "to": "foreground",
+          "points": [
+            [
+              248,
+              312
+            ],
+            [
+              360,
+              312
+            ]
+          ],
+          "label": {
+            "text": "选择",
+            "x": 280,
+            "y": 284,
+            "w": 48,
+            "h": 20
+          }
+        },
+        {
+          "from": "foreground",
+          "to": "answer",
+          "points": [
+            [
+              608,
+              312
+            ],
+            [
+              704,
+              312
+            ]
+          ],
+          "label": {
+            "text": "等待",
+            "x": 624,
+            "y": 284,
+            "w": 64,
+            "h": 20
+          }
+        },
+        {
+          "from": "parent",
+          "to": "background",
+          "points": [
+            [
+              248,
+              472
+            ],
+            [
+              360,
+              472
+            ]
+          ],
+          "label": {
+            "text": "选择",
+            "x": 280,
+            "y": 444,
+            "w": 48,
+            "h": 20
+          },
+          "dashed": true
+        },
+        {
+          "from": "background",
+          "to": "report",
+          "points": [
+            [
+              608,
+              472
+            ],
+            [
+              704,
+              472
+            ]
+          ],
+          "label": {
+            "text": "后台报告",
+            "x": 612,
+            "y": 444,
+            "w": 88,
+            "h": 20
+          },
+          "dashed": true
+        }
+      ],
+      "notes": [
+        "checkpoint 保存执行阶段；外部副作用仍需要重放策略与执行端幂等。"
+      ],
+      "sources": [
+        [
+          "packages/coding-agent/examples/extensions/subagent/index.ts",
+          272
+        ],
+        [
+          "packages/durable/test/examples/23-subagent-background.ts",
+          38
+        ]
+      ]
+    },
+    {
+      "chapter": 12,
+      "type": "layers",
+      "title": "四类证据分别回答四类问题",
+      "desc": "机制测试、工具效果、模型任务与服务验收分层补足证据，任何一个运行信号都不能代替实际业务结果。",
+      "caption": "这些是不同范围的证明，不是 PI 默认自带的四个自动检查器。合理拒绝、未运行和基础设施失败应分别记录。",
+      "nodes": [
+        {
+          "id": "mechanism",
+          "name": "机制验证",
+          "sub": "调度、配对、取消是否符合约定",
+          "x": 104,
+          "y": 104,
+          "w": 800,
+          "h": 80,
+          "section": 5,
+          "band": true,
+          "tag": "01",
+          "right": "假 StreamFn · 确定性断言"
+        },
+        {
+          "id": "effect",
+          "name": "工具效果",
+          "sub": "文件或外部动作实际发生了什么",
+          "x": 104,
+          "y": 208,
+          "w": 800,
+          "h": 80,
+          "section": 5,
+          "band": true,
+          "tag": "02",
+          "right": "回读 · diff · 执行端记录"
+        },
+        {
+          "id": "model",
+          "name": "模型任务",
+          "sub": "工具选择、约束与答案是否正确",
+          "x": 104,
+          "y": 312,
+          "w": 800,
+          "h": 80,
+          "section": 6,
+          "band": true,
+          "tag": "03",
+          "right": "真实模型 · 固定任务 · 评分",
+          "focal": true
+        },
+        {
+          "id": "service",
+          "name": "服务验收",
+          "sub": "身份、任务状态、恢复与配额是否可用",
+          "x": 104,
+          "y": 416,
+          "w": 800,
+          "h": 80,
+          "section": 13,
+          "band": true,
+          "tag": "04",
+          "right": "真实服务与环境验收"
+        }
+      ],
+      "edges": [],
+      "notes": [
+        "从机制到交付，逐项补足证据；started / agent_end / settled 都不单独证明任务正确。"
+      ],
+      "sources": [
+        [
+          "packages/evals/src/harness.ts",
+          238
+        ],
+        [
+          "packages/coding-agent/src/modes/rpc/rpc-mode.ts",
+          394
+        ]
+      ]
+    }
+  ]
+}

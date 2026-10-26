@@ -1,6 +1,6 @@
 # Agent 笔记
 
-一个可持续更新的 GitHub Pages 博客。第一期发布 PI Agent Harness 的 12 节源码伴读和互动架构总览。
+一个可持续更新的 GitHub Pages 博客。第一期发布 PI Agent Harness 的 12 节源码伴读、每章图解和互动架构总览。图中节点可跳到本章对应解释，支持单独看图与明暗配色。
 
 - 博客：https://findma.github.io/agent-notes/
 - PI 源码伴读：https://findma.github.io/agent-notes/posts/pi-harness/
@@ -24,6 +24,7 @@ npm run preview
 
 1. 修改 `content/pi-harness/chapters/` 内对应 Markdown。
 2. 修改互动总览时编辑 `scripts/overview.mjs` 中的模块数据。
+   修改每章图解时编辑 `scripts/chapter-diagrams.mjs`；`section` 指向本章第几个二级标题，章节调整后需核对对应关系。
 3. 运行 `npm run build` 和 `npm run check`。
 4. 提交源文件和更新后的 `docs/`，推送 main，GitHub Pages 自动发布。
 
@@ -58,6 +59,7 @@ git push
 - `scripts/build.mjs`：生成博客首页、普通文章和 PI 系列。
 - `scripts/build-reader.mjs`：PI 系列阅读页。
 - `scripts/overview.mjs`：PI 互动架构图。
+- `scripts/chapter-diagrams.mjs`：12 张章节图解与独立看图页。
 - `docs/`：可直接由 GitHub Pages 托管的静态文件。
 - `blog.config.json`：网站名称、仓库地址与正式访问地址。
 

@@ -3,6 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { marked } from 'marked';
 import { overviewCss, overviewMarkup, writeOverview } from './overview.mjs';
+import { chapterDiagramCss, chapterDiagramMarkup, writeChapterDiagrams } from './chapter-diagrams.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../docs/posts/pi-harness');
 const sha = 'eb326d265ae0b88489a6d10319307780df827cdf';
@@ -40,7 +41,7 @@ const css = `
 @media print{body{background:white;color:#111;font-size:11pt}.layout{display:block;padding:0}.sidebar,.mobile-head,.nav-tools,.back-top,.read-progress,.downloads,.chapter-links,.chapter-toc{display:none!important}.hero,.chapter{border:none;padding:0;border-radius:0}.chapter{break-before:page}pre{white-space:pre-wrap;overflow-wrap:anywhere;border:1px solid #ddd;font-size:9pt}pre code{white-space:pre-wrap;overflow-wrap:anywhere}table{min-width:0}.table-wrap{overflow:visible}a{color:#111}h1,h2,h3{break-after:avoid}tr{break-inside:avoid}}
 .nav-link[hidden]{display:none}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
-` + overviewCss;
+` + overviewCss + chapterDiagramCss;
 const js = `
 const root=document.documentElement;
 try{root.dataset.theme=localStorage.getItem('pi-study-theme')||'light'}catch{}
@@ -55,7 +56,7 @@ document.querySelectorAll('.chapter>h1').forEach(h=>observer.observe(h));
 `;
 const toc = lesson => `<details class="chapter-toc"><summary>本节小节目录 · ${lesson.outline.length} 项</summary><ol>${lesson.outline.map(o=>`<li><a href="#${o.id}">${o.text}</a></li>`).join('')}</ol></details>`;
 function chapterHtml(lesson, combined){
-  const body = lesson.html.replace(/(<\/h1>)/, '$1'+toc(lesson));
+  const body = lesson.html.replace(/(<\/h1>)/, '$1'+toc(lesson)+chapterDiagramMarkup({...lesson,combined}));
   const prev=lessons[lesson.number-2], next=lessons[lesson.number];
   const target=x=>combined?`#chapter-${String(x.number).padStart(2,'0')}`:encodeURI(x.htmlFile);
   return `<section class="chapter" data-chapter="${lesson.number}">${body}<div class="chapter-links">${prev?`<a href="${target(prev)}">← 第 ${prev.number} 节</a>`:''}${next?`<a href="${target(next)}">第 ${next.number} 节 →</a>`:''}<a href="${combined?'chapters/':''}${encodeURI(lesson.file)}" download>本节 Markdown</a>${combined?`<a href="chapters/${encodeURI(lesson.htmlFile)}">单独阅读本节</a>`:'<a href="../index.html">返回合订本</a>'}</div></section>`;
@@ -66,6 +67,7 @@ function page(selected, combined){
   return `<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light dark"><title>${escape(title)}</title><style>${css}</style></head><body><div class="read-progress" aria-hidden="true"></div><div class="mobile-head"><span>PI · 源码伴读</span><button data-menu aria-expanded="false" aria-controls="chapter-nav">章节目录</button></div><div class="layout"><aside class="sidebar" id="chapter-nav"><div class="eyebrow">SOURCE WALKTHROUGH</div><div class="brand">PI Agent Harness</div><p>从一次请求到执行、历史和恢复。<br>按 01 → 12 顺序阅读。</p><input class="nav-search" data-search aria-label="筛选章节" placeholder="筛选章节标题"><nav aria-label="章节目录">${nav}</nav><div class="nav-tools"><button data-theme-toggle>切换明暗</button><button onclick="window.print()">打印</button></div><p>源码：<a href="${base.replace('/blob/','/tree/')}" target="_blank" rel="noopener noreferrer">eb326d2</a><br>包版本：1.0.4<br>本地整理：2026-10-26</p></aside><main class="main"><header class="hero"><div class="eyebrow">PI STUDY NOTES / 01—12</div><h1>${escape(title)}</h1><p>逐段看代码怎样接收输入、请求模型、执行工具、保存历史，并处理取消、重试和恢复。</p><div class="meta"><span>12 节完整讲解</span><span>固定提交源码引用</span><span>解释 · 例子 · 练习 · 面试追问</span></div><div class="downloads"><a href="${combined?'':'../'}PI-Agent-Harness-01-12.md" download>下载 Markdown 合订本</a><a href="${combined?'':'../'}README.md">阅读说明</a></div><div class="notice">静态源码伴读。示意轨迹、待执行练习与实际运行结果分别说明。本文提供源码分析与待执行练习，不将源码阅读作为模型实测或生产验收。</div></header>${selected.map(l=>chapterHtml(l,combined)).join('')}<footer class="footer">本系列按固定版本源码整理。源码链接固定到研究提交；本地源码若更新，请按函数名复核。HTML 内嵌样式和脚本，正文可离线阅读。</footer></main></div><button class="back-top" data-top aria-label="返回顶部">↑ 顶部</button><script>${js}</script></body></html>`;
 }
 writeOverview();
+writeChapterDiagrams(root,lessons);
 for (const lesson of lessons) fs.writeFileSync(path.join(root,'chapters',lesson.htmlFile),page([lesson],false).replace('<body>', '<body><a class="blog-back" href="../../../index.html">← Agent 笔记 · 所有文章</a>'));
 fs.writeFileSync(path.join(root,'index.html'),page(lessons,true).replace('<body>', '<body><a class="blog-back" href="../../index.html">← Agent 笔记 · 所有文章</a>').replace('</header><section class="chapter"','</header>'+overviewMarkup()+'<section class="chapter"'));
 const intro=`# PI Agent Harness：第 01–12 节源码伴读\n\n适合有基本编程能力、希望理解 Agent 实现并准备开发面试的读者。\n\n- 源码提交：\`${sha}\`，coding-agent 1.0.4。\n- 本地整理日期：2026-10-26。本系列基于固定版本源码整理。\n- 正文包含源码事实、标明的示意过程和待执行练习。本轮未运行 PI 项目测试、真实模型或生产服务。\n- 章节引用固定到同一提交；少量节选代码省略了不影响解释的字段。\n- F1–F8 统一采用第 06 节的编号。\n\n## 目录\n\n${lessons.map(l=>`- [${l.title}](#chapter-${String(l.number).padStart(2,'0')})`).join('\n')}\n\n`;
