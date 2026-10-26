@@ -1,0 +1,873 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light dark"><title>第 03 节：模型协议与流——从数据片段到完整消息</title><style>
+.blog-back{display:block;max-width:1440px;margin:18px auto 0;padding:0 28px;font-size:14px}
+:root{color-scheme:light;--bg:#f5f3ee;--paper:#fffefa;--text:#26332e;--muted:#65736b;--line:#d9dfd6;--accent:#28664e;--code:#eef2ed;--nav:#edf1e9}
+:root[data-theme=dark]{color-scheme:dark;--bg:#151c19;--paper:#1c2520;--text:#e0e8df;--muted:#abb9ad;--line:#3b4b40;--accent:#9ed4ac;--code:#25332a;--nav:#202c24}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:28px}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.9 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}a{color:var(--accent);text-underline-offset:3px;overflow-wrap:anywhere}a:hover{text-decoration-thickness:2px}button,input{font:inherit}button{cursor:pointer;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--text);padding:7px 13px}button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+.layout{max-width:1440px;margin:0 auto;display:grid;grid-template-columns:275px minmax(0,1fr);gap:30px;padding:28px 28px 70px}.sidebar{position:sticky;top:24px;max-height:calc(100vh - 48px);overflow:auto;padding:5px 15px 20px 0;scrollbar-width:thin}.brand{font-size:20px;font-weight:700;line-height:1.5;margin-bottom:8px}.eyebrow{font-size:12px;letter-spacing:.13em;color:var(--muted)}.sidebar p{font-size:13px;color:var(--muted);margin:8px 0 18px}.nav-link{display:block;padding:10px 12px;border-radius:7px;font-size:14px;text-decoration:none;line-height:1.7}.nav-link:hover,.nav-link.current{background:var(--nav)}.nav-link[aria-current=true]{background:var(--nav);font-weight:600}.nav-tools{display:flex;gap:8px;margin:16px 0}.nav-tools button{font-size:13px}.nav-search{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:7px;background:var(--paper);color:var(--text);margin:0 0 13px}.main{min-width:0}.hero{padding:34px 44px;background:var(--paper);border:1px solid var(--line);border-radius:12px;margin-bottom:24px}.hero h1{font-size:30px;line-height:1.5;margin:8px 0 12px}.hero p{margin:9px 0}.meta{display:flex;gap:8px 18px;flex-wrap:wrap;font-size:13px;color:var(--muted)}.downloads{display:flex;gap:20px;flex-wrap:wrap;font-size:14px;margin-top:18px}.notice{border-left:3px solid var(--accent);padding:8px 14px;background:var(--nav);margin:18px 0 0;font-size:14px}
+.chapter{padding:35px 44px 40px;background:var(--paper);border:1px solid var(--line);border-radius:12px;margin-bottom:26px;overflow-wrap:break-word}.chapter h1{font-size:27px;line-height:1.55;margin:0 0 24px}.chapter h2{font-size:22px;line-height:1.65;margin:42px 0 16px;padding-top:8px;border-top:1px solid var(--line)}.chapter h3{font-size:18px;line-height:1.7;margin:28px 0 12px}.chapter h4{font-size:16px;margin:22px 0 10px}p{margin:14px 0}ul,ol{padding-left:1.55em}li{margin:6px 0}blockquote{border-left:3px solid var(--accent);margin:20px 0;padding:1px 18px;color:var(--muted);background:var(--nav);border-radius:0 7px 7px 0}blockquote p{margin:12px 0}code{font: .88em/1.65 ui-monospace,SFMono-Regular,Consolas,monospace;background:var(--code);padding:2px 5px;border-radius:4px;overflow-wrap:anywhere}pre{background:var(--code);padding:18px 20px;border:1px solid var(--line);border-radius:9px;overflow-x:auto;max-width:100%;font-size:14px;line-height:1.75;tab-size:2}pre code{padding:0;background:transparent;white-space:pre;overflow-wrap:normal;word-break:normal;font-size:inherit}.table-wrap{overflow-x:auto;margin:22px 0;border:1px solid var(--line);border-radius:8px}table{border-collapse:collapse;width:100%;min-width:440px;font-size:14px;line-height:1.75}th,td{padding:11px 14px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}th{background:var(--nav);font-weight:600}tr:last-child td{border-bottom:0}hr{border:0;border-top:1px solid var(--line);margin:30px 0}strong{font-weight:650}.chapter-toc{background:var(--nav);border-radius:8px;padding:12px 16px;margin:0 0 24px}.chapter-toc summary{cursor:pointer;font-size:14px}.chapter-toc ol{columns:2;font-size:13px;line-height:1.7;margin:12px 0 3px}.chapter-toc li{break-inside:avoid;margin:5px 0}.chapter-toc a{text-decoration:none}.chapter-links{display:flex;flex-wrap:wrap;gap:16px;margin:25px 0 0;font-size:13px;color:var(--muted);border-top:1px solid var(--line);padding-top:17px}.mobile-head{display:none}.footer{color:var(--muted);font-size:13px;padding:8px 8px 0}.back-top{position:fixed;right:20px;bottom:20px;font-size:13px;box-shadow:0 2px 12px #0001}.read-progress{position:fixed;top:0;left:0;height:3px;background:var(--accent);width:0;z-index:10}.source-tag{font-size:12px;color:var(--muted)}
+@media(max-width:900px){.layout{grid-template-columns:1fr;padding:15px 14px 60px;gap:15px}.sidebar{position:static;max-height:none;display:none;padding:16px;background:var(--paper);border:1px solid var(--line);border-radius:10px}.sidebar.open{display:block}.mobile-head{display:flex;justify-content:space-between;align-items:center;padding:14px 16px 0}.hero,.chapter{padding:24px}.hero h1{font-size:26px}.chapter h1{font-size:24px}.chapter h2{font-size:21px}.chapter-toc ol{columns:1}.back-top{bottom:12px;right:12px}}
+@media(max-width:480px){body{font-size:15px}.hero,.chapter{padding:19px 17px}.hero h1{font-size:24px}.chapter h1{font-size:23px}pre{padding:14px;font-size:12px}.table-wrap{margin:18px 0}.chapter h2{font-size:19px}.meta{font-size:12px}}
+@media print{body{background:white;color:#111;font-size:11pt}.layout{display:block;padding:0}.sidebar,.mobile-head,.nav-tools,.back-top,.read-progress,.downloads,.chapter-links,.chapter-toc{display:none!important}.hero,.chapter{border:none;padding:0;border-radius:0}.chapter{break-before:page}pre{white-space:pre-wrap;overflow-wrap:anywhere;border:1px solid #ddd;font-size:9pt}pre code{white-space:pre-wrap;overflow-wrap:anywhere}table{min-width:0}.table-wrap{overflow:visible}a{color:#111}h1,h2,h3{break-after:avoid}tr{break-inside:avoid}}
+.nav-link[hidden]{display:none}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+
+.pi-overview{position:relative;margin:0 0 28px;border:1px solid var(--line);border-radius:10px;background:var(--paper);padding:24px;min-width:0;max-width:100%;color:var(--text)}.overview-target{position:absolute;top:0;left:0;width:1px;height:1px;scroll-margin-top:20px}.overview-head{margin:0 0 16px}.overview-head .overview-kicker{font:12px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:.1em;color:var(--muted)}.overview-head h2{font-size:25px;line-height:1.5;margin:6px 0 9px;border:0;padding:0}.overview-head p{font-size:14px;line-height:1.8;color:var(--muted);margin:7px 0}.overview-head a{font-size:13px}.overview-panel{display:none;grid-template-columns:minmax(0,1.45fr) minmax(220px,1fr);gap:20px;border:1px solid var(--line);border-radius:8px;padding:18px 20px;margin-bottom:18px;min-height:210px;background:var(--nav)}.overview-panel[data-detail="loop"]{display:grid}.pi-overview:has(.overview-target:target) .overview-panel{display:none}.pi-overview:has(#pi-map-session:target) .overview-panel[data-detail="session"]{display:grid}.pi-overview:has(#pi-map-session:target) [data-map-node="session"] .node-outline{stroke:var(--accent);stroke-width:2.4;fill:var(--nav)}
+.pi-overview:has(#pi-map-loop:target) .overview-panel[data-detail="loop"]{display:grid}.pi-overview:has(#pi-map-loop:target) [data-map-node="loop"] .node-outline{stroke:var(--accent);stroke-width:2.4;fill:var(--nav)}
+.pi-overview:has(#pi-map-model:target) .overview-panel[data-detail="model"]{display:grid}.pi-overview:has(#pi-map-model:target) [data-map-node="model"] .node-outline{stroke:var(--accent);stroke-width:2.4;fill:var(--nav)}
+.pi-overview:has(#pi-map-history:target) .overview-panel[data-detail="history"]{display:grid}.pi-overview:has(#pi-map-history:target) [data-map-node="history"] .node-outline{stroke:var(--accent);stroke-width:2.4;fill:var(--nav)}
+.pi-overview:has(#pi-map-tools:target) .overview-panel[data-detail="tools"]{display:grid}.pi-overview:has(#pi-map-tools:target) [data-map-node="tools"] .node-outline{stroke:var(--accent);stroke-width:2.4;fill:var(--nav)}
+.pi-overview:has(#pi-map-extensions:target) .overview-panel[data-detail="extensions"]{display:grid}.pi-overview:has(#pi-map-extensions:target) [data-map-node="extensions"] .node-outline{stroke:var(--accent);stroke-width:2.4;fill:var(--nav)}
+.pi-overview:has(#pi-map-validation:target) .overview-panel[data-detail="validation"]{display:grid}.pi-overview:has(#pi-map-validation:target) [data-map-node="validation"] .node-outline{stroke:var(--accent);stroke-width:2.4;fill:var(--nav)}
+.pi-overview:has(#pi-map-subagents:target) .overview-panel[data-detail="subagents"]{display:grid}.pi-overview:has(#pi-map-subagents:target) [data-map-node="subagents"] .node-outline{stroke:var(--accent);stroke-width:2.4;fill:var(--nav)}
+.overview-panel h3{margin:0 0 7px;font-size:19px;line-height:1.6}.overview-panel p{margin:6px 0;font-size:14px;line-height:1.8}.overview-io{display:grid;grid-template-columns:38px minmax(0,1fr);gap:4px 8px;font-size:13px;line-height:1.75;margin:12px 0 0}.overview-io dt{color:var(--muted)}.overview-io dd{margin:0}.overview-chapter-links{display:flex;gap:8px;flex-wrap:wrap;margin:3px 0 12px}.overview-chapter-links a{display:inline-block;background:var(--paper);border:1px solid var(--line);border-radius:5px;padding:5px 10px;font-size:13px;text-decoration:none}.overview-sources{list-style:none;padding:0;margin:0;font-size:12px;line-height:1.8}.overview-sources li{margin:7px 0}.overview-sources code{background:none;padding:0;font-size:11px;overflow-wrap:anywhere}.overview-diagram-container{width:100%;max-width:100%;overflow-x:auto;overscroll-behavior-x:contain;border:1px solid var(--line);border-radius:8px;background:var(--paper)}.pi-overview svg{width:100%;min-width:960px;display:block;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}.pi-overview svg text{fill:var(--text)}.pi-overview svg .svg-muted{fill:var(--muted)}.pi-overview svg .svg-mono{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}.pi-overview svg .node-outline{fill:var(--paper);stroke:var(--line);stroke-width:1.4}.pi-overview svg .node-state{fill:var(--code)}.pi-overview svg .node-optional{stroke-dasharray:5 4}.pi-overview svg .node-focal{stroke:var(--accent);stroke-width:2;fill:var(--nav)}.pi-overview svg a:hover .node-outline,.pi-overview svg a:focus-visible .node-outline{stroke:var(--accent);stroke-width:2.4}.pi-overview svg a:focus-visible{outline:none}.pi-overview svg .edge{fill:none;stroke:var(--muted);stroke-width:1.5}.pi-overview svg .edge-return{stroke-dasharray:5 4}.pi-overview svg .label-mask{fill:var(--paper)}.pi-overview svg .type-tag{fill:var(--code);stroke:var(--line);stroke-width:.8}.overview-chapter-index{display:flex;gap:7px;flex-wrap:wrap;margin-top:15px;font-size:12px;line-height:1.6}.overview-chapter-index a{border:1px solid var(--line);padding:5px 8px;border-radius:5px;text-decoration:none;color:var(--muted)}.overview-chapter-index a:hover{color:var(--accent);border-color:var(--accent)}.overview-note{font-size:12px;line-height:1.8;color:var(--muted);margin:13px 0 0}.overview-bounds{border-left:3px solid var(--accent);padding-left:11px;color:var(--muted)}
+@media(max-width:1000px){.overview-panel{grid-template-columns:1fr;min-height:0;gap:14px}.overview-panel-side{border-top:1px solid var(--line);padding-top:12px}}
+@media(max-width:600px){.pi-overview{padding:17px}.overview-head h2{font-size:22px}.overview-panel{padding:15px}.overview-panel h3{font-size:17px}.overview-head p{font-size:13px}}
+@media print{.pi-overview{break-before:page;padding:0;border:0}.overview-diagram-container{overflow:visible;border:0}.pi-overview svg{min-width:0;width:100%}.overview-panel{display:block!important;break-inside:avoid;background:none;min-height:0}.overview-chapter-index,.overview-head>a{display:none}.overview-target{display:none}}
+</style></head><body><a class="blog-back" href="../../../index.html">← Agent 笔记 · 所有文章</a><div class="read-progress" aria-hidden="true"></div><div class="mobile-head"><span>PI · 源码伴读</span><button data-menu aria-expanded="false" aria-controls="chapter-nav">章节目录</button></div><div class="layout"><aside class="sidebar" id="chapter-nav"><div class="eyebrow">SOURCE WALKTHROUGH</div><div class="brand">PI Agent Harness</div><p>从一次请求到执行、历史和恢复。<br>按 01 → 12 顺序阅读。</p><input class="nav-search" data-search aria-label="筛选章节" placeholder="筛选章节标题"><nav aria-label="章节目录"><a class="nav-link" href="../pi-overview.html">总览 · 各部分怎样配合</a><a class="nav-link" href="01-%E5%87%86%E5%A4%87%E4%B8%8E%E6%9E%B6%E6%9E%84.html">01 · 准备与架构——先认清对象和职责</a><a class="nav-link" href="02-Agent-Loop.html">02 · Agent Loop——工具执行后，为什么还要请求模型？</a><a class="nav-link current" href="03-%E6%A8%A1%E5%9E%8B%E5%8D%8F%E8%AE%AE%E4%B8%8E%E6%B5%81.html">03 · 模型协议与流——从数据片段到完整消息</a><a class="nav-link" href="04-%E5%B7%A5%E5%85%B7%E4%B8%8E%E4%BB%A3%E7%A0%81%E4%BF%AE%E6%94%B9.html">04 · 工具与代码修改——从模型意图到真实副作用</a><a class="nav-link" href="05-%E8%B0%83%E5%BA%A6%E4%B8%8E%E6%94%B6%E5%B0%BE.html">05 · 调度与收尾——并行、队列、停止、取消与重试</a><a class="nav-link" href="06-%E9%A2%84%E6%B5%8B%E4%B8%8E%E9%AA%8C%E8%AF%81.html">06 · 预测与验证——怎样用测试检查自己读懂了没有</a><a class="nav-link" href="07-%E4%BC%9A%E8%AF%9D%E4%B8%8E%E5%8E%86%E5%8F%B2.html">07 · 会话与历史——保存过的内容，为什么模型未必看得见</a><a class="nav-link" href="08-%E4%B8%8A%E4%B8%8B%E6%96%87%E5%8E%8B%E7%BC%A9.html">08 · 上下文压缩——预算、切点、信息损失与缓存</a><a class="nav-link" href="09-Extension%E4%B8%8ESkill.html">09 · Extension 与 Skill——怎样增加工具和工作方法</a><a class="nav-link" href="10-MCP%E5%8F%91%E7%8E%B0%E4%B8%8E%E8%B0%83%E7%94%A8.html">10 · MCP——外部工具怎样进入 PI 的执行循环</a><a class="nav-link" href="11-Subagent%E4%B8%8EDurable.html">11 · Subagent 与 durable——委派、后台工作和恢复</a><a class="nav-link" href="12-%E5%AE%89%E5%85%A8%E8%AF%84%E6%B5%8B%E4%B8%8E%E6%9C%8D%E5%8A%A1.html">12 · 安全、评测与服务——怎样判断 Agent 真正完成了任务</a></nav><div class="nav-tools"><button data-theme-toggle>切换明暗</button><button onclick="window.print()">打印</button></div><p>源码：<a href="https://github.com/earendil-works/pi/tree/eb326d265ae0b88489a6d10319307780df827cdf/" target="_blank" rel="noopener noreferrer">eb326d2</a><br>包版本：1.0.4<br>本地整理：2026-10-26</p></aside><main class="main"><header class="hero"><div class="eyebrow">PI STUDY NOTES / 01—12</div><h1>第 03 节：模型协议与流——从数据片段到完整消息</h1><p>逐段看代码怎样接收输入、请求模型、执行工具、保存历史，并处理取消、重试和恢复。</p><div class="meta"><span>12 节完整讲解</span><span>固定提交源码引用</span><span>解释 · 例子 · 练习 · 面试追问</span></div><div class="downloads"><a href="../PI-Agent-Harness-01-12.md" download>下载 Markdown 合订本</a><a href="../README.md">阅读说明</a></div><div class="notice">静态源码伴读。示意轨迹、待执行练习与实际运行结果分别说明。本文提供源码分析与待执行练习，不将源码阅读作为模型实测或生产验收。</div></header><section class="chapter" data-chapter="3"><h1 id="chapter-03" tabindex="-1">第 03 节：模型协议与流——从数据片段到完整消息</h1><details class="chapter-toc"><summary>本节小节目录 · 19 项</summary><ol><li><a href="#c3-s1">一、先看整条数据链</a></li><li><a href="#c3-s2">二、Message 与 Event：完整内容与变化通知</a></li><li><a href="#c3-s6">三、delta、partial、final 分别是什么？</a></li><li><a href="#c3-s10">四、一个很重要的源码细节：partial 不是快照</a></li><li><a href="#c3-s13">五、Provider 与 API adapter 为什么要分开？</a></li><li><a href="#c3-s14">六、实际模型请求在哪里发生？</a></li><li><a href="#c3-s16">七、adapter 怎样把厂商 chunk 变成 Pi 事件？</a></li><li><a href="#c3-s19">八、工具参数为什么更难：它是逐步生成的 JSON 字符串</a></li><li><a href="#c3-s22">九、三个索引／ID，不要混淆</a></li><li><a href="#c3-s26">十、toolcall_end 为什么不表示工具已经执行？</a></li><li><a href="#c3-s27">十一、结束原因怎样决定响应是否可用？</a></li><li><a href="#c3-s29">十二、EventStream&lt;T, R&gt; 怎样连接生产者与消费者？</a></li><li><a href="#c3-s34">十三、end() 与 result()：一个容易踩的坑</a></li><li><a href="#c3-s38">十四、统一模型事件怎样变成 Agent 事件？</a></li><li><a href="#c3-s42">十五、为什么 length 时，合法参数也不能执行？</a></li><li><a href="#c3-s44">十六、对外 JSONL 为什么不发送每次完整 partial？</a></li><li><a href="#c3-s47">十七、流式能力有哪些没有自动保证的东西？</a></li><li><a href="#c3-s48">十八、本节阅读顺序与练习</a></li><li><a href="#c3-s54">面试时如何概括这一节？</a></li></ol></details>
+<p>第二节讲的是：<strong>工具结果怎样驱动下一次模型请求。</strong></p>
+<p>第三节往下一层看：</p>
+<blockquote>
+<p><strong>一次模型请求的响应是分批到达的。Pi 怎样把这些片段组合成完整消息，同时给 UI 提供增量更新，又避免执行残缺的工具调用？</strong></p>
+</blockquote>
+<p>这节学完，你需要区分：</p>
+<ul>
+<li>模型消息 <code>Message</code>；</li>
+<li>流式事件 <code>Event</code>；</li>
+<li>本次片段 <code>delta</code>；</li>
+<li>当前累计响应 <code>partial</code>；</li>
+<li>最终消息 <code>final</code>；</li>
+<li>网络传输、进程内事件流和对外 JSONL。</li>
+</ul>
+<p>源码基于已核对的提交 <code>eb326d2</code>。以下例子是教学推演，没有运行模型或修改源码。</p>
+<hr>
+<h2 id="c3-s1" tabindex="-1">一、先看整条数据链</h2>
+<p>假设模型最终回答“你好”，但分两次传回来：</p>
+<pre><code class="language-text">片段一：你
+片段二：好
+</code></pre>
+<p>Pi 的处理链是：</p>
+<pre><code class="language-text">模型供应方的响应流
+    ↓
+厂商 SDK 提供解析后的 chunk
+    ↓
+Pi API adapter 解释 chunk
+    ↓
+统一的 AssistantMessageEvent
+    ↓
+AssistantMessageEventStream
+    ↓
+Agent 的 streamAssistantResponse()
+    ↓
+message_start / message_update / message_end
+    ↓
+UI、SDK 订阅者或 JSONL 输出
+</code></pre>
+<p>其中有三个不同职责：</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>部分</th>
+<th>职责</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>网络／厂商 SDK</td>
+<td>取得和解析上游传输数据</td>
+</tr>
+<tr>
+<td>Pi API adapter</td>
+<td>把厂商字段转换为 Pi 统一消息和事件</td>
+</tr>
+<tr>
+<td>Agent harness</td>
+<td>更新上下文、通知订阅者，最终决定工具执行和续轮</td>
+</tr>
+</tbody></table></div>
+<p><strong>进程内的 <code>EventStream</code> 本身不会发送 HTTP 请求。</strong> 它只是生产者与消费者之间的数据通道。</p>
+<hr>
+<h2 id="c3-s2" tabindex="-1">二、Message 与 Event：完整内容与变化通知</h2>
+<h3 id="c3-s3" tabindex="-1">1. <code>AssistantMessage</code> 保存响应内容</h3>
+<p>源码：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/ai/src/types.ts#L548-L578">types.ts:548–578</a></p>
+<p>重要字段：</p>
+<pre><code class="language-ts">interface AssistantMessage {
+    role: &quot;assistant&quot;;
+    content: (TextContent | ThinkingContent | ToolCall)[];
+    api: Api;
+    provider: ProviderId;
+    model: string;
+    usage: Usage;
+    stopReason: StopReason;
+    errorMessage?: string;
+    timestamp: number;
+}
+</code></pre>
+<p>它不是只有一个字符串。</p>
+<p>一份 assistant 响应可以包含：</p>
+<pre><code class="language-text">文本块：“我先查看配置。”
+工具调用块：read({ path: &quot;package.json&quot; })
+</code></pre>
+<p><code>content</code> 数组保存的是这份响应的组成部分。</p>
+<h3 id="c3-s4" tabindex="-1">2. <code>AssistantMessageEvent</code> 描述响应怎样变化</h3>
+<p>源码：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/ai/src/types.ts#L763-L795">types.ts:763–795</a></p>
+<p>主要事件：</p>
+<pre><code class="language-text">start
+
+text_start → text_delta → text_end
+
+thinking_start → thinking_delta → thinking_end
+
+toolcall_start → toolcall_delta → toolcall_end
+
+done 或 error
+</code></pre>
+<p>可以理解为：</p>
+<ul>
+<li>**Message：**目前／最终的内容是什么？</li>
+<li>**Event：**刚刚发生了什么变化？</li>
+</ul>
+<p>例如：</p>
+<pre><code class="language-text">事件：新增文本“好”
+消息：累计文本已变成“你好”
+</code></pre>
+<p>它们关联，但不是同一个对象。</p>
+<h3 id="c3-s5" tabindex="-1">为什么需要两者？</h3>
+<p>只给最终消息，UI 必须等生成结束才显示。</p>
+<p>只给增量事件，后续请求、记录和错误处理又需要自己重新拼完整内容。</p>
+<p>所以 Pi 同时提供：</p>
+<blockquote>
+<p><strong>过程可以逐步消费，最终结果可以一次取得。</strong></p>
+</blockquote>
+<hr>
+<h2 id="c3-s6" tabindex="-1">三、<code>delta</code>、<code>partial</code>、<code>final</code> 分别是什么？</h2>
+<p>以“你好”为例：</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>时点</th>
+<th><code>delta</code></th>
+<th><code>partial</code> 中累计文本</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>开始</td>
+<td>无</td>
+<td><code>&quot;&quot;</code></td>
+</tr>
+<tr>
+<td>第一段</td>
+<td><code>&quot;你&quot;</code></td>
+<td><code>&quot;你&quot;</code></td>
+</tr>
+<tr>
+<td>第二段</td>
+<td><code>&quot;好&quot;</code></td>
+<td><code>&quot;你好&quot;</code></td>
+</tr>
+<tr>
+<td>结束</td>
+<td>无</td>
+<td>最终消息 <code>&quot;你好&quot;</code></td>
+</tr>
+</tbody></table></div>
+<h3 id="c3-s7" tabindex="-1">1. <code>delta</code>：本次新到的片段</h3>
+<p>适合追加到屏幕：</p>
+<pre><code class="language-ts">process.stdout.write(event.delta);
+</code></pre>
+<p>连续追加：</p>
+<pre><code class="language-text">你 + 好 = 你好
+</code></pre>
+<p><strong>一个 delta 不一定对应一个 token、一个字或一个词。</strong> 上游可能把多个 token 合在一段，也可能按不同边界返回。</p>
+<h3 id="c3-s8" tabindex="-1">2. <code>partial</code>：累计到目前为止的响应</h3>
+<p>适合用于：</p>
+<ul>
+<li>展示当前完整内容；</li>
+<li>更新工具参数预览；</li>
+<li>检查已出现哪些内容块。</li>
+</ul>
+<p>如果把每次累计全文追加到屏幕：</p>
+<pre><code class="language-text">第一次追加：你
+第二次追加：你好
+</code></pre>
+<p>结果会变成：</p>
+<pre><code class="language-text">你你好
+</code></pre>
+<p>因此 UI 必须选择一种策略：</p>
+<ul>
+<li>追加 <code>delta</code>；</li>
+<li>或用 <code>partial</code> 替换当前显示。</li>
+</ul>
+<p>不能混用。</p>
+<h3 id="c3-s9" tabindex="-1">3. <code>final</code>：这次请求结束后的权威消息</h3>
+<p>它包括：</p>
+<ul>
+<li>最终内容块；</li>
+<li>结束原因；</li>
+<li>用量；</li>
+<li>错误信息；</li>
+<li>相关模型元数据。</li>
+</ul>
+<p><strong>final 不等于成功。</strong> 最终消息也可能是：</p>
+<pre><code class="language-ts">{
+    stopReason: &quot;error&quot;,
+    errorMessage: &quot;Stream ended without finish_reason&quot;
+}
+</code></pre>
+<p>这说明“本次请求的结果已经确定”，不是“用户任务成功了”。</p>
+<hr>
+<h2 id="c3-s10" tabindex="-1">四、一个很重要的源码细节：<code>partial</code> 不是快照</h2>
+<p>类型注释已经明确说明：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/ai/src/types.ts#L772-L777">types.ts:772–777</a></p>
+<pre><code class="language-text">partial 是共享的实时累计响应，不是事件发生时的快照。
+</code></pre>
+<p>具体 adapter 会反复修改同一个 <code>output</code> 对象：</p>
+<pre><code class="language-ts">block.text += choice.delta.content;
+
+stream.push({
+    type: &quot;text_delta&quot;,
+    delta: choice.delta.content,
+    partial: output,
+});
+</code></pre>
+<p>见：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/ai/src/api/openai-completions.ts#L591-L604">openai-completions.ts:591–604</a></p>
+<h3 id="c3-s11" tabindex="-1">会出现什么现象？</h3>
+<p>示意代码：</p>
+<pre><code class="language-ts">const savedEvents = [];
+
+for await (const event of stream) {
+    savedEvents.push(event);
+}
+</code></pre>
+<p>结束后再查看最早事件的 <code>partial</code>，它可能已经包含最终“你好”，而不是当时的“你”。</p>
+<p>因为：</p>
+<pre><code class="language-text">早期事件.partial ─┐
+                 ├→ 同一个 output 对象
+后期事件.partial ─┘
+</code></pre>
+<p><code>EventStream</code> 排队的是事件对象，<strong>不会自动深拷贝其 partial</strong>。</p>
+<h3 id="c3-s12" tabindex="-1">对开发的影响</h3>
+<ul>
+<li>要记录“这次新增什么”，保存 <code>delta</code>。</li>
+<li>要记录事件时刻的累计内容，需要自己设计快照。</li>
+<li>不要把共享 partial 当作不可变历史。</li>
+<li>工具参数预览更不能因为“现在看起来像完整对象”就执行。</li>
+</ul>
+<p>这也解释了：<strong>事件顺序正确，不代表每个事件携带的共享对象都是历史快照。</strong></p>
+<hr>
+<h2 id="c3-s13" tabindex="-1">五、Provider 与 API adapter 为什么要分开？</h2>
+<p>例如 Pi 的 DeepSeek 接入：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/ai/src/providers/deepseek.ts">deepseek.ts</a></p>
+<pre><code class="language-ts">export function deepseekProvider() {
+    return createProvider({
+        id: &quot;deepseek&quot;,
+        baseUrl: &quot;https://api.deepseek.com&quot;,
+        // 认证与模型信息
+        api: openAICompletionsApi(),
+    });
+}
+</code></pre>
+<p>这里：</p>
+<ul>
+<li>供应方是 <strong>DeepSeek</strong>；</li>
+<li>使用的请求协议实现是 <strong>openai-completions</strong>。</li>
+</ul>
+<p>所以：</p>
+<blockquote>
+<p><strong>OpenAI-compatible 协议，不等于调用的供应方一定是 OpenAI。</strong></p>
+</blockquote>
+<p>Provider 管供应方配置、认证和模型接入；API adapter 负责特定协议的数据转换。</p>
+<p>第三节选 <code>openai-completions.ts</code> 作为代表路径，不需要第一遍读完所有 Provider。</p>
+<hr>
+<h2 id="c3-s14" tabindex="-1">六、实际模型请求在哪里发生？</h2>
+<p>打开：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/ai/src/api/openai-completions.ts#L304-L384">openai-completions.ts:304–384</a></p>
+<p>函数首先创建进程内流：</p>
+<pre><code class="language-ts">const stream = new AssistantMessageEventStream();
+</code></pre>
+<p>然后启动异步处理：</p>
+<pre><code class="language-ts">(async () =&gt; {
+    // 创建 output
+    // 准备客户端与请求参数
+    // 调模型
+    // 解析响应
+})();
+
+return stream;
+</code></pre>
+<h3 id="c3-s15" tabindex="-1">为什么先返回一个 stream？</h3>
+<p>网络请求可能还没完成，但调用方可以先得到一个可等待的消费入口。</p>
+<pre><code class="language-text">创建事件流
+    ↓
+启动异步请求过程
+    ↓
+把事件流交给消费者
+    ↓
+数据随后到达并被 push
+</code></pre>
+<p>这个异步函数<strong>不是新建了一个线程</strong>。它与消费者通过异步等待和事件循环配合。</p>
+<p>实际请求点：</p>
+<pre><code class="language-ts">client.chat.completions
+    .create(params, requestOptions)
+    .withResponse();
+</code></pre>
+<p>位于：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/ai/src/api/openai-completions.ts#L370-L382">openai-completions.ts:370–382</a></p>
+<p>随后：</p>
+<pre><code class="language-ts">stream.push({ type: &quot;start&quot;, partial: output });
+</code></pre>
+<p>注意，这个 <code>start</code> 是这份响应流的开始事件，<strong>不是 Agent 整个任务的 <code>agent_start</code></strong>，也不一定意味着第一段可见文本已经到达。</p>
+<hr>
+<h2 id="c3-s16" tabindex="-1">七、adapter 怎样把厂商 chunk 变成 Pi 事件？</h2>
+<p>核心消费：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/ai/src/api/openai-completions.ts#L558-L579">openai-completions.ts:558–579</a></p>
+<pre><code class="language-ts">for await (const chunk of openaiStream) {
+    // 读取响应 ID、模型、usage 和 choices
+}
+</code></pre>
+<p><code>chunk</code> 是厂商 SDK 提供的解析后数据，不是原始 TCP 字节。</p>
+<h3 id="c3-s17" tabindex="-1">1. 文本路径</h3>
+<pre><code class="language-ts">const block = ensureTextBlock();
+
+block.text += choice.delta.content;
+
+stream.push({
+    type: &quot;text_delta&quot;,
+    contentIndex: getContentIndex(block),
+    delta: choice.delta.content,
+    partial: output,
+});
+</code></pre>
+<p>它做两件事：</p>
+<ol>
+<li>更新完整响应中的文本；</li>
+<li>发出“本次新增文本”的事件。</li>
+</ol>
+<p><code>ensureTextBlock()</code> 在首次需要时：</p>
+<pre><code class="language-text">创建空文本块
+    ↓
+加入 output.content
+    ↓
+发 text_start
+</code></pre>
+<p>源码：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/ai/src/api/openai-completions.ts#L479-L486">openai-completions.ts:479–486</a></p>
+<p>因此一个规范的文本过程是：</p>
+<pre><code class="language-text">start
+text_start
+text_delta(&quot;你&quot;)
+text_delta(&quot;好&quot;)
+text_end(&quot;你好&quot;)
+done(完整消息)
+</code></pre>
+<h3 id="c3-s18" tabindex="-1">2. thinking 路径</h3>
+<p>不同兼容接口可能使用：</p>
+<pre><code class="language-text">reasoning_content
+reasoning
+reasoning_text
+</code></pre>
+<p>代码选出适用的非空字段，累计到 thinking 块，生成 <code>thinking_delta</code>：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/ai/src/api/openai-completions.ts#L607-L637">openai-completions.ts:607–637</a></p>
+<p>不要进一步推导为“所有模型都返回完整内部思考”。有些内容可能是摘要、经过处理的内容或不透明回放元数据。</p>
+<p><code>thinkingSignature</code> 等协议字段也不能随意当作普通展示文字，或为了统一接口直接丢掉。</p>
+<hr>
+<h2 id="c3-s19" tabindex="-1">八、工具参数为什么更难：它是逐步生成的 JSON 字符串</h2>
+<p>模型可能分三段返回：</p>
+<pre><code class="language-text">片段一：{&quot;path&quot;:&quot;
+片段二：package
+片段三：.json&quot;}
+</code></pre>
+<p>到第三段结束，完整参数才是：</p>
+<pre><code class="language-json">{&quot;path&quot;:&quot;package.json&quot;}
+</code></pre>
+<p>源码：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/ai/src/api/openai-completions.ts#L640-L667">openai-completions.ts:640–667</a></p>
+<p>关键代码：</p>
+<pre><code class="language-ts">block.partialArgs =
+    (block.partialArgs ?? &quot;&quot;) + toolCall.function.arguments;
+
+block.arguments = parseStreamingJson(block.partialArgs);
+</code></pre>
+<h3 id="c3-s20" tabindex="-1">为什么同时保存两种表示？</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>字段</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>partialArgs</code></td>
+<td>累计原始参数字符串</td>
+</tr>
+<tr>
+<td><code>arguments</code></td>
+<td>当前尽力解析出的对象，供过程观察</td>
+</tr>
+</tbody></table></div>
+<p>原始字符串用于持续累计。当前对象便于 UI 预览，但不代表已经完成。</p>
+<h3 id="c3-s21" tabindex="-1"><code>parseStreamingJson()</code> 做了什么？</h3>
+<p>源码：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/ai/src/utils/json-parse.ts#L97-L124">json-parse.ts:97–124</a></p>
+<p>它尝试：</p>
+<ol>
+<li>正常解析或修复 JSON 字符串转义；</li>
+<li>失败时尝试 partial JSON parser；</li>
+<li>仍失败则返回空对象。</li>
+</ol>
+<p>因此某段残缺内容：</p>
+<pre><code class="language-text">{&quot;path&quot;:&quot;package
+</code></pre>
+<p><strong>可能被尽力恢复成包含不完整值的对象。</strong></p>
+<p>这适合显示“目前生成了哪些参数”，不适合证明：</p>
+<pre><code class="language-text">参数已完整
+参数通过 schema
+路径存在
+动作允许执行
+</code></pre>
+<p>四项仍然是不同问题。</p>
+<hr>
+<h2 id="c3-s22" tabindex="-1">九、三个索引／ID，不要混淆</h2>
+<p>工具流可能交错，Pi 需要正确归并。</p>
+<h3 id="c3-s23" tabindex="-1">1. 厂商 tool-call <code>index</code></h3>
+<p>用来识别某个片段属于哪项工具调用。</p>
+<p>例如：</p>
+<pre><code class="language-text">index=0：read 的参数片段
+index=1：grep 的参数片段
+index=0：read 的后续参数片段
+</code></pre>
+<h3 id="c3-s24" tabindex="-1">2. Pi 的 <code>contentIndex</code></h3>
+<p>指向：</p>
+<pre><code class="language-ts">output.content[contentIndex]
+</code></pre>
+<p>一份消息里可能同时有 text、thinking、toolCall，所以它不是“第几个工具”的简单编号。</p>
+<h3 id="c3-s25" tabindex="-1">3. <code>toolCallId</code></h3>
+<p>工具调用的身份，用来关联后面的执行结果：</p>
+<pre><code class="language-text">assistant/toolCall(id=&quot;call_A&quot;)
+    ↕
+toolResult(toolCallId=&quot;call_A&quot;)
+</code></pre>
+<p>adapter 用两张 Map 归并工具块：</p>
+<pre><code class="language-ts">toolCallBlocksByIndex
+toolCallBlocksById
+</code></pre>
+<p>见：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/ai/src/api/openai-completions.ts#L403-L409">openai-completions.ts:403–409</a>、<a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/ai/src/api/openai-completions.ts#L499-L555">499–555</a></p>
+<p><strong>index 解决分片归并，contentIndex 解决消息内容定位，ID 解决调用与结果关联。</strong></p>
+<hr>
+<h2 id="c3-s26" tabindex="-1">十、<code>toolcall_end</code> 为什么不表示工具已经执行？</h2>
+<p>块结束时，adapter 会：</p>
+<pre><code class="language-ts">block.arguments = parseStreamingJson(block.partialArgs);
+
+delete block.partialArgs;
+delete block.customInput;
+delete block.streamIndex;
+
+stream.push({
+    type: &quot;toolcall_end&quot;,
+    contentIndex,
+    toolCall: block,
+    partial: output,
+});
+</code></pre>
+<p>见：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/ai/src/api/openai-completions.ts#L432-L477">openai-completions.ts:432–477</a></p>
+<p>它表示：</p>
+<blockquote>
+<p>这项工具调用内容块的解析阶段结束。</p>
+</blockquote>
+<p>它没有调用工具的 <code>execute()</code>。</p>
+<p>还要区分：</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>事件</th>
+<th>意义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>toolcall_start/delta/end</code></td>
+<td>模型生成工具调用内容</td>
+</tr>
+<tr>
+<td><code>tool_execution_start/update/end</code></td>
+<td>harness 处理和执行工具的生命周期</td>
+</tr>
+</tbody></table></div>
+<p>在当前 adapter 中，<strong>块结束后还会检查整个响应的终态</strong>。所以 <code>toolcall_end</code> 甚至不能单独证明整次请求成功。</p>
+<hr>
+<h2 id="c3-s27" tabindex="-1">十一、结束原因怎样决定响应是否可用？</h2>
+<p>上游字段是 <code>finish_reason</code>，Pi 转成 <code>stopReason</code>。</p>
+<p>源码：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/ai/src/api/openai-completions.ts#L1562-L1585">mapStopReason():1562–1585</a></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>上游值</th>
+<th>Pi 值</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>stop</code>／<code>end</code></td>
+<td><code>stop</code></td>
+</tr>
+<tr>
+<td><code>length</code></td>
+<td><code>length</code></td>
+</tr>
+<tr>
+<td><code>tool_calls</code>／<code>function_call</code></td>
+<td><code>toolUse</code></td>
+</tr>
+<tr>
+<td><code>content_filter</code></td>
+<td><code>error</code></td>
+</tr>
+<tr>
+<td><code>network_error</code></td>
+<td><code>error</code></td>
+</tr>
+<tr>
+<td>未识别值</td>
+<td><code>error</code></td>
+</tr>
+</tbody></table></div>
+<p>Pi 还保留 <code>rawStopReason</code>，便于追查原始协议信息。</p>
+<h3 id="c3-s28" tabindex="-1">为什么网络流读完，不直接当作成功？</h3>
+<p>源码会检查：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/ai/src/api/openai-completions.ts#L685-L729">openai-completions.ts:685–729</a></p>
+<pre><code class="language-ts">if (
+    (compat.supportsFinishReason &amp;&amp; !hasFinishReason) ||
+    output.stopReason === &quot;pending&quot;
+) {
+    throw new Error(&quot;Stream ended without finish_reason&quot;);
+}
+</code></pre>
+<p>原因是：</p>
+<pre><code class="language-text">连接结束
+</code></pre>
+<p>可能意味着：</p>
+<ul>
+<li>正常响应完成；</li>
+<li>网络中断；</li>
+<li>代理服务提前断流。</li>
+</ul>
+<p>不能把“没有更多字节”自动当成“模型完成”。</p>
+<p>成功时发：</p>
+<pre><code class="language-ts">{ type: &quot;done&quot;, reason: output.stopReason, message: output }
+</code></pre>
+<p>失败时清理解析用临时字段，将结果标为 <code>error</code> 或 <code>aborted</code>，再发 error 事件。</p>
+<p>某些不提供 finish_reason 的兼容接口有明确的备用策略；不能把一条通用规则套到所有接口。</p>
+<hr>
+<h2 id="c3-s29" tabindex="-1">十二、<code>EventStream&lt;T, R&gt;</code> 怎样连接生产者与消费者？</h2>
+<p>打开整份短文件：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/ai/src/utils/event-stream.ts">event-stream.ts</a></p>
+<p>核心类型：</p>
+<pre><code class="language-ts">class EventStream&lt;T, R = T&gt; implements AsyncIterable&lt;T&gt;
+</code></pre>
+<p>两个泛型：</p>
+<ul>
+<li><code>T</code>：逐次产生的事件类型；</li>
+<li><code>R</code>：最终结果类型。</li>
+</ul>
+<p>对于 assistant 响应：</p>
+<pre><code class="language-text">T = AssistantMessageEvent
+R = AssistantMessage
+</code></pre>
+<p>因此消费方式有两种：</p>
+<pre><code class="language-ts">for await (const event of response) {
+    // 消费过程事件
+}
+
+const finalMessage = await response.result();
+</code></pre>
+<p>这是<strong>同一次请求的两种读取方式</strong>，不会因此再请求模型一次。</p>
+<h3 id="c3-s30" tabindex="-1">1. 有数据就排队，有消费者等待就直接交付</h3>
+<p><code>push()</code>：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/ai/src/utils/event-stream.ts#L43-L58">event-stream.ts:43–58</a></p>
+<pre><code class="language-text">生产者 push
+    ├─ 有等待者：直接交给最早等待的消费者
+    └─ 无等待者：放入事件队列
+</code></pre>
+<p>异步迭代：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/ai/src/utils/event-stream.ts#L72-L84">event-stream.ts:72–84</a></p>
+<pre><code class="language-text">消费者取事件
+    ├─ 队列有值：按顺序取
+    ├─ 已结束且无值：迭代完成
+    └─ 尚未有值：登记等待
+</code></pre>
+<p>这种结构处理了两种顺序：</p>
+<ul>
+<li>数据先到，消费者后读；</li>
+<li>消费者先等，数据后到。</li>
+</ul>
+<h3 id="c3-s31" tabindex="-1">2. FIFO 为什么用两个数组？</h3>
+<p>源码中的 <code>FifoQueue</code>：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/ai/src/utils/event-stream.ts#L3-L23">event-stream.ts:3–23</a></p>
+<pre><code class="language-text">incoming 接收新值
+outgoing 提供取值
+</code></pre>
+<p>需要时把 incoming 倒序转到 outgoing，再从末尾取，保持先进先出。</p>
+<p>相比每次对数组 <code>shift()</code>，这种方式避免持续移动前面的元素，队列操作具有摊还常数时间的特征。</p>
+<p>这是数据结构优化，<strong>不等于队列有容量上限</strong>。</p>
+<h3 id="c3-s32" tabindex="-1">3. <code>done</code> 事件与迭代器的 <code>done</code> 不是同一个东西</h3>
+<p>生产者推入：</p>
+<pre><code class="language-ts">{ type: &quot;done&quot;, message: final }
+</code></pre>
+<p>消费者拿到它时，这仍是一项事件值：</p>
+<pre><code class="language-ts">{ value: doneEvent, done: false }
+</code></pre>
+<p>等缓冲事件全部消费完，下一次才得到：</p>
+<pre><code class="language-ts">{ value: undefined, done: true }
+</code></pre>
+<p>因此：</p>
+<blockquote>
+<p>终结事件仍然会被消费者处理，不是直接消失。</p>
+</blockquote>
+<h3 id="c3-s33" tabindex="-1">4. <code>result()</code> 可能比事件消费更早完成</h3>
+<p><code>push()</code> 一旦识别终结事件，就解析最终 Promise。</p>
+<p>即使 UI 还没消费完之前排队的增量，<code>result()</code> 也可以已经完成。</p>
+<p><strong>最终结果确定，与消费者把所有过程显示完，是两个时点。</strong></p>
+<hr>
+<h2 id="c3-s34" tabindex="-1">十三、<code>end()</code> 与 <code>result()</code>：一个容易踩的坑</h2>
+<p>源码：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/ai/src/utils/event-stream.ts#L60-L88">event-stream.ts:60–88</a></p>
+<pre><code class="language-ts">end(result?: R) {
+    this.done = true;
+
+    if (result !== undefined) {
+        this.resolveFinalResult(result);
+    }
+
+    // 唤醒等待者
+}
+</code></pre>
+<h3 id="c3-s35" tabindex="-1">情况 A：已经 push 了 done/error</h3>
+<p>最终结果已经由终结事件解析。</p>
+<p>之后调用 <code>end()</code>，不会丢失该结果。</p>
+<h3 id="c3-s36" tabindex="-1">情况 B：没有终结事件，只调用 <code>end(final)</code></h3>
+<p>显式传入 final，最终 Promise 可以解析。</p>
+<h3 id="c3-s37" tabindex="-1">情况 C：没有终结事件，只调用 <code>end()</code></h3>
+<p>迭代可以结束，但没有值用于解析最终 Promise。</p>
+<p>于是可能出现：</p>
+<pre><code class="language-text">for await 已结束
+await result() 仍然等待
+</code></pre>
+<p>这是两个完成机制的区别。</p>
+<p><code>AssistantMessageEventStream</code> 专门定义：</p>
+<pre><code class="language-ts">event.type === &quot;done&quot; || event.type === &quot;error&quot;
+</code></pre>
+<p>为终结事件，并提取 <code>event.message</code> 或 <code>event.error</code>：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/ai/src/utils/event-stream.ts#L97-L113">event-stream.ts:97–113</a></p>
+<p>因此<strong>流中的 error 通常也是一个可取得的最终失败消息，而不是 <code>result()</code> 自动 reject</strong>。请求入口同步抛错、注入函数违反契约等是另一些路径。</p>
+<hr>
+<h2 id="c3-s38" tabindex="-1">十四、统一模型事件怎样变成 Agent 事件？</h2>
+<p>打开：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/agent/src/agent-loop.ts#L381-L469">agent-loop.ts:381–469</a></p>
+<p>映射是：</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>模型层事件</th>
+<th>Agent 层事件</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>start</code></td>
+<td><code>message_start</code></td>
+</tr>
+<tr>
+<td>text／thinking／toolcall 更新</td>
+<td><code>message_update</code></td>
+</tr>
+<tr>
+<td><code>done</code>／<code>error</code></td>
+<td><code>message_end</code></td>
+</tr>
+</tbody></table></div>
+<h3 id="c3-s39" tabindex="-1">开始时加入一条生成中的 assistant</h3>
+<pre><code class="language-ts">context.messages.push(partialMessage);
+</code></pre>
+<h3 id="c3-s40" tabindex="-1">更新时替换最后一条</h3>
+<pre><code class="language-ts">context.messages[context.messages.length - 1] = partialMessage;
+</code></pre>
+<h3 id="c3-s41" tabindex="-1">结束时换成最终消息</h3>
+<pre><code class="language-ts">context.messages[context.messages.length - 1] = finalMessage;
+</code></pre>
+<p>因此不会发生：</p>
+<pre><code class="language-text">一个 delta → 一条永久 assistant
+</code></pre>
+<p>而是：</p>
+<pre><code class="language-text">同一条 assistant 的生成过程
+    ↓
+最终形成一条完整消息
+</code></pre>
+<p>更新事件里的 <code>{ ...partialMessage }</code> 只是浅拷贝。嵌套 content 等不能据此认为都是独立快照。</p>
+<hr>
+<h2 id="c3-s42" tabindex="-1">十五、为什么 length 时，合法参数也不能执行？</h2>
+<p>工具执行在 <code>streamAssistantResponse()</code> 返回最终 assistant 后才发生：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/agent/src/agent-loop.ts#L241-L270">agent-loop.ts:241–270</a></p>
+<p>正常情况下：</p>
+<pre><code class="language-text">完整响应
+    ↓
+检测 toolCall
+    ↓
+参数校验、hooks、执行
+</code></pre>
+<p>但如果响应以 <code>length</code> 结束，就调用：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/agent/src/agent-loop.ts#L471-L503">failToolCallsFromTruncatedMessage():471–503</a></p>
+<p>不执行这份消息里的工具，改为错误反馈。</p>
+<h3 id="c3-s43" tabindex="-1">具体反例</h3>
+<p>模型本想输出：</p>
+<pre><code class="language-json">{&quot;path&quot;:&quot;package.json&quot;}
+</code></pre>
+<p>却在下面位置被截断：</p>
+<pre><code class="language-text">{&quot;path&quot;:&quot;package
+</code></pre>
+<p>容错 parser 可能得到：</p>
+<pre><code class="language-json">{&quot;path&quot;:&quot;package&quot;}
+</code></pre>
+<p>这个对象：</p>
+<ul>
+<li>JSON 合法；</li>
+<li><code>path</code> 是字符串；</li>
+<li>甚至可能通过工具 schema。</li>
+</ul>
+<p>但它不是完整的原始意图。</p>
+<p>所以：</p>
+<pre><code class="language-text">能解析
+≠
+结构合法
+≠
+来源完整
+≠
+允许执行
+≠
+业务正确
+</code></pre>
+<p>Pi 的保护是：<strong>整条响应以 length 结束时，其中全部工具调用都拒绝执行，包括看起来完整的那项。</strong></p>
+<p>代价是可能要重新请求模型；收益是避免残缺参数产生真实副作用。</p>
+<hr>
+<h2 id="c3-s44" tabindex="-1">十六、对外 JSONL 为什么不发送每次完整 partial？</h2>
+<p>SDK 进程内订阅与 JSON／RPC 输出并非完全相同的结构。</p>
+<p>源码：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/coding-agent/src/modes/json-event.ts">json-event.ts</a></p>
+<p>转换器会移除增量中的累计 partial 和完整消息快照，保留：</p>
+<ul>
+<li>本次 delta；</li>
+<li>contentIndex；</li>
+<li>用量；</li>
+<li>必要调用标识。</li>
+</ul>
+<p>最终 <code>message_end</code> 再提供权威完整消息。</p>
+<h3 id="c3-s45" tabindex="-1">为什么这样做？</h3>
+<p>假设回答逐步增长：</p>
+<pre><code class="language-text">第1次累计长度：1
+第2次累计长度：2
+……
+第N次累计长度：N
+</code></pre>
+<p>每次都序列化全文，累计数据量可能接近：</p>
+<pre><code class="language-text">1 + 2 + … + N
+</code></pre>
+<p>随着响应变长，重复传输非常多。</p>
+<p>增量模式只传新片段，最后给一份完整结果，更合理。</p>
+<p><strong>因此不要假定 JSONL 的 message_update 一定有 SDK 内存事件的全部字段。</strong></p>
+<p>在 PI 的 JSON/RPC 模式中，JSONL 经进程 stdout 传递；模型 HTTP 流式接口则可能采用 SSE 等协议。JSONL 本身是一种逐行记录格式，也可以用于文件和网络，不能仅凭名字判断运行在哪一层。</p>
+<h3 id="c3-s46" tabindex="-1">补充：图片怎样经过这些层</h3>
+<p>PI 使用 <code>{ type: &quot;image&quot;, data, mimeType }</code> 表示图片，data 是 Base64 字符串。Base64 负责把二进制表示成可放入 JSON 的文本，不做 OCR，也不自动压缩图片。</p>
+<p><code>read</code> 读取图片时检测格式、读取 Buffer，并按设置处理尺寸，返回文字说明和 ImageContent。模型接口适配器再转换为对应厂商的图片输入。例如 openai-completions 使用含 <code>data:&lt;mime&gt;;base64,...</code> 的 image_url。见 <a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/coding-agent/src/core/tools/read.ts#L129-L151">read 图片路径</a> 和 <a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/ai/src/api/openai-completions.ts#L1270-L1285">图片适配</a>。</p>
+<pre><code class="language-text">文件或附件 → ImageContent 对象 → 模型协议中的图片输入
+                                   ↓
+                           支持视觉输入的模型
+                                   ↓
+                         文字或工具调用响应流
+</code></pre>
+<p>RPC 也可在一行 prompt JSON 的 images 数组中传图片块。只传本机文件路径，不等于远程模型已获得图片。裁剪或修改则需要真正执行图片操作的工具/服务；图像识别、动作执行和结果展示分别由对应层负责。</p>
+<hr>
+<h2 id="c3-s47" tabindex="-1">十七、流式能力有哪些没有自动保证的东西？</h2>
+<p>当前 <code>EventStream</code> 不自动提供：</p>
+<ol>
+<li><p><strong>生产者背压</strong><br><code>push()</code> 不等待消费者，慢消费者可能造成队列积压。</p>
+</li>
+<li><p><strong>容量限制</strong><br>队列没有通用最大长度。</p>
+</li>
+<li><p><strong>广播</strong><br>多个异步迭代器会共享队列、分取事件，不保证每人收到全套。</p>
+</li>
+<li><p><strong>消费者退出后的自动取消</strong><br><code>break</code> 退出 <code>for await</code>，不意味着 Provider 请求被取消。</p>
+</li>
+</ol>
+<p>这些都能直接从队列和迭代器代码看出。</p>
+<p>应用层可以补充背压、广播或取消，但不能因为底层支持 AsyncIterable，就默认具备这些保证。</p>
+<p>对应测试可以阅读：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/ai/test/event-stream.test.ts#L7-L94">event-stream.test.ts:7–94</a></p>
+<p>它覆盖事件顺序、等待消费者和结束行为。本轮没有运行这些测试。</p>
+<hr>
+<h2 id="c3-s48" tabindex="-1">十八、本节阅读顺序与练习</h2>
+<h3 id="c3-s49" tabindex="-1">第一遍：认清数据形状</h3>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/ai/src/types.ts#L397-L427">types.ts:397–427</a><br><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/ai/src/types.ts#L763-L795">AssistantMessageEvent:763–795</a></p>
+<p>画：</p>
+<pre><code class="language-text">完整 assistant
+    └─ content[]：text / thinking / toolCall
+
+过程事件
+    └─ start / delta / end / done / error
+</code></pre>
+<h3 id="c3-s50" tabindex="-1">第二遍：读进程内流</h3>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/ai/src/utils/event-stream.ts">event-stream.ts</a></p>
+<p>重点找：</p>
+<pre><code class="language-text">push → queue/waiter
+asyncIterator → yield/wait
+done/error → final result
+end → 结束与唤醒
+</code></pre>
+<h3 id="c3-s51" tabindex="-1">第三遍：跟一个文本与一个工具参数</h3>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/ai/src/api/openai-completions.ts#L591-L604">文本解析:591–604</a><br><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/ai/src/api/openai-completions.ts#L640-L667">工具参数:640–667</a><br><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/ai/src/api/openai-completions.ts#L432-L477">块终结:432–477</a></p>
+<h3 id="c3-s52" tabindex="-1">第四遍：跟到 harness 执行边界</h3>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/agent/src/agent-loop.ts#L414-L468">流到消息的转换</a><br><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/agent/src/agent-loop.ts#L241-L270">最终响应与执行判断</a></p>
+<h3 id="c3-s53" tabindex="-1">三项闭卷练习</h3>
+<p><strong>练习 A：文本</strong></p>
+<p>按顺序写：</p>
+<pre><code class="language-text">start
+text_start
+delta(&quot;你&quot;)
+delta(&quot;好&quot;)
+text_end
+done
+</code></pre>
+<p>解释 delta、partial、final 各是什么，为什么不能累计追加 partial。</p>
+<p><strong>练习 B：工具参数</strong></p>
+<p>给三段：</p>
+<pre><code class="language-text">{&quot;path&quot;:&quot;
+package
+.json&quot;}
+</code></pre>
+<p>解释原始缓冲、解析预览和最终参数分别在哪里；为什么收到 toolcall_end 还不能宣称工具执行成功。</p>
+<p><strong>练习 C：提前断流</strong></p>
+<p>模型已经输出一段文本和一项工具参数，但没有预期 finish_reason 就断流。</p>
+<p>回答：</p>
+<ul>
+<li>UI 已显示的内容是否代表成功？</li>
+<li>adapter 怎样表示错误？</li>
+<li>Agent 会不会执行失败 assistant 内的工具？</li>
+<li>最终消息为何仍可能包含部分内容？</li>
+</ul>
+<hr>
+<h2 id="c3-s54" tabindex="-1">面试时如何概括这一节？</h2>
+<blockquote>
+<p>Pi 用完整 AssistantMessage 保存内容、结束原因和用量，用 AssistantMessageEvent 表达生成过程。Provider adapter 将厂商 chunk 转成统一的 start、delta、end、done/error，EventStream 同时支持异步消费过程和取得最终结果。partial 是共享累计对象，delta 才是本次变化。工具 JSON 使用缓冲和容错解析做过程预览，但 harness 等最终响应并检查结束原因后才进入工具执行；length 截断会拒绝全部工具调用，避免合法但不完整的参数产生副作用。流式展示、响应结束和业务成功是不同边界。</p>
+</blockquote>
+<p><strong>能讲清“增量怎样累计、完整消息怎样形成、残缺工具为什么不执行”，并指出对应源码，就完成了第三节的核心学习。</strong></p>
+<div class="chapter-links"><a href="02-Agent-Loop.html">← 第 2 节</a><a href="04-%E5%B7%A5%E5%85%B7%E4%B8%8E%E4%BB%A3%E7%A0%81%E4%BF%AE%E6%94%B9.html">第 4 节 →</a><a href="03-%E6%A8%A1%E5%9E%8B%E5%8D%8F%E8%AE%AE%E4%B8%8E%E6%B5%81.md" download>本节 Markdown</a><a href="../index.html">返回合订本</a></div></section><footer class="footer">本系列按固定版本源码整理。源码链接固定到研究提交；本地源码若更新，请按函数名复核。HTML 内嵌样式和脚本，正文可离线阅读。</footer></main></div><button class="back-top" data-top aria-label="返回顶部">↑ 顶部</button><script>
+const root=document.documentElement;
+try{root.dataset.theme=localStorage.getItem('pi-study-theme')||'light'}catch{}
+document.querySelectorAll('[data-theme-toggle]').forEach(b=>b.addEventListener('click',()=>{root.dataset.theme=root.dataset.theme==='dark'?'light':'dark';try{localStorage.setItem('pi-study-theme',root.dataset.theme)}catch{}}));
+document.querySelector('[data-menu]')?.addEventListener('click',e=>{const expanded=document.querySelector('.sidebar').classList.toggle('open');e.currentTarget.setAttribute('aria-expanded',String(expanded))});
+document.querySelector('[data-search]')?.addEventListener('input',e=>{const q=e.target.value.trim().toLowerCase();document.querySelectorAll('.nav-link').forEach(a=>a.hidden=!a.textContent.toLowerCase().includes(q))});
+document.querySelector('[data-top]')?.addEventListener('click',()=>window.scrollTo({top:0,behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth'}));
+function progress(){const total=document.documentElement.scrollHeight-innerHeight;document.querySelector('.read-progress').style.width=(total>0?scrollY/total*100:100)+'%'}
+addEventListener('scroll',progress,{passive:true});addEventListener('resize',progress);progress();
+const observer=new IntersectionObserver(entries=>{for(const entry of entries)if(entry.isIntersecting){const id=entry.target.id;document.querySelectorAll('.nav-link[href^="#"]').forEach(a=>a.setAttribute('aria-current',String(a.getAttribute('href')==='#'+id))) }},{rootMargin:'-5% 0px -75% 0px'});
+document.querySelectorAll('.chapter>h1').forEach(h=>observer.observe(h));
+</script></body></html>

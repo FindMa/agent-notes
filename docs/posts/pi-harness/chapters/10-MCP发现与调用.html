@@ -1,0 +1,183 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light dark"><title>第 10 节：MCP——外部工具怎样进入 PI 的执行循环</title><style>
+.blog-back{display:block;max-width:1440px;margin:18px auto 0;padding:0 28px;font-size:14px}
+:root{color-scheme:light;--bg:#f5f3ee;--paper:#fffefa;--text:#26332e;--muted:#65736b;--line:#d9dfd6;--accent:#28664e;--code:#eef2ed;--nav:#edf1e9}
+:root[data-theme=dark]{color-scheme:dark;--bg:#151c19;--paper:#1c2520;--text:#e0e8df;--muted:#abb9ad;--line:#3b4b40;--accent:#9ed4ac;--code:#25332a;--nav:#202c24}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:28px}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.9 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}a{color:var(--accent);text-underline-offset:3px;overflow-wrap:anywhere}a:hover{text-decoration-thickness:2px}button,input{font:inherit}button{cursor:pointer;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--text);padding:7px 13px}button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+.layout{max-width:1440px;margin:0 auto;display:grid;grid-template-columns:275px minmax(0,1fr);gap:30px;padding:28px 28px 70px}.sidebar{position:sticky;top:24px;max-height:calc(100vh - 48px);overflow:auto;padding:5px 15px 20px 0;scrollbar-width:thin}.brand{font-size:20px;font-weight:700;line-height:1.5;margin-bottom:8px}.eyebrow{font-size:12px;letter-spacing:.13em;color:var(--muted)}.sidebar p{font-size:13px;color:var(--muted);margin:8px 0 18px}.nav-link{display:block;padding:10px 12px;border-radius:7px;font-size:14px;text-decoration:none;line-height:1.7}.nav-link:hover,.nav-link.current{background:var(--nav)}.nav-link[aria-current=true]{background:var(--nav);font-weight:600}.nav-tools{display:flex;gap:8px;margin:16px 0}.nav-tools button{font-size:13px}.nav-search{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:7px;background:var(--paper);color:var(--text);margin:0 0 13px}.main{min-width:0}.hero{padding:34px 44px;background:var(--paper);border:1px solid var(--line);border-radius:12px;margin-bottom:24px}.hero h1{font-size:30px;line-height:1.5;margin:8px 0 12px}.hero p{margin:9px 0}.meta{display:flex;gap:8px 18px;flex-wrap:wrap;font-size:13px;color:var(--muted)}.downloads{display:flex;gap:20px;flex-wrap:wrap;font-size:14px;margin-top:18px}.notice{border-left:3px solid var(--accent);padding:8px 14px;background:var(--nav);margin:18px 0 0;font-size:14px}
+.chapter{padding:35px 44px 40px;background:var(--paper);border:1px solid var(--line);border-radius:12px;margin-bottom:26px;overflow-wrap:break-word}.chapter h1{font-size:27px;line-height:1.55;margin:0 0 24px}.chapter h2{font-size:22px;line-height:1.65;margin:42px 0 16px;padding-top:8px;border-top:1px solid var(--line)}.chapter h3{font-size:18px;line-height:1.7;margin:28px 0 12px}.chapter h4{font-size:16px;margin:22px 0 10px}p{margin:14px 0}ul,ol{padding-left:1.55em}li{margin:6px 0}blockquote{border-left:3px solid var(--accent);margin:20px 0;padding:1px 18px;color:var(--muted);background:var(--nav);border-radius:0 7px 7px 0}blockquote p{margin:12px 0}code{font: .88em/1.65 ui-monospace,SFMono-Regular,Consolas,monospace;background:var(--code);padding:2px 5px;border-radius:4px;overflow-wrap:anywhere}pre{background:var(--code);padding:18px 20px;border:1px solid var(--line);border-radius:9px;overflow-x:auto;max-width:100%;font-size:14px;line-height:1.75;tab-size:2}pre code{padding:0;background:transparent;white-space:pre;overflow-wrap:normal;word-break:normal;font-size:inherit}.table-wrap{overflow-x:auto;margin:22px 0;border:1px solid var(--line);border-radius:8px}table{border-collapse:collapse;width:100%;min-width:440px;font-size:14px;line-height:1.75}th,td{padding:11px 14px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}th{background:var(--nav);font-weight:600}tr:last-child td{border-bottom:0}hr{border:0;border-top:1px solid var(--line);margin:30px 0}strong{font-weight:650}.chapter-toc{background:var(--nav);border-radius:8px;padding:12px 16px;margin:0 0 24px}.chapter-toc summary{cursor:pointer;font-size:14px}.chapter-toc ol{columns:2;font-size:13px;line-height:1.7;margin:12px 0 3px}.chapter-toc li{break-inside:avoid;margin:5px 0}.chapter-toc a{text-decoration:none}.chapter-links{display:flex;flex-wrap:wrap;gap:16px;margin:25px 0 0;font-size:13px;color:var(--muted);border-top:1px solid var(--line);padding-top:17px}.mobile-head{display:none}.footer{color:var(--muted);font-size:13px;padding:8px 8px 0}.back-top{position:fixed;right:20px;bottom:20px;font-size:13px;box-shadow:0 2px 12px #0001}.read-progress{position:fixed;top:0;left:0;height:3px;background:var(--accent);width:0;z-index:10}.source-tag{font-size:12px;color:var(--muted)}
+@media(max-width:900px){.layout{grid-template-columns:1fr;padding:15px 14px 60px;gap:15px}.sidebar{position:static;max-height:none;display:none;padding:16px;background:var(--paper);border:1px solid var(--line);border-radius:10px}.sidebar.open{display:block}.mobile-head{display:flex;justify-content:space-between;align-items:center;padding:14px 16px 0}.hero,.chapter{padding:24px}.hero h1{font-size:26px}.chapter h1{font-size:24px}.chapter h2{font-size:21px}.chapter-toc ol{columns:1}.back-top{bottom:12px;right:12px}}
+@media(max-width:480px){body{font-size:15px}.hero,.chapter{padding:19px 17px}.hero h1{font-size:24px}.chapter h1{font-size:23px}pre{padding:14px;font-size:12px}.table-wrap{margin:18px 0}.chapter h2{font-size:19px}.meta{font-size:12px}}
+@media print{body{background:white;color:#111;font-size:11pt}.layout{display:block;padding:0}.sidebar,.mobile-head,.nav-tools,.back-top,.read-progress,.downloads,.chapter-links,.chapter-toc{display:none!important}.hero,.chapter{border:none;padding:0;border-radius:0}.chapter{break-before:page}pre{white-space:pre-wrap;overflow-wrap:anywhere;border:1px solid #ddd;font-size:9pt}pre code{white-space:pre-wrap;overflow-wrap:anywhere}table{min-width:0}.table-wrap{overflow:visible}a{color:#111}h1,h2,h3{break-after:avoid}tr{break-inside:avoid}}
+.nav-link[hidden]{display:none}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+
+.pi-overview{position:relative;margin:0 0 28px;border:1px solid var(--line);border-radius:10px;background:var(--paper);padding:24px;min-width:0;max-width:100%;color:var(--text)}.overview-target{position:absolute;top:0;left:0;width:1px;height:1px;scroll-margin-top:20px}.overview-head{margin:0 0 16px}.overview-head .overview-kicker{font:12px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:.1em;color:var(--muted)}.overview-head h2{font-size:25px;line-height:1.5;margin:6px 0 9px;border:0;padding:0}.overview-head p{font-size:14px;line-height:1.8;color:var(--muted);margin:7px 0}.overview-head a{font-size:13px}.overview-panel{display:none;grid-template-columns:minmax(0,1.45fr) minmax(220px,1fr);gap:20px;border:1px solid var(--line);border-radius:8px;padding:18px 20px;margin-bottom:18px;min-height:210px;background:var(--nav)}.overview-panel[data-detail="loop"]{display:grid}.pi-overview:has(.overview-target:target) .overview-panel{display:none}.pi-overview:has(#pi-map-session:target) .overview-panel[data-detail="session"]{display:grid}.pi-overview:has(#pi-map-session:target) [data-map-node="session"] .node-outline{stroke:var(--accent);stroke-width:2.4;fill:var(--nav)}
+.pi-overview:has(#pi-map-loop:target) .overview-panel[data-detail="loop"]{display:grid}.pi-overview:has(#pi-map-loop:target) [data-map-node="loop"] .node-outline{stroke:var(--accent);stroke-width:2.4;fill:var(--nav)}
+.pi-overview:has(#pi-map-model:target) .overview-panel[data-detail="model"]{display:grid}.pi-overview:has(#pi-map-model:target) [data-map-node="model"] .node-outline{stroke:var(--accent);stroke-width:2.4;fill:var(--nav)}
+.pi-overview:has(#pi-map-history:target) .overview-panel[data-detail="history"]{display:grid}.pi-overview:has(#pi-map-history:target) [data-map-node="history"] .node-outline{stroke:var(--accent);stroke-width:2.4;fill:var(--nav)}
+.pi-overview:has(#pi-map-tools:target) .overview-panel[data-detail="tools"]{display:grid}.pi-overview:has(#pi-map-tools:target) [data-map-node="tools"] .node-outline{stroke:var(--accent);stroke-width:2.4;fill:var(--nav)}
+.pi-overview:has(#pi-map-extensions:target) .overview-panel[data-detail="extensions"]{display:grid}.pi-overview:has(#pi-map-extensions:target) [data-map-node="extensions"] .node-outline{stroke:var(--accent);stroke-width:2.4;fill:var(--nav)}
+.pi-overview:has(#pi-map-validation:target) .overview-panel[data-detail="validation"]{display:grid}.pi-overview:has(#pi-map-validation:target) [data-map-node="validation"] .node-outline{stroke:var(--accent);stroke-width:2.4;fill:var(--nav)}
+.pi-overview:has(#pi-map-subagents:target) .overview-panel[data-detail="subagents"]{display:grid}.pi-overview:has(#pi-map-subagents:target) [data-map-node="subagents"] .node-outline{stroke:var(--accent);stroke-width:2.4;fill:var(--nav)}
+.overview-panel h3{margin:0 0 7px;font-size:19px;line-height:1.6}.overview-panel p{margin:6px 0;font-size:14px;line-height:1.8}.overview-io{display:grid;grid-template-columns:38px minmax(0,1fr);gap:4px 8px;font-size:13px;line-height:1.75;margin:12px 0 0}.overview-io dt{color:var(--muted)}.overview-io dd{margin:0}.overview-chapter-links{display:flex;gap:8px;flex-wrap:wrap;margin:3px 0 12px}.overview-chapter-links a{display:inline-block;background:var(--paper);border:1px solid var(--line);border-radius:5px;padding:5px 10px;font-size:13px;text-decoration:none}.overview-sources{list-style:none;padding:0;margin:0;font-size:12px;line-height:1.8}.overview-sources li{margin:7px 0}.overview-sources code{background:none;padding:0;font-size:11px;overflow-wrap:anywhere}.overview-diagram-container{width:100%;max-width:100%;overflow-x:auto;overscroll-behavior-x:contain;border:1px solid var(--line);border-radius:8px;background:var(--paper)}.pi-overview svg{width:100%;min-width:960px;display:block;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}.pi-overview svg text{fill:var(--text)}.pi-overview svg .svg-muted{fill:var(--muted)}.pi-overview svg .svg-mono{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}.pi-overview svg .node-outline{fill:var(--paper);stroke:var(--line);stroke-width:1.4}.pi-overview svg .node-state{fill:var(--code)}.pi-overview svg .node-optional{stroke-dasharray:5 4}.pi-overview svg .node-focal{stroke:var(--accent);stroke-width:2;fill:var(--nav)}.pi-overview svg a:hover .node-outline,.pi-overview svg a:focus-visible .node-outline{stroke:var(--accent);stroke-width:2.4}.pi-overview svg a:focus-visible{outline:none}.pi-overview svg .edge{fill:none;stroke:var(--muted);stroke-width:1.5}.pi-overview svg .edge-return{stroke-dasharray:5 4}.pi-overview svg .label-mask{fill:var(--paper)}.pi-overview svg .type-tag{fill:var(--code);stroke:var(--line);stroke-width:.8}.overview-chapter-index{display:flex;gap:7px;flex-wrap:wrap;margin-top:15px;font-size:12px;line-height:1.6}.overview-chapter-index a{border:1px solid var(--line);padding:5px 8px;border-radius:5px;text-decoration:none;color:var(--muted)}.overview-chapter-index a:hover{color:var(--accent);border-color:var(--accent)}.overview-note{font-size:12px;line-height:1.8;color:var(--muted);margin:13px 0 0}.overview-bounds{border-left:3px solid var(--accent);padding-left:11px;color:var(--muted)}
+@media(max-width:1000px){.overview-panel{grid-template-columns:1fr;min-height:0;gap:14px}.overview-panel-side{border-top:1px solid var(--line);padding-top:12px}}
+@media(max-width:600px){.pi-overview{padding:17px}.overview-head h2{font-size:22px}.overview-panel{padding:15px}.overview-panel h3{font-size:17px}.overview-head p{font-size:13px}}
+@media print{.pi-overview{break-before:page;padding:0;border:0}.overview-diagram-container{overflow:visible;border:0}.pi-overview svg{min-width:0;width:100%}.overview-panel{display:block!important;break-inside:avoid;background:none;min-height:0}.overview-chapter-index,.overview-head>a{display:none}.overview-target{display:none}}
+</style></head><body><a class="blog-back" href="../../../index.html">← Agent 笔记 · 所有文章</a><div class="read-progress" aria-hidden="true"></div><div class="mobile-head"><span>PI · 源码伴读</span><button data-menu aria-expanded="false" aria-controls="chapter-nav">章节目录</button></div><div class="layout"><aside class="sidebar" id="chapter-nav"><div class="eyebrow">SOURCE WALKTHROUGH</div><div class="brand">PI Agent Harness</div><p>从一次请求到执行、历史和恢复。<br>按 01 → 12 顺序阅读。</p><input class="nav-search" data-search aria-label="筛选章节" placeholder="筛选章节标题"><nav aria-label="章节目录"><a class="nav-link" href="../pi-overview.html">总览 · 各部分怎样配合</a><a class="nav-link" href="01-%E5%87%86%E5%A4%87%E4%B8%8E%E6%9E%B6%E6%9E%84.html">01 · 准备与架构——先认清对象和职责</a><a class="nav-link" href="02-Agent-Loop.html">02 · Agent Loop——工具执行后，为什么还要请求模型？</a><a class="nav-link" href="03-%E6%A8%A1%E5%9E%8B%E5%8D%8F%E8%AE%AE%E4%B8%8E%E6%B5%81.html">03 · 模型协议与流——从数据片段到完整消息</a><a class="nav-link" href="04-%E5%B7%A5%E5%85%B7%E4%B8%8E%E4%BB%A3%E7%A0%81%E4%BF%AE%E6%94%B9.html">04 · 工具与代码修改——从模型意图到真实副作用</a><a class="nav-link" href="05-%E8%B0%83%E5%BA%A6%E4%B8%8E%E6%94%B6%E5%B0%BE.html">05 · 调度与收尾——并行、队列、停止、取消与重试</a><a class="nav-link" href="06-%E9%A2%84%E6%B5%8B%E4%B8%8E%E9%AA%8C%E8%AF%81.html">06 · 预测与验证——怎样用测试检查自己读懂了没有</a><a class="nav-link" href="07-%E4%BC%9A%E8%AF%9D%E4%B8%8E%E5%8E%86%E5%8F%B2.html">07 · 会话与历史——保存过的内容，为什么模型未必看得见</a><a class="nav-link" href="08-%E4%B8%8A%E4%B8%8B%E6%96%87%E5%8E%8B%E7%BC%A9.html">08 · 上下文压缩——预算、切点、信息损失与缓存</a><a class="nav-link" href="09-Extension%E4%B8%8ESkill.html">09 · Extension 与 Skill——怎样增加工具和工作方法</a><a class="nav-link current" href="10-MCP%E5%8F%91%E7%8E%B0%E4%B8%8E%E8%B0%83%E7%94%A8.html">10 · MCP——外部工具怎样进入 PI 的执行循环</a><a class="nav-link" href="11-Subagent%E4%B8%8EDurable.html">11 · Subagent 与 durable——委派、后台工作和恢复</a><a class="nav-link" href="12-%E5%AE%89%E5%85%A8%E8%AF%84%E6%B5%8B%E4%B8%8E%E6%9C%8D%E5%8A%A1.html">12 · 安全、评测与服务——怎样判断 Agent 真正完成了任务</a></nav><div class="nav-tools"><button data-theme-toggle>切换明暗</button><button onclick="window.print()">打印</button></div><p>源码：<a href="https://github.com/earendil-works/pi/tree/eb326d265ae0b88489a6d10319307780df827cdf/" target="_blank" rel="noopener noreferrer">eb326d2</a><br>包版本：1.0.4<br>本地整理：2026-10-26</p></aside><main class="main"><header class="hero"><div class="eyebrow">PI STUDY NOTES / 01—12</div><h1>第 10 节：MCP——外部工具怎样进入 PI 的执行循环</h1><p>逐段看代码怎样接收输入、请求模型、执行工具、保存历史，并处理取消、重试和恢复。</p><div class="meta"><span>12 节完整讲解</span><span>固定提交源码引用</span><span>解释 · 例子 · 练习 · 面试追问</span></div><div class="downloads"><a href="../PI-Agent-Harness-01-12.md" download>下载 Markdown 合订本</a><a href="../README.md">阅读说明</a></div><div class="notice">静态源码伴读。示意轨迹、待执行练习与实际运行结果分别说明。本文提供源码分析与待执行练习，不将源码阅读作为模型实测或生产验收。</div></header><section class="chapter" data-chapter="10"><h1 id="chapter-10" tabindex="-1">第 10 节：MCP——外部工具怎样进入 PI 的执行循环</h1><details class="chapter-toc"><summary>本节小节目录 · 11 项</summary><ol><li><a href="#c10-s1">一、先把模型调用与 MCP 调用画在不同位置</a></li><li><a href="#c10-s2">二、CLI 自带客户端，与 SDK 默认加载不同</a></li><li><a href="#c10-s3">三、连接时先协商，再发现能力</a></li><li><a href="#c10-s4">四、tools/list 怎么变成 registerTool</a></li><li><a href="#c10-s5">五、ToolDefinition 的 execute 做了什么</a></li><li><a href="#c10-s6">六、结果怎样变成模型能用的内容</a></li><li><a href="#c10-s7">七、注册了工具，为什么模型列表里可能看不到</a></li><li><a href="#c10-s8">八、工具列表变了怎么办</a></li><li><a href="#c10-s9">九、stdio、HTTP 与 PI 自己的 JSONL 别混在一起</a></li><li><a href="#c10-s10">十、错误要按发生位置处理</a></li><li><a href="#c10-s11">十一、最小学习实验怎样安排</a></li></ol></details>
+<p>前一节的 echo 工具直接在 PI 进程里运行。现在假设团队已有一个文档搜索服务，希望 PI 能发现它提供的工具并调用。MCP 负责客户端与服务之间的能力发现和调用约定。</p>
+<p>本节只追当前 PI 的实际接线，不连接真实 MCP server。协议版本、默认暴露策略和路径都按 <code>eb326d2</code> 说明。</p>
+<h2 id="c10-s1" tabindex="-1">一、先把模型调用与 MCP 调用画在不同位置</h2>
+<pre><code class="language-text">模型看到可用工具说明
+→ 模型提出 toolCall
+→ PI 按工具名找到执行函数
+→ 执行函数通过 MCP client 请求外部 server
+→ server 返回结果
+→ PI 转成 ToolResult
+→ 下一次模型请求看到结果
+</code></pre>
+<p>模型生成调用意图和 MCP 客户端发出协议请求，是不同动作。模型通常不会直接连接 MCP server。一个普通本地函数也能接工具循环；当多种客户端需要复用外部能力时，MCP 提供统一发现和调用方式。</p>
+<p>当前仓库有自己的 <code>packages/mcp</code> 客户端实现。不能因为接口叫 MCP，就假定它必然包了一层某个官方 SDK。</p>
+<h2 id="c10-s2" tabindex="-1">二、CLI 自带客户端，与 SDK 默认加载不同</h2>
+<p>当前 <a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/coding-agent/src/extensions/index.ts#L1-L13">内建扩展列表</a> 包括 MCP、codemode、tool-search 等可替换扩展。普通 CLI 启动时会把内建列表接入资源加载。</p>
+<p>而 <a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/coding-agent/docs/mcp.md#L264-L272">SDK 的 MCP 说明</a> 明确要求显式加入需要的内建扩展。<code>createAgentSession()</code> 能创建会话，不代表它已经自动连上你在 CLI 中配置的所有 MCP 能力。</p>
+<p>这里要分别检查：客户端实现是否存在，扩展是否加载，server 是否配置，连接是否成功，工具是否注册，以及该工具当前是否可达。每一步成功都不能代替后一步。</p>
+<h2 id="c10-s3" tabindex="-1">三、连接时先协商，再发现能力</h2>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/mcp/src/client.ts#L213-L243">McpClient.connect</a> 先启动 transport，发送 initialize，携带协议版本、客户端信息和客户端能力。服务端返回版本与能力后，客户端验证是否支持，再发送 initialized 通知。</p>
+<p>当前默认提出的版本是 <code>2025-11-25</code>，同时接受源码列出的几个旧版本。实际采用哪个版本取决于 server 的响应；本节没有实际协商结果。</p>
+<p>连接运行时随后检查服务端能力：如果 server 声明 tools，才调用 listTools；只有资源能力的服务不需要回答 tools/list。见 <a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/coding-agent/src/extensions/mcp/runtime.ts#L378-L424">connectOnce</a>。</p>
+<p>初始化成功表示协议连接建立，不代表任意工具都可用，更不代表业务访问授权已通过。</p>
+<h2 id="c10-s4" tabindex="-1">四、tools/list 怎么变成 registerTool</h2>
+<p>普通工具发现链是：</p>
+<pre><code class="language-text">client.listTools()
+→ MCP tools/list
+→ connection.tools 保存工具列表
+→ connection.onTools(this)
+→ registerTools(connection)
+→ createMcpToolDefinition(...)
+→ pi.registerTool(definition)
+</code></pre>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/mcp/src/client.ts#L294-L295">listTools</a> 发出的协议方法是 <code>tools/list</code>。创建连接时，<a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/coding-agent/src/extensions/mcp/index.ts#L525-L536">onTools 明确绑定 registerTools</a>。</p>
+<p><code>registerTools</code> 遍历发现的工具，把远端 name、description、inputSchema、exposure 和连接对象组装成 PI 的 ToolDefinition。见 <a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/coding-agent/src/extensions/mcp/index.ts#L368-L416">注册循环</a>。</p>
+<p>工具名会带上 server 命名空间，并处理名称归一化后的冲突，避免两个服务的同名工具在本地混淆。原始远端工具名仍保留，实际发给 server 时使用它。</p>
+<h2 id="c10-s5" tabindex="-1">五、ToolDefinition 的 execute 做了什么</h2>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/coding-agent/src/extensions/mcp/tools.ts#L256-L294">createMcpToolDefinition</a> 返回的 execute 可以简化成：</p>
+<pre><code class="language-ts">async execute(_id, params, signal, onUpdate) {
+  const client = await options.getClient();
+  const result = await client.callTool(tool.name, params, {
+    signal,
+    timeoutMs: options.timeoutMs,
+    onProgress: progress =&gt; {
+      onUpdate?.(/* 转成 PI 的工具进度 */);
+    },
+  });
+  return convertMcpResult(server, tool.name, result);
+}
+</code></pre>
+<p>注册时 <code>getClient</code> 返回的就是该工具所属的连接对象。连接的 callTool 再转给底层 McpClient，底层发送：</p>
+<pre><code class="language-text">method: tools/call
+params: { name: 远端工具名, arguments: 参数 }
+</code></pre>
+<p>见 <a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/mcp/src/client.ts#L376-L383">客户端调用</a>。因此调用方向可以一直追到同一个 server，不需要靠工具名猜。</p>
+<p>signal、timeout 和进度也跨过这层适配。进度被转成 onUpdate，再进入第 04 节的 tool_execution_update；它仍然只是过程信息。</p>
+<h2 id="c10-s6" tabindex="-1">六、结果怎样变成模型能用的内容</h2>
+<p>MCP 服务可能返回文本、图片、资源链接、结构化数据和错误标记。PI 要把这些转换成自己支持的内容形状。</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/coding-agent/src/extensions/mcp/tools.ts#L209-L229">convertMcpResult</a> 大致做：</p>
+<ol>
+<li>有 content blocks 时转换它们；否则可用 structuredContent 形成文本表示。</li>
+<li>错误结果没有文字时补上错误说明。</li>
+<li>对模型内容应用输出限制。</li>
+<li>在 details 保存 server、tool 和可能的完整输出位置。</li>
+<li>向程序调用者保留去掉 <code>_meta</code> 的原结果包装，作为 structuredContent。</li>
+<li>保留 <code>isError</code>。</li>
+</ol>
+<p>模型通常消费 content，脚本调用者可以消费 structuredContent。不能假定所有原始 JSON 都完整塞进模型窗口，也不能把工具 content 中写“失败”与 isError 字段混为一谈。</p>
+<p>工具结果里的图片可以经过内容转换和尺寸处理，最终以 ImageContent 进入多模态上下文；只有路径文字不等于模型已经收到像素。是否能使用图片仍取决于模型输入能力。</p>
+<h2 id="c10-s7" tabindex="-1">七、注册了工具，为什么模型列表里可能看不到</h2>
+<p>当前 MCP 默认 exposure 是 <code>codemode</code>。见 <a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/coding-agent/docs/mcp.md#L189-L204">暴露策略</a>。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>配置</th>
+<th>模型怎样使用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>direct</td>
+<td>直接声明工具，模型可直接提出调用</td>
+</tr>
+<tr>
+<td>deferred</td>
+<td>先经 tool_search 发现，加载后供下一次模型调用</td>
+</tr>
+<tr>
+<td>codemode</td>
+<td>不全量声明；脚本通过 searchTools、describeTool、ALL_TOOLS 发现并调用</td>
+</tr>
+<tr>
+<td>hidden</td>
+<td>注册保留，但不可达</td>
+</tr>
+</tbody></table></div>
+<p>大工具目录如果全部写进 prompt，会占空间，也容易让模型在相似工具中选错。按需发现减少初始工具说明，但增加发现步骤，可能影响延迟和漏选，需要实际任务比较。</p>
+<p>注意这里 MCP 配置中的 codemode 会映射到内部的相应工具暴露策略；不要只凭两个配置字符串相似就推断内部行为完全一样。也不要把 exposure 当作资源权限，它决定如何到达工具，不替服务端判断用户是否能读某份文档。</p>
+<h2 id="c10-s8" tabindex="-1">八、工具列表变了怎么办</h2>
+<p>连接运行时订阅 <code>notifications/tools/list_changed</code>，收到后刷新工具。当前注册机制不能直接取消注册，所以从 server 列表消失的工具会重新登记为 hidden。</p>
+<p>这是一种保持注册对象和当前可达集合一致的处理方式。不能缓存一次 tools/list 后，就永久认为工具存在；断连、服务升级和权限变化都可能改变后续调用结果。</p>
+<p>工具描述和 server instructions 也是外部内容。它们可以帮助选择能力，但不能自动成为高于宿主规则的授权指令。</p>
+<h2 id="c10-s9" tabindex="-1">九、stdio、HTTP 与 PI 自己的 JSONL 别混在一起</h2>
+<pre><code class="language-text">外部程序 ── PI RPC JSONL ──&gt; PI
+PI ── MCP transport ──&gt; MCP server
+PI ── 模型 API ──&gt; 模型服务
+</code></pre>
+<p>它们是三个独立连接。当前 MCP 支持 stdio 和 Streamable HTTP；普通 PI RPC 使用自己的 stdin/stdout JSONL 命令协议。即便都出现 JSON 和标准输入输出，消息方法、生命周期和对端也不同。</p>
+<p>例如模型请求超时，是模型 API 一侧；tools/call 超时，是某个外部工具一侧；父进程不读 stdout 导致阻塞，则是 PI 输出接口一侧。诊断时先确认卡在哪一条连接。</p>
+<h2 id="c10-s10" tabindex="-1">十、错误要按发生位置处理</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>情况</th>
+<th>应先检查</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>初始化失败</td>
+<td>transport、认证、协议协商、server 启动</td>
+</tr>
+<tr>
+<td>列表为空</td>
+<td>server 能力、权限、分页与发现结果</td>
+</tr>
+<tr>
+<td>注册但模型看不到</td>
+<td>exposure、当前激活集合、发现工具</td>
+</tr>
+<tr>
+<td>参数不合法</td>
+<td>模型参数、schema、适配后的结构</td>
+</tr>
+<tr>
+<td>tools/call 返回 isError</td>
+<td>服务端业务失败内容</td>
+</tr>
+<tr>
+<td>超时但动作可能成功</td>
+<td>执行端状态和幂等机制</td>
+</tr>
+</tbody></table></div>
+<p>MCP 的存在不能消除“执行成功但响应丢失”的失败窗口。读请求和有副作用调用也不能无差别重试。</p>
+<h2 id="c10-s11" tabindex="-1">十一、最小学习实验怎样安排</h2>
+<p>先把第 09 节本地 echo 工具的输入输出写清，再用一个受控 server 提供同样语义。观察 initialize、tools/list、注册、tools/call、ToolResult 五个位置，比较直接暴露与按需发现。</p>
+<p>至少设计三个失败案例：参数缺字段、server 返回明确错误、连接中断。每个案例记录错误在哪一层产生、是否进入 execute、是否发生真实动作。本文没有创建 server 或执行该实验，不能把这份流程图写成“已完成 MCP 集成”。</p>
+<p>面试讲解时可以沿这一条链回答：模型提出意图，PI 通过本地 ToolDefinition 接到 MCP client，server 执行动作，结果经过适配返回 Agent Loop。若改用本地函数，循环大体不变，变化的是 execute 背后的调用方式。</p>
+<div class="chapter-links"><a href="09-Extension%E4%B8%8ESkill.html">← 第 9 节</a><a href="11-Subagent%E4%B8%8EDurable.html">第 11 节 →</a><a href="10-MCP%E5%8F%91%E7%8E%B0%E4%B8%8E%E8%B0%83%E7%94%A8.md" download>本节 Markdown</a><a href="../index.html">返回合订本</a></div></section><footer class="footer">本系列按固定版本源码整理。源码链接固定到研究提交；本地源码若更新，请按函数名复核。HTML 内嵌样式和脚本，正文可离线阅读。</footer></main></div><button class="back-top" data-top aria-label="返回顶部">↑ 顶部</button><script>
+const root=document.documentElement;
+try{root.dataset.theme=localStorage.getItem('pi-study-theme')||'light'}catch{}
+document.querySelectorAll('[data-theme-toggle]').forEach(b=>b.addEventListener('click',()=>{root.dataset.theme=root.dataset.theme==='dark'?'light':'dark';try{localStorage.setItem('pi-study-theme',root.dataset.theme)}catch{}}));
+document.querySelector('[data-menu]')?.addEventListener('click',e=>{const expanded=document.querySelector('.sidebar').classList.toggle('open');e.currentTarget.setAttribute('aria-expanded',String(expanded))});
+document.querySelector('[data-search]')?.addEventListener('input',e=>{const q=e.target.value.trim().toLowerCase();document.querySelectorAll('.nav-link').forEach(a=>a.hidden=!a.textContent.toLowerCase().includes(q))});
+document.querySelector('[data-top]')?.addEventListener('click',()=>window.scrollTo({top:0,behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth'}));
+function progress(){const total=document.documentElement.scrollHeight-innerHeight;document.querySelector('.read-progress').style.width=(total>0?scrollY/total*100:100)+'%'}
+addEventListener('scroll',progress,{passive:true});addEventListener('resize',progress);progress();
+const observer=new IntersectionObserver(entries=>{for(const entry of entries)if(entry.isIntersecting){const id=entry.target.id;document.querySelectorAll('.nav-link[href^="#"]').forEach(a=>a.setAttribute('aria-current',String(a.getAttribute('href')==='#'+id))) }},{rootMargin:'-5% 0px -75% 0px'});
+document.querySelectorAll('.chapter>h1').forEach(h=>observer.observe(h));
+</script></body></html>

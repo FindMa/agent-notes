@@ -1,0 +1,197 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light dark"><title>第 09 节：Extension 与 Skill——怎样增加工具和工作方法</title><style>
+.blog-back{display:block;max-width:1440px;margin:18px auto 0;padding:0 28px;font-size:14px}
+:root{color-scheme:light;--bg:#f5f3ee;--paper:#fffefa;--text:#26332e;--muted:#65736b;--line:#d9dfd6;--accent:#28664e;--code:#eef2ed;--nav:#edf1e9}
+:root[data-theme=dark]{color-scheme:dark;--bg:#151c19;--paper:#1c2520;--text:#e0e8df;--muted:#abb9ad;--line:#3b4b40;--accent:#9ed4ac;--code:#25332a;--nav:#202c24}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:28px}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.9 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}a{color:var(--accent);text-underline-offset:3px;overflow-wrap:anywhere}a:hover{text-decoration-thickness:2px}button,input{font:inherit}button{cursor:pointer;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--text);padding:7px 13px}button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+.layout{max-width:1440px;margin:0 auto;display:grid;grid-template-columns:275px minmax(0,1fr);gap:30px;padding:28px 28px 70px}.sidebar{position:sticky;top:24px;max-height:calc(100vh - 48px);overflow:auto;padding:5px 15px 20px 0;scrollbar-width:thin}.brand{font-size:20px;font-weight:700;line-height:1.5;margin-bottom:8px}.eyebrow{font-size:12px;letter-spacing:.13em;color:var(--muted)}.sidebar p{font-size:13px;color:var(--muted);margin:8px 0 18px}.nav-link{display:block;padding:10px 12px;border-radius:7px;font-size:14px;text-decoration:none;line-height:1.7}.nav-link:hover,.nav-link.current{background:var(--nav)}.nav-link[aria-current=true]{background:var(--nav);font-weight:600}.nav-tools{display:flex;gap:8px;margin:16px 0}.nav-tools button{font-size:13px}.nav-search{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:7px;background:var(--paper);color:var(--text);margin:0 0 13px}.main{min-width:0}.hero{padding:34px 44px;background:var(--paper);border:1px solid var(--line);border-radius:12px;margin-bottom:24px}.hero h1{font-size:30px;line-height:1.5;margin:8px 0 12px}.hero p{margin:9px 0}.meta{display:flex;gap:8px 18px;flex-wrap:wrap;font-size:13px;color:var(--muted)}.downloads{display:flex;gap:20px;flex-wrap:wrap;font-size:14px;margin-top:18px}.notice{border-left:3px solid var(--accent);padding:8px 14px;background:var(--nav);margin:18px 0 0;font-size:14px}
+.chapter{padding:35px 44px 40px;background:var(--paper);border:1px solid var(--line);border-radius:12px;margin-bottom:26px;overflow-wrap:break-word}.chapter h1{font-size:27px;line-height:1.55;margin:0 0 24px}.chapter h2{font-size:22px;line-height:1.65;margin:42px 0 16px;padding-top:8px;border-top:1px solid var(--line)}.chapter h3{font-size:18px;line-height:1.7;margin:28px 0 12px}.chapter h4{font-size:16px;margin:22px 0 10px}p{margin:14px 0}ul,ol{padding-left:1.55em}li{margin:6px 0}blockquote{border-left:3px solid var(--accent);margin:20px 0;padding:1px 18px;color:var(--muted);background:var(--nav);border-radius:0 7px 7px 0}blockquote p{margin:12px 0}code{font: .88em/1.65 ui-monospace,SFMono-Regular,Consolas,monospace;background:var(--code);padding:2px 5px;border-radius:4px;overflow-wrap:anywhere}pre{background:var(--code);padding:18px 20px;border:1px solid var(--line);border-radius:9px;overflow-x:auto;max-width:100%;font-size:14px;line-height:1.75;tab-size:2}pre code{padding:0;background:transparent;white-space:pre;overflow-wrap:normal;word-break:normal;font-size:inherit}.table-wrap{overflow-x:auto;margin:22px 0;border:1px solid var(--line);border-radius:8px}table{border-collapse:collapse;width:100%;min-width:440px;font-size:14px;line-height:1.75}th,td{padding:11px 14px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}th{background:var(--nav);font-weight:600}tr:last-child td{border-bottom:0}hr{border:0;border-top:1px solid var(--line);margin:30px 0}strong{font-weight:650}.chapter-toc{background:var(--nav);border-radius:8px;padding:12px 16px;margin:0 0 24px}.chapter-toc summary{cursor:pointer;font-size:14px}.chapter-toc ol{columns:2;font-size:13px;line-height:1.7;margin:12px 0 3px}.chapter-toc li{break-inside:avoid;margin:5px 0}.chapter-toc a{text-decoration:none}.chapter-links{display:flex;flex-wrap:wrap;gap:16px;margin:25px 0 0;font-size:13px;color:var(--muted);border-top:1px solid var(--line);padding-top:17px}.mobile-head{display:none}.footer{color:var(--muted);font-size:13px;padding:8px 8px 0}.back-top{position:fixed;right:20px;bottom:20px;font-size:13px;box-shadow:0 2px 12px #0001}.read-progress{position:fixed;top:0;left:0;height:3px;background:var(--accent);width:0;z-index:10}.source-tag{font-size:12px;color:var(--muted)}
+@media(max-width:900px){.layout{grid-template-columns:1fr;padding:15px 14px 60px;gap:15px}.sidebar{position:static;max-height:none;display:none;padding:16px;background:var(--paper);border:1px solid var(--line);border-radius:10px}.sidebar.open{display:block}.mobile-head{display:flex;justify-content:space-between;align-items:center;padding:14px 16px 0}.hero,.chapter{padding:24px}.hero h1{font-size:26px}.chapter h1{font-size:24px}.chapter h2{font-size:21px}.chapter-toc ol{columns:1}.back-top{bottom:12px;right:12px}}
+@media(max-width:480px){body{font-size:15px}.hero,.chapter{padding:19px 17px}.hero h1{font-size:24px}.chapter h1{font-size:23px}pre{padding:14px;font-size:12px}.table-wrap{margin:18px 0}.chapter h2{font-size:19px}.meta{font-size:12px}}
+@media print{body{background:white;color:#111;font-size:11pt}.layout{display:block;padding:0}.sidebar,.mobile-head,.nav-tools,.back-top,.read-progress,.downloads,.chapter-links,.chapter-toc{display:none!important}.hero,.chapter{border:none;padding:0;border-radius:0}.chapter{break-before:page}pre{white-space:pre-wrap;overflow-wrap:anywhere;border:1px solid #ddd;font-size:9pt}pre code{white-space:pre-wrap;overflow-wrap:anywhere}table{min-width:0}.table-wrap{overflow:visible}a{color:#111}h1,h2,h3{break-after:avoid}tr{break-inside:avoid}}
+.nav-link[hidden]{display:none}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+
+.pi-overview{position:relative;margin:0 0 28px;border:1px solid var(--line);border-radius:10px;background:var(--paper);padding:24px;min-width:0;max-width:100%;color:var(--text)}.overview-target{position:absolute;top:0;left:0;width:1px;height:1px;scroll-margin-top:20px}.overview-head{margin:0 0 16px}.overview-head .overview-kicker{font:12px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:.1em;color:var(--muted)}.overview-head h2{font-size:25px;line-height:1.5;margin:6px 0 9px;border:0;padding:0}.overview-head p{font-size:14px;line-height:1.8;color:var(--muted);margin:7px 0}.overview-head a{font-size:13px}.overview-panel{display:none;grid-template-columns:minmax(0,1.45fr) minmax(220px,1fr);gap:20px;border:1px solid var(--line);border-radius:8px;padding:18px 20px;margin-bottom:18px;min-height:210px;background:var(--nav)}.overview-panel[data-detail="loop"]{display:grid}.pi-overview:has(.overview-target:target) .overview-panel{display:none}.pi-overview:has(#pi-map-session:target) .overview-panel[data-detail="session"]{display:grid}.pi-overview:has(#pi-map-session:target) [data-map-node="session"] .node-outline{stroke:var(--accent);stroke-width:2.4;fill:var(--nav)}
+.pi-overview:has(#pi-map-loop:target) .overview-panel[data-detail="loop"]{display:grid}.pi-overview:has(#pi-map-loop:target) [data-map-node="loop"] .node-outline{stroke:var(--accent);stroke-width:2.4;fill:var(--nav)}
+.pi-overview:has(#pi-map-model:target) .overview-panel[data-detail="model"]{display:grid}.pi-overview:has(#pi-map-model:target) [data-map-node="model"] .node-outline{stroke:var(--accent);stroke-width:2.4;fill:var(--nav)}
+.pi-overview:has(#pi-map-history:target) .overview-panel[data-detail="history"]{display:grid}.pi-overview:has(#pi-map-history:target) [data-map-node="history"] .node-outline{stroke:var(--accent);stroke-width:2.4;fill:var(--nav)}
+.pi-overview:has(#pi-map-tools:target) .overview-panel[data-detail="tools"]{display:grid}.pi-overview:has(#pi-map-tools:target) [data-map-node="tools"] .node-outline{stroke:var(--accent);stroke-width:2.4;fill:var(--nav)}
+.pi-overview:has(#pi-map-extensions:target) .overview-panel[data-detail="extensions"]{display:grid}.pi-overview:has(#pi-map-extensions:target) [data-map-node="extensions"] .node-outline{stroke:var(--accent);stroke-width:2.4;fill:var(--nav)}
+.pi-overview:has(#pi-map-validation:target) .overview-panel[data-detail="validation"]{display:grid}.pi-overview:has(#pi-map-validation:target) [data-map-node="validation"] .node-outline{stroke:var(--accent);stroke-width:2.4;fill:var(--nav)}
+.pi-overview:has(#pi-map-subagents:target) .overview-panel[data-detail="subagents"]{display:grid}.pi-overview:has(#pi-map-subagents:target) [data-map-node="subagents"] .node-outline{stroke:var(--accent);stroke-width:2.4;fill:var(--nav)}
+.overview-panel h3{margin:0 0 7px;font-size:19px;line-height:1.6}.overview-panel p{margin:6px 0;font-size:14px;line-height:1.8}.overview-io{display:grid;grid-template-columns:38px minmax(0,1fr);gap:4px 8px;font-size:13px;line-height:1.75;margin:12px 0 0}.overview-io dt{color:var(--muted)}.overview-io dd{margin:0}.overview-chapter-links{display:flex;gap:8px;flex-wrap:wrap;margin:3px 0 12px}.overview-chapter-links a{display:inline-block;background:var(--paper);border:1px solid var(--line);border-radius:5px;padding:5px 10px;font-size:13px;text-decoration:none}.overview-sources{list-style:none;padding:0;margin:0;font-size:12px;line-height:1.8}.overview-sources li{margin:7px 0}.overview-sources code{background:none;padding:0;font-size:11px;overflow-wrap:anywhere}.overview-diagram-container{width:100%;max-width:100%;overflow-x:auto;overscroll-behavior-x:contain;border:1px solid var(--line);border-radius:8px;background:var(--paper)}.pi-overview svg{width:100%;min-width:960px;display:block;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}.pi-overview svg text{fill:var(--text)}.pi-overview svg .svg-muted{fill:var(--muted)}.pi-overview svg .svg-mono{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}.pi-overview svg .node-outline{fill:var(--paper);stroke:var(--line);stroke-width:1.4}.pi-overview svg .node-state{fill:var(--code)}.pi-overview svg .node-optional{stroke-dasharray:5 4}.pi-overview svg .node-focal{stroke:var(--accent);stroke-width:2;fill:var(--nav)}.pi-overview svg a:hover .node-outline,.pi-overview svg a:focus-visible .node-outline{stroke:var(--accent);stroke-width:2.4}.pi-overview svg a:focus-visible{outline:none}.pi-overview svg .edge{fill:none;stroke:var(--muted);stroke-width:1.5}.pi-overview svg .edge-return{stroke-dasharray:5 4}.pi-overview svg .label-mask{fill:var(--paper)}.pi-overview svg .type-tag{fill:var(--code);stroke:var(--line);stroke-width:.8}.overview-chapter-index{display:flex;gap:7px;flex-wrap:wrap;margin-top:15px;font-size:12px;line-height:1.6}.overview-chapter-index a{border:1px solid var(--line);padding:5px 8px;border-radius:5px;text-decoration:none;color:var(--muted)}.overview-chapter-index a:hover{color:var(--accent);border-color:var(--accent)}.overview-note{font-size:12px;line-height:1.8;color:var(--muted);margin:13px 0 0}.overview-bounds{border-left:3px solid var(--accent);padding-left:11px;color:var(--muted)}
+@media(max-width:1000px){.overview-panel{grid-template-columns:1fr;min-height:0;gap:14px}.overview-panel-side{border-top:1px solid var(--line);padding-top:12px}}
+@media(max-width:600px){.pi-overview{padding:17px}.overview-head h2{font-size:22px}.overview-panel{padding:15px}.overview-panel h3{font-size:17px}.overview-head p{font-size:13px}}
+@media print{.pi-overview{break-before:page;padding:0;border:0}.overview-diagram-container{overflow:visible;border:0}.pi-overview svg{min-width:0;width:100%}.overview-panel{display:block!important;break-inside:avoid;background:none;min-height:0}.overview-chapter-index,.overview-head>a{display:none}.overview-target{display:none}}
+</style></head><body><a class="blog-back" href="../../../index.html">← Agent 笔记 · 所有文章</a><div class="read-progress" aria-hidden="true"></div><div class="mobile-head"><span>PI · 源码伴读</span><button data-menu aria-expanded="false" aria-controls="chapter-nav">章节目录</button></div><div class="layout"><aside class="sidebar" id="chapter-nav"><div class="eyebrow">SOURCE WALKTHROUGH</div><div class="brand">PI Agent Harness</div><p>从一次请求到执行、历史和恢复。<br>按 01 → 12 顺序阅读。</p><input class="nav-search" data-search aria-label="筛选章节" placeholder="筛选章节标题"><nav aria-label="章节目录"><a class="nav-link" href="../pi-overview.html">总览 · 各部分怎样配合</a><a class="nav-link" href="01-%E5%87%86%E5%A4%87%E4%B8%8E%E6%9E%B6%E6%9E%84.html">01 · 准备与架构——先认清对象和职责</a><a class="nav-link" href="02-Agent-Loop.html">02 · Agent Loop——工具执行后，为什么还要请求模型？</a><a class="nav-link" href="03-%E6%A8%A1%E5%9E%8B%E5%8D%8F%E8%AE%AE%E4%B8%8E%E6%B5%81.html">03 · 模型协议与流——从数据片段到完整消息</a><a class="nav-link" href="04-%E5%B7%A5%E5%85%B7%E4%B8%8E%E4%BB%A3%E7%A0%81%E4%BF%AE%E6%94%B9.html">04 · 工具与代码修改——从模型意图到真实副作用</a><a class="nav-link" href="05-%E8%B0%83%E5%BA%A6%E4%B8%8E%E6%94%B6%E5%B0%BE.html">05 · 调度与收尾——并行、队列、停止、取消与重试</a><a class="nav-link" href="06-%E9%A2%84%E6%B5%8B%E4%B8%8E%E9%AA%8C%E8%AF%81.html">06 · 预测与验证——怎样用测试检查自己读懂了没有</a><a class="nav-link" href="07-%E4%BC%9A%E8%AF%9D%E4%B8%8E%E5%8E%86%E5%8F%B2.html">07 · 会话与历史——保存过的内容，为什么模型未必看得见</a><a class="nav-link" href="08-%E4%B8%8A%E4%B8%8B%E6%96%87%E5%8E%8B%E7%BC%A9.html">08 · 上下文压缩——预算、切点、信息损失与缓存</a><a class="nav-link current" href="09-Extension%E4%B8%8ESkill.html">09 · Extension 与 Skill——怎样增加工具和工作方法</a><a class="nav-link" href="10-MCP%E5%8F%91%E7%8E%B0%E4%B8%8E%E8%B0%83%E7%94%A8.html">10 · MCP——外部工具怎样进入 PI 的执行循环</a><a class="nav-link" href="11-Subagent%E4%B8%8EDurable.html">11 · Subagent 与 durable——委派、后台工作和恢复</a><a class="nav-link" href="12-%E5%AE%89%E5%85%A8%E8%AF%84%E6%B5%8B%E4%B8%8E%E6%9C%8D%E5%8A%A1.html">12 · 安全、评测与服务——怎样判断 Agent 真正完成了任务</a></nav><div class="nav-tools"><button data-theme-toggle>切换明暗</button><button onclick="window.print()">打印</button></div><p>源码：<a href="https://github.com/earendil-works/pi/tree/eb326d265ae0b88489a6d10319307780df827cdf/" target="_blank" rel="noopener noreferrer">eb326d2</a><br>包版本：1.0.4<br>本地整理：2026-10-26</p></aside><main class="main"><header class="hero"><div class="eyebrow">PI STUDY NOTES / 01—12</div><h1>第 09 节：Extension 与 Skill——怎样增加工具和工作方法</h1><p>逐段看代码怎样接收输入、请求模型、执行工具、保存历史，并处理取消、重试和恢复。</p><div class="meta"><span>12 节完整讲解</span><span>固定提交源码引用</span><span>解释 · 例子 · 练习 · 面试追问</span></div><div class="downloads"><a href="../PI-Agent-Harness-01-12.md" download>下载 Markdown 合订本</a><a href="../README.md">阅读说明</a></div><div class="notice">静态源码伴读。示意轨迹、待执行练习与实际运行结果分别说明。本文提供源码分析与待执行练习，不将源码阅读作为模型实测或生产验收。</div></header><section class="chapter" data-chapter="9"><h1 id="chapter-09" tabindex="-1">第 09 节：Extension 与 Skill——怎样增加工具和工作方法</h1><details class="chapter-toc"><summary>本节小节目录 · 12 项</summary><ol><li><a href="#c9-s1">一、先把几个常用名字对上具体对象</a></li><li><a href="#c9-s2">二、最小 Extension 在什么时候运行</a></li><li><a href="#c9-s3">三、registerTool 先登记定义</a></li><li><a href="#c9-s4">四、读一个 echo 工具示例</a></li><li><a href="#c9-s5">五、扩展工具怎样进入第四节的执行管线</a></li><li><a href="#c9-s6">六、hook 怎样登记、怎样影响结果</a></li><li><a href="#c9-s7">七、Skill 是怎样被发现的</a></li><li><a href="#c9-s8">八、渐进加载具体节省了什么</a></li><li><a href="#c9-s9">九、显式 /skill 命令走另一条入口</a></li><li><a href="#c9-s10">十、Extension、Skill、工具各自怎么配合</a></li><li><a href="#c9-s11">十一、学习时做两种小实验</a></li><li><a href="#c9-s12">十二、面试可以怎样追问</a></li></ol></details>
+<p>假设你希望 PI 成为代码取证助手：读取相关代码，给出准确出处；同时禁止模型调用 bash。这里至少涉及两种内容：可执行的限制逻辑，以及指导模型怎样找证据的文字。</p>
+<p>PI 用 Extension 接入代码，用 Skill 提供任务方法。两者可以配合，也可以独立使用。本节依据固定源码，示例代码供阅读或后续实验，本次未加载扩展或运行模型。</p>
+<h2 id="c9-s1" tabindex="-1">一、先把几个常用名字对上具体对象</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>名称</th>
+<th>实际形式</th>
+<th>示例</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Tool</td>
+<td>名称、描述、schema 和 execute 函数</td>
+<td>read、echo</td>
+</tr>
+<tr>
+<td>Extension</td>
+<td>加载到 PI 的可执行模块</td>
+<td>注册工具、命令、hook</td>
+</tr>
+<tr>
+<td>Skill</td>
+<td>SKILL.md 和它引用的材料</td>
+<td>怎样按源码回答问题</td>
+</tr>
+<tr>
+<td>Prompt template</td>
+<td>可复用的提示文字</td>
+<td>展开固定的审查问题</td>
+</tr>
+<tr>
+<td>MCP</td>
+<td>发现和调用外部能力的协议</td>
+<td>从服务取得工具列表并调用</td>
+</tr>
+</tbody></table></div>
+<p>RAG 则是检索和生成的组织方式，可以通过工具接入；它不是这张表里某一个文件格式的同义词。</p>
+<h2 id="c9-s2" tabindex="-1">二、最小 Extension 在什么时候运行</h2>
+<p>普通扩展导出一个工厂函数，加载器把 <code>ExtensionAPI</code> 传给它。工厂被调用时，你可以注册能力。</p>
+<pre><code class="language-ts">import type { ExtensionAPI } from &quot;@earendil-works/pi-coding-agent&quot;;
+
+export default function (pi: ExtensionAPI) {
+  // 在这里登记工具、命令或事件处理函数
+}
+</code></pre>
+<p>要区分两次调用：扩展初始化时调用工厂；以后运行到特定事件时，才调用你登记的 handler。工厂初始化不是模型的一次工具执行。</p>
+<p>查看 <a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/coding-agent/src/core/extensions/loader.ts#L595-L650">扩展初始化与加载</a> 时，先找导出函数怎样被取得，再看调用时传入的 API 来自哪里。</p>
+<h2 id="c9-s3" tabindex="-1">三、registerTool 先登记定义</h2>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/coding-agent/src/core/extensions/loader.ts#L289-L301">registerTool</a> 做的事情是检查参数 schema 的基本形式，把工具定义存进扩展自己的工具表，再触发工具集合刷新。</p>
+<pre><code class="language-ts">extension.tools.set(tool.name, {
+  definition: tool,
+  sourceInfo: extension.sourceInfo,
+});
+runtime.refreshTools();
+</code></pre>
+<p>登记工具不会立即执行 execute，也不意味着模型已经调用。还要经过当前工具集合和 exposure 策略，工具才以相应方式供模型或脚本使用。</p>
+<p><code>ToolDefinition</code> 同时有模型相关字段、执行字段和 UI 字段。名称、description、parameters 告诉模型怎样提出调用；execute 决定宿主真实动作；label 和渲染字段用于显示。见 <a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/coding-agent/src/core/extensions/types.ts#L574-L642">类型定义</a>。</p>
+<h2 id="c9-s4" tabindex="-1">四、读一个 echo 工具示例</h2>
+<p>下面的代码按当前接口编写，展示最小结构；没有作为本轮实跑结果。</p>
+<pre><code class="language-ts">import type { ExtensionAPI } from &quot;@earendil-works/pi-coding-agent&quot;;
+import { Type } from &quot;typebox&quot;;
+
+export default function (pi: ExtensionAPI) {
+  pi.registerTool({
+    name: &quot;echo_note&quot;,
+    label: &quot;Echo note&quot;,
+    description: &quot;Return the supplied text unchanged.&quot;,
+    parameters: Type.Object({ text: Type.String() }),
+    async execute(_toolCallId, params) {
+      return {
+        content: [{ type: &quot;text&quot;, text: params.text }],
+        details: { characterCount: params.text.length },
+      };
+    },
+  });
+}
+</code></pre>
+<p>模型看见的是这个工具的调用说明，不会拿到函数源码并自行运行。它提出 <code>echo_note({text:&quot;hello&quot;})</code> 后，宿主找到已登记的 execute，再执行并回传。</p>
+<p><code>content</code> 面向模型，<code>details</code> 可以用于显示或程序记录。若工具还要供 codemode 可靠消费，可以设计 structuredContent/outputSchema；声明输出 schema 本身不等于普通 core 自动验证所有输出。</p>
+<h2 id="c9-s5" tabindex="-1">五、扩展工具怎样进入第四节的执行管线</h2>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/coding-agent/src/core/extensions/wrapper.ts#L1-L29">wrapRegisteredTool</a> 把注册定义适配为 AgentTool，并为 execute 提供运行上下文。</p>
+<pre><code class="language-text">扩展 registerTool
+→ 当前工具集合刷新
+→ 包装为 AgentTool
+→ Agent Loop 按名称找到它
+→ prepare / validate / before
+→ execute
+→ after / ToolResult
+</code></pre>
+<p>当前 wrapper 的主要职责是上下文适配。工具调用和结果拦截由 AgentSession 安装在 agent-core hooks 上，不能把所有控制都归到 wrapper。</p>
+<p>这一层拆分让内建工具和扩展工具共享普通工具执行规则，同时扩展仍能获得自己的 ctx。</p>
+<h2 id="c9-s6" tabindex="-1">六、hook 怎样登记、怎样影响结果</h2>
+<p>你写：</p>
+<pre><code class="language-ts">pi.on(&quot;tool_call&quot;, async event =&gt; {
+  if (event.toolName === &quot;bash&quot;) {
+    return { block: true, reason: &quot;本会话不允许 bash&quot; };
+  }
+  return undefined;
+});
+</code></pre>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/coding-agent/src/core/extensions/loader.ts#L270-L286">on 的实现</a> 将 handler 放进事件对应的数组。返回的函数用于取消这次登记。</p>
+<p>真正执行时，AgentSession 将 beforeToolCall 接到扩展运行器：</p>
+<pre><code class="language-text">beforeToolCall
+→ AgentSession._beforeToolCall
+→ emitToolCall
+→ 已注册的 tool_call handlers
+→ 返回 block/reason
+</code></pre>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/coding-agent/src/core/agent-session.ts#L652-L701">接线位置</a>；<a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/coding-agent/src/core/extensions/runner.ts#L1242-L1260">处理函数调度</a>。当前 tool_call handlers 按注册集合顺序处理，遇到 block 就返回。</p>
+<p>执行后对应 tool_result，可以查看或修改结果。要留意不同事件的异常策略：当前 tool_call 处理异常会沿前置准备路径阻止执行；tool_result 扩展运行器则记录 handler 异常并继续遍历。不要假设所有事件 handler 抛错后的行为完全一致。</p>
+<p>前置 hook 是可信可执行代码的一部分。普通 core 中参数在 before 之前校验，before 可以原地改 args，之后没有自动复验；第 04 节已经解释这个边界。扩展应自己维护最终值有效性，避免把原本通过校验的参数改坏。</p>
+<h2 id="c9-s7" tabindex="-1">七、Skill 是怎样被发现的</h2>
+<p>看 <a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/coding-agent/src/core/skills.ts#L277-L345">loadSkillFromFile</a>：它读取文件全文，解析 frontmatter，检查 name 和 description，保存名称、描述、文件路径、目录和来源等元信息。</p>
+<p>示意文件：</p>
+<pre><code class="language-markdown">---
+name: evidence-note
+description: 回答代码实现问题时，定位实际调用链并给出源码依据。
+---
+
+先定位用户提到的入口和直接调用者。
+读取相关实现，区分代码事实、推测和未验证行为。
+回答时给出文件与函数位置。
+找不到实现时说明缺口，不补造执行结果。
+</code></pre>
+<p>这些文字告诉模型怎样工作。真正读取文件仍由 read 或其他已提供的工具执行，Markdown 文件不会自己启动一个执行器。</p>
+<h2 id="c9-s8" tabindex="-1">八、渐进加载具体节省了什么</h2>
+<p>容易误解的是“需要时才读 Skill”。当前加载器启动阶段已经读过磁盘文件来解析元信息；渐进发生在模型上下文的提供方式。</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/coding-agent/src/core/skills.ts#L358-L387">formatSkillsForPrompt</a> 主要给模型提供：</p>
+<pre><code class="language-text">name
+description
+location
+以及匹配任务时读取 Skill 正文的说明
+</code></pre>
+<p>模型先看到目录，决定适用后再读正文，然后按正文查附件或脚本。这样不需要把每个 Skill 的全文一次塞进窗口。</p>
+<p>description 应让模型知道何时适用。正文则承载具体步骤。描述模糊会导致选错 Skill；正文冗长会增加读入成本；两者的质量需要用真实任务验证。</p>
+<p><code>disable-model-invocation: true</code> 会让该 Skill 不出现在自动选择目录中，但可显式调用。这个开关控制模型发现方式，不是 OS 文件权限。</p>
+<h2 id="c9-s9" tabindex="-1">九、显式 /skill 命令走另一条入口</h2>
+<p>用户输入 <code>/skill:evidence-note 解释登录逻辑</code> 时，<a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/coding-agent/src/core/agent-session.ts#L2142-L2169">_expandSkillCommand</a> 查到 Skill，重新读取文件、去掉 frontmatter，将正文包装为带名称、路径和相对路径说明的文本块，再接用户参数。</p>
+<pre><code class="language-text">显式命令 → 找到 Skill → 正文展开到输入 → 后续模型处理
+</code></pre>
+<p>这和模型先读目录、再主动调用 read 取正文的自动发现路线不同。读学习资料时应说明正在讲哪一条，不能把所有 Skill 使用都写成同一个时序。</p>
+<p>未知 Skill 名或读取失败的行为也由这段代码处理；失败不能冒充成功加载。</p>
+<h2 id="c9-s10" tabindex="-1">十、Extension、Skill、工具各自怎么配合</h2>
+<p>以代码取证任务为例：</p>
+<pre><code class="language-text">Skill：要求先定位调用者、读实现、给出处
+read 工具：负责取得源码内容
+Extension hook：阻止本会话不允许的工具动作
+宿主验收：检查回答引用是否真的支持结论
+</code></pre>
+<p>Skill 可以要求“只读”，但真正能执行哪些动作，还取决于工具集合、代码检查和环境权限。一个已加载的 Extension 本身就是同进程可执行代码，不能靠它的名字假定已被沙箱隔离。</p>
+<p>如果你需要所有文件读取都限制在一个目录，应该在实际执行路径落实路径与符号链接处理，并用环境限制进一步约束；仅在 Skill 中写一句“别读外面”不是确定性实现。</p>
+<h2 id="c9-s11" tabindex="-1">十一、学习时做两种小实验</h2>
+<p>第一种研究工具契约：给 echo_note 合法参数、缺参数、空字符串，先预测 schema 和 execute 的结果，再检查实际调用记录。</p>
+<p>第二种研究 Skill 发现：保持问题和工具不变，比较有目录、无目录、显式 /skill 三种输入。观察模型是否读正文、读了哪些附件、最终回答是否有证据。只检查“模型说用了 Skill”不够。</p>
+<p>本节未进行这些实验，也不声称示例提高了回答质量。执行时把模型、输入、工具和 Skill 版本记下来，才有可比较的结果。</p>
+<h2 id="c9-s12" tabindex="-1">十二、面试可以怎样追问</h2>
+<p>从“如何给 Agent 增加能力”开始：你会新增工具还是写 Skill？函数在哪里注册？模型什么时候知道它？谁执行？参数错误在哪里拒绝？hook 是哪一阶段调用？Skill 正文什么时候进入输入？插件出错怎样处理？</p>
+<p>把这条链说明白后，第 10 节就只是将其中一部分执行函数接到外部 MCP 服务。</p>
+<div class="chapter-links"><a href="08-%E4%B8%8A%E4%B8%8B%E6%96%87%E5%8E%8B%E7%BC%A9.html">← 第 8 节</a><a href="10-MCP%E5%8F%91%E7%8E%B0%E4%B8%8E%E8%B0%83%E7%94%A8.html">第 10 节 →</a><a href="09-Extension%E4%B8%8ESkill.md" download>本节 Markdown</a><a href="../index.html">返回合订本</a></div></section><footer class="footer">本系列按固定版本源码整理。源码链接固定到研究提交；本地源码若更新，请按函数名复核。HTML 内嵌样式和脚本，正文可离线阅读。</footer></main></div><button class="back-top" data-top aria-label="返回顶部">↑ 顶部</button><script>
+const root=document.documentElement;
+try{root.dataset.theme=localStorage.getItem('pi-study-theme')||'light'}catch{}
+document.querySelectorAll('[data-theme-toggle]').forEach(b=>b.addEventListener('click',()=>{root.dataset.theme=root.dataset.theme==='dark'?'light':'dark';try{localStorage.setItem('pi-study-theme',root.dataset.theme)}catch{}}));
+document.querySelector('[data-menu]')?.addEventListener('click',e=>{const expanded=document.querySelector('.sidebar').classList.toggle('open');e.currentTarget.setAttribute('aria-expanded',String(expanded))});
+document.querySelector('[data-search]')?.addEventListener('input',e=>{const q=e.target.value.trim().toLowerCase();document.querySelectorAll('.nav-link').forEach(a=>a.hidden=!a.textContent.toLowerCase().includes(q))});
+document.querySelector('[data-top]')?.addEventListener('click',()=>window.scrollTo({top:0,behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth'}));
+function progress(){const total=document.documentElement.scrollHeight-innerHeight;document.querySelector('.read-progress').style.width=(total>0?scrollY/total*100:100)+'%'}
+addEventListener('scroll',progress,{passive:true});addEventListener('resize',progress);progress();
+const observer=new IntersectionObserver(entries=>{for(const entry of entries)if(entry.isIntersecting){const id=entry.target.id;document.querySelectorAll('.nav-link[href^="#"]').forEach(a=>a.setAttribute('aria-current',String(a.getAttribute('href')==='#'+id))) }},{rootMargin:'-5% 0px -75% 0px'});
+document.querySelectorAll('.chapter>h1').forEach(h=>observer.observe(h));
+</script></body></html>

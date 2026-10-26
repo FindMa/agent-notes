@@ -1,0 +1,14 @@
+[
+  {
+    "slug": "pi-harness",
+    "title": "PI Agent Harness 源码伴读",
+    "description": "从一次模型请求开始，读懂工具执行、消息流、会话上下文、MCP 与持久恢复。12 节完整讲解，配有互动总览。",
+    "date": "2026-10-26",
+    "kind": "series",
+    "tags": [
+      "源码阅读",
+      "Agent 工程"
+    ],
+    "chapters": 12
+  }
+]

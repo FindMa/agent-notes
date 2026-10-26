@@ -1,0 +1,98 @@
+[
+  {
+    "number": 1,
+    "title": "第 01 节：准备与架构——先认清对象和职责",
+    "markdown": "chapters/01-准备与架构.md",
+    "html": "chapters/01-准备与架构.html",
+    "characters": 12538,
+    "sections": 9
+  },
+  {
+    "number": 2,
+    "title": "第 02 节：Agent Loop——工具执行后，为什么还要请求模型？",
+    "markdown": "chapters/02-Agent-Loop.md",
+    "html": "chapters/02-Agent-Loop.html",
+    "characters": 15974,
+    "sections": 17
+  },
+  {
+    "number": 3,
+    "title": "第 03 节：模型协议与流——从数据片段到完整消息",
+    "markdown": "chapters/03-模型协议与流.md",
+    "html": "chapters/03-模型协议与流.html",
+    "characters": 19525,
+    "sections": 19
+  },
+  {
+    "number": 4,
+    "title": "第 04 节：工具与代码修改——从模型意图到真实副作用",
+    "markdown": "chapters/04-工具与代码修改.md",
+    "html": "chapters/04-工具与代码修改.html",
+    "characters": 19349,
+    "sections": 17
+  },
+  {
+    "number": 5,
+    "title": "第 05 节：调度与收尾——并行、队列、停止、取消与重试",
+    "markdown": "chapters/05-调度与收尾.md",
+    "html": "chapters/05-调度与收尾.html",
+    "characters": 9396,
+    "sections": 13
+  },
+  {
+    "number": 6,
+    "title": "第 06 节：预测与验证——怎样用测试检查自己读懂了没有",
+    "markdown": "chapters/06-预测与验证.md",
+    "html": "chapters/06-预测与验证.html",
+    "characters": 6222,
+    "sections": 11
+  },
+  {
+    "number": 7,
+    "title": "第 07 节：会话与历史——保存过的内容，为什么模型未必看得见",
+    "markdown": "chapters/07-会话与历史.md",
+    "html": "chapters/07-会话与历史.html",
+    "characters": 6560,
+    "sections": 12
+  },
+  {
+    "number": 8,
+    "title": "第 08 节：上下文压缩——预算、切点、信息损失与缓存",
+    "markdown": "chapters/08-上下文压缩.md",
+    "html": "chapters/08-上下文压缩.html",
+    "characters": 6049,
+    "sections": 12
+  },
+  {
+    "number": 9,
+    "title": "第 09 节：Extension 与 Skill——怎样增加工具和工作方法",
+    "markdown": "chapters/09-Extension与Skill.md",
+    "html": "chapters/09-Extension与Skill.html",
+    "characters": 6381,
+    "sections": 12
+  },
+  {
+    "number": 10,
+    "title": "第 10 节：MCP——外部工具怎样进入 PI 的执行循环",
+    "markdown": "chapters/10-MCP发现与调用.md",
+    "html": "chapters/10-MCP发现与调用.html",
+    "characters": 6028,
+    "sections": 11
+  },
+  {
+    "number": 11,
+    "title": "第 11 节：Subagent 与 durable——委派、后台工作和恢复",
+    "markdown": "chapters/11-Subagent与Durable.md",
+    "html": "chapters/11-Subagent与Durable.html",
+    "characters": 6432,
+    "sections": 13
+  },
+  {
+    "number": 12,
+    "title": "第 12 节：安全、评测与服务——怎样判断 Agent 真正完成了任务",
+    "markdown": "chapters/12-安全评测与服务.md",
+    "html": "chapters/12-安全评测与服务.html",
+    "characters": 7040,
+    "sections": 15
+  }
+]

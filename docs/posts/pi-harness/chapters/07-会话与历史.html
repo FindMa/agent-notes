@@ -1,0 +1,213 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light dark"><title>第 07 节：会话与历史——保存过的内容，为什么模型未必看得见</title><style>
+.blog-back{display:block;max-width:1440px;margin:18px auto 0;padding:0 28px;font-size:14px}
+:root{color-scheme:light;--bg:#f5f3ee;--paper:#fffefa;--text:#26332e;--muted:#65736b;--line:#d9dfd6;--accent:#28664e;--code:#eef2ed;--nav:#edf1e9}
+:root[data-theme=dark]{color-scheme:dark;--bg:#151c19;--paper:#1c2520;--text:#e0e8df;--muted:#abb9ad;--line:#3b4b40;--accent:#9ed4ac;--code:#25332a;--nav:#202c24}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:28px}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.9 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}a{color:var(--accent);text-underline-offset:3px;overflow-wrap:anywhere}a:hover{text-decoration-thickness:2px}button,input{font:inherit}button{cursor:pointer;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--text);padding:7px 13px}button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+.layout{max-width:1440px;margin:0 auto;display:grid;grid-template-columns:275px minmax(0,1fr);gap:30px;padding:28px 28px 70px}.sidebar{position:sticky;top:24px;max-height:calc(100vh - 48px);overflow:auto;padding:5px 15px 20px 0;scrollbar-width:thin}.brand{font-size:20px;font-weight:700;line-height:1.5;margin-bottom:8px}.eyebrow{font-size:12px;letter-spacing:.13em;color:var(--muted)}.sidebar p{font-size:13px;color:var(--muted);margin:8px 0 18px}.nav-link{display:block;padding:10px 12px;border-radius:7px;font-size:14px;text-decoration:none;line-height:1.7}.nav-link:hover,.nav-link.current{background:var(--nav)}.nav-link[aria-current=true]{background:var(--nav);font-weight:600}.nav-tools{display:flex;gap:8px;margin:16px 0}.nav-tools button{font-size:13px}.nav-search{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:7px;background:var(--paper);color:var(--text);margin:0 0 13px}.main{min-width:0}.hero{padding:34px 44px;background:var(--paper);border:1px solid var(--line);border-radius:12px;margin-bottom:24px}.hero h1{font-size:30px;line-height:1.5;margin:8px 0 12px}.hero p{margin:9px 0}.meta{display:flex;gap:8px 18px;flex-wrap:wrap;font-size:13px;color:var(--muted)}.downloads{display:flex;gap:20px;flex-wrap:wrap;font-size:14px;margin-top:18px}.notice{border-left:3px solid var(--accent);padding:8px 14px;background:var(--nav);margin:18px 0 0;font-size:14px}
+.chapter{padding:35px 44px 40px;background:var(--paper);border:1px solid var(--line);border-radius:12px;margin-bottom:26px;overflow-wrap:break-word}.chapter h1{font-size:27px;line-height:1.55;margin:0 0 24px}.chapter h2{font-size:22px;line-height:1.65;margin:42px 0 16px;padding-top:8px;border-top:1px solid var(--line)}.chapter h3{font-size:18px;line-height:1.7;margin:28px 0 12px}.chapter h4{font-size:16px;margin:22px 0 10px}p{margin:14px 0}ul,ol{padding-left:1.55em}li{margin:6px 0}blockquote{border-left:3px solid var(--accent);margin:20px 0;padding:1px 18px;color:var(--muted);background:var(--nav);border-radius:0 7px 7px 0}blockquote p{margin:12px 0}code{font: .88em/1.65 ui-monospace,SFMono-Regular,Consolas,monospace;background:var(--code);padding:2px 5px;border-radius:4px;overflow-wrap:anywhere}pre{background:var(--code);padding:18px 20px;border:1px solid var(--line);border-radius:9px;overflow-x:auto;max-width:100%;font-size:14px;line-height:1.75;tab-size:2}pre code{padding:0;background:transparent;white-space:pre;overflow-wrap:normal;word-break:normal;font-size:inherit}.table-wrap{overflow-x:auto;margin:22px 0;border:1px solid var(--line);border-radius:8px}table{border-collapse:collapse;width:100%;min-width:440px;font-size:14px;line-height:1.75}th,td{padding:11px 14px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}th{background:var(--nav);font-weight:600}tr:last-child td{border-bottom:0}hr{border:0;border-top:1px solid var(--line);margin:30px 0}strong{font-weight:650}.chapter-toc{background:var(--nav);border-radius:8px;padding:12px 16px;margin:0 0 24px}.chapter-toc summary{cursor:pointer;font-size:14px}.chapter-toc ol{columns:2;font-size:13px;line-height:1.7;margin:12px 0 3px}.chapter-toc li{break-inside:avoid;margin:5px 0}.chapter-toc a{text-decoration:none}.chapter-links{display:flex;flex-wrap:wrap;gap:16px;margin:25px 0 0;font-size:13px;color:var(--muted);border-top:1px solid var(--line);padding-top:17px}.mobile-head{display:none}.footer{color:var(--muted);font-size:13px;padding:8px 8px 0}.back-top{position:fixed;right:20px;bottom:20px;font-size:13px;box-shadow:0 2px 12px #0001}.read-progress{position:fixed;top:0;left:0;height:3px;background:var(--accent);width:0;z-index:10}.source-tag{font-size:12px;color:var(--muted)}
+@media(max-width:900px){.layout{grid-template-columns:1fr;padding:15px 14px 60px;gap:15px}.sidebar{position:static;max-height:none;display:none;padding:16px;background:var(--paper);border:1px solid var(--line);border-radius:10px}.sidebar.open{display:block}.mobile-head{display:flex;justify-content:space-between;align-items:center;padding:14px 16px 0}.hero,.chapter{padding:24px}.hero h1{font-size:26px}.chapter h1{font-size:24px}.chapter h2{font-size:21px}.chapter-toc ol{columns:1}.back-top{bottom:12px;right:12px}}
+@media(max-width:480px){body{font-size:15px}.hero,.chapter{padding:19px 17px}.hero h1{font-size:24px}.chapter h1{font-size:23px}pre{padding:14px;font-size:12px}.table-wrap{margin:18px 0}.chapter h2{font-size:19px}.meta{font-size:12px}}
+@media print{body{background:white;color:#111;font-size:11pt}.layout{display:block;padding:0}.sidebar,.mobile-head,.nav-tools,.back-top,.read-progress,.downloads,.chapter-links,.chapter-toc{display:none!important}.hero,.chapter{border:none;padding:0;border-radius:0}.chapter{break-before:page}pre{white-space:pre-wrap;overflow-wrap:anywhere;border:1px solid #ddd;font-size:9pt}pre code{white-space:pre-wrap;overflow-wrap:anywhere}table{min-width:0}.table-wrap{overflow:visible}a{color:#111}h1,h2,h3{break-after:avoid}tr{break-inside:avoid}}
+.nav-link[hidden]{display:none}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+
+.pi-overview{position:relative;margin:0 0 28px;border:1px solid var(--line);border-radius:10px;background:var(--paper);padding:24px;min-width:0;max-width:100%;color:var(--text)}.overview-target{position:absolute;top:0;left:0;width:1px;height:1px;scroll-margin-top:20px}.overview-head{margin:0 0 16px}.overview-head .overview-kicker{font:12px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:.1em;color:var(--muted)}.overview-head h2{font-size:25px;line-height:1.5;margin:6px 0 9px;border:0;padding:0}.overview-head p{font-size:14px;line-height:1.8;color:var(--muted);margin:7px 0}.overview-head a{font-size:13px}.overview-panel{display:none;grid-template-columns:minmax(0,1.45fr) minmax(220px,1fr);gap:20px;border:1px solid var(--line);border-radius:8px;padding:18px 20px;margin-bottom:18px;min-height:210px;background:var(--nav)}.overview-panel[data-detail="loop"]{display:grid}.pi-overview:has(.overview-target:target) .overview-panel{display:none}.pi-overview:has(#pi-map-session:target) .overview-panel[data-detail="session"]{display:grid}.pi-overview:has(#pi-map-session:target) [data-map-node="session"] .node-outline{stroke:var(--accent);stroke-width:2.4;fill:var(--nav)}
+.pi-overview:has(#pi-map-loop:target) .overview-panel[data-detail="loop"]{display:grid}.pi-overview:has(#pi-map-loop:target) [data-map-node="loop"] .node-outline{stroke:var(--accent);stroke-width:2.4;fill:var(--nav)}
+.pi-overview:has(#pi-map-model:target) .overview-panel[data-detail="model"]{display:grid}.pi-overview:has(#pi-map-model:target) [data-map-node="model"] .node-outline{stroke:var(--accent);stroke-width:2.4;fill:var(--nav)}
+.pi-overview:has(#pi-map-history:target) .overview-panel[data-detail="history"]{display:grid}.pi-overview:has(#pi-map-history:target) [data-map-node="history"] .node-outline{stroke:var(--accent);stroke-width:2.4;fill:var(--nav)}
+.pi-overview:has(#pi-map-tools:target) .overview-panel[data-detail="tools"]{display:grid}.pi-overview:has(#pi-map-tools:target) [data-map-node="tools"] .node-outline{stroke:var(--accent);stroke-width:2.4;fill:var(--nav)}
+.pi-overview:has(#pi-map-extensions:target) .overview-panel[data-detail="extensions"]{display:grid}.pi-overview:has(#pi-map-extensions:target) [data-map-node="extensions"] .node-outline{stroke:var(--accent);stroke-width:2.4;fill:var(--nav)}
+.pi-overview:has(#pi-map-validation:target) .overview-panel[data-detail="validation"]{display:grid}.pi-overview:has(#pi-map-validation:target) [data-map-node="validation"] .node-outline{stroke:var(--accent);stroke-width:2.4;fill:var(--nav)}
+.pi-overview:has(#pi-map-subagents:target) .overview-panel[data-detail="subagents"]{display:grid}.pi-overview:has(#pi-map-subagents:target) [data-map-node="subagents"] .node-outline{stroke:var(--accent);stroke-width:2.4;fill:var(--nav)}
+.overview-panel h3{margin:0 0 7px;font-size:19px;line-height:1.6}.overview-panel p{margin:6px 0;font-size:14px;line-height:1.8}.overview-io{display:grid;grid-template-columns:38px minmax(0,1fr);gap:4px 8px;font-size:13px;line-height:1.75;margin:12px 0 0}.overview-io dt{color:var(--muted)}.overview-io dd{margin:0}.overview-chapter-links{display:flex;gap:8px;flex-wrap:wrap;margin:3px 0 12px}.overview-chapter-links a{display:inline-block;background:var(--paper);border:1px solid var(--line);border-radius:5px;padding:5px 10px;font-size:13px;text-decoration:none}.overview-sources{list-style:none;padding:0;margin:0;font-size:12px;line-height:1.8}.overview-sources li{margin:7px 0}.overview-sources code{background:none;padding:0;font-size:11px;overflow-wrap:anywhere}.overview-diagram-container{width:100%;max-width:100%;overflow-x:auto;overscroll-behavior-x:contain;border:1px solid var(--line);border-radius:8px;background:var(--paper)}.pi-overview svg{width:100%;min-width:960px;display:block;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}.pi-overview svg text{fill:var(--text)}.pi-overview svg .svg-muted{fill:var(--muted)}.pi-overview svg .svg-mono{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}.pi-overview svg .node-outline{fill:var(--paper);stroke:var(--line);stroke-width:1.4}.pi-overview svg .node-state{fill:var(--code)}.pi-overview svg .node-optional{stroke-dasharray:5 4}.pi-overview svg .node-focal{stroke:var(--accent);stroke-width:2;fill:var(--nav)}.pi-overview svg a:hover .node-outline,.pi-overview svg a:focus-visible .node-outline{stroke:var(--accent);stroke-width:2.4}.pi-overview svg a:focus-visible{outline:none}.pi-overview svg .edge{fill:none;stroke:var(--muted);stroke-width:1.5}.pi-overview svg .edge-return{stroke-dasharray:5 4}.pi-overview svg .label-mask{fill:var(--paper)}.pi-overview svg .type-tag{fill:var(--code);stroke:var(--line);stroke-width:.8}.overview-chapter-index{display:flex;gap:7px;flex-wrap:wrap;margin-top:15px;font-size:12px;line-height:1.6}.overview-chapter-index a{border:1px solid var(--line);padding:5px 8px;border-radius:5px;text-decoration:none;color:var(--muted)}.overview-chapter-index a:hover{color:var(--accent);border-color:var(--accent)}.overview-note{font-size:12px;line-height:1.8;color:var(--muted);margin:13px 0 0}.overview-bounds{border-left:3px solid var(--accent);padding-left:11px;color:var(--muted)}
+@media(max-width:1000px){.overview-panel{grid-template-columns:1fr;min-height:0;gap:14px}.overview-panel-side{border-top:1px solid var(--line);padding-top:12px}}
+@media(max-width:600px){.pi-overview{padding:17px}.overview-head h2{font-size:22px}.overview-panel{padding:15px}.overview-panel h3{font-size:17px}.overview-head p{font-size:13px}}
+@media print{.pi-overview{break-before:page;padding:0;border:0}.overview-diagram-container{overflow:visible;border:0}.pi-overview svg{min-width:0;width:100%}.overview-panel{display:block!important;break-inside:avoid;background:none;min-height:0}.overview-chapter-index,.overview-head>a{display:none}.overview-target{display:none}}
+</style></head><body><a class="blog-back" href="../../../index.html">← Agent 笔记 · 所有文章</a><div class="read-progress" aria-hidden="true"></div><div class="mobile-head"><span>PI · 源码伴读</span><button data-menu aria-expanded="false" aria-controls="chapter-nav">章节目录</button></div><div class="layout"><aside class="sidebar" id="chapter-nav"><div class="eyebrow">SOURCE WALKTHROUGH</div><div class="brand">PI Agent Harness</div><p>从一次请求到执行、历史和恢复。<br>按 01 → 12 顺序阅读。</p><input class="nav-search" data-search aria-label="筛选章节" placeholder="筛选章节标题"><nav aria-label="章节目录"><a class="nav-link" href="../pi-overview.html">总览 · 各部分怎样配合</a><a class="nav-link" href="01-%E5%87%86%E5%A4%87%E4%B8%8E%E6%9E%B6%E6%9E%84.html">01 · 准备与架构——先认清对象和职责</a><a class="nav-link" href="02-Agent-Loop.html">02 · Agent Loop——工具执行后，为什么还要请求模型？</a><a class="nav-link" href="03-%E6%A8%A1%E5%9E%8B%E5%8D%8F%E8%AE%AE%E4%B8%8E%E6%B5%81.html">03 · 模型协议与流——从数据片段到完整消息</a><a class="nav-link" href="04-%E5%B7%A5%E5%85%B7%E4%B8%8E%E4%BB%A3%E7%A0%81%E4%BF%AE%E6%94%B9.html">04 · 工具与代码修改——从模型意图到真实副作用</a><a class="nav-link" href="05-%E8%B0%83%E5%BA%A6%E4%B8%8E%E6%94%B6%E5%B0%BE.html">05 · 调度与收尾——并行、队列、停止、取消与重试</a><a class="nav-link" href="06-%E9%A2%84%E6%B5%8B%E4%B8%8E%E9%AA%8C%E8%AF%81.html">06 · 预测与验证——怎样用测试检查自己读懂了没有</a><a class="nav-link current" href="07-%E4%BC%9A%E8%AF%9D%E4%B8%8E%E5%8E%86%E5%8F%B2.html">07 · 会话与历史——保存过的内容，为什么模型未必看得见</a><a class="nav-link" href="08-%E4%B8%8A%E4%B8%8B%E6%96%87%E5%8E%8B%E7%BC%A9.html">08 · 上下文压缩——预算、切点、信息损失与缓存</a><a class="nav-link" href="09-Extension%E4%B8%8ESkill.html">09 · Extension 与 Skill——怎样增加工具和工作方法</a><a class="nav-link" href="10-MCP%E5%8F%91%E7%8E%B0%E4%B8%8E%E8%B0%83%E7%94%A8.html">10 · MCP——外部工具怎样进入 PI 的执行循环</a><a class="nav-link" href="11-Subagent%E4%B8%8EDurable.html">11 · Subagent 与 durable——委派、后台工作和恢复</a><a class="nav-link" href="12-%E5%AE%89%E5%85%A8%E8%AF%84%E6%B5%8B%E4%B8%8E%E6%9C%8D%E5%8A%A1.html">12 · 安全、评测与服务——怎样判断 Agent 真正完成了任务</a></nav><div class="nav-tools"><button data-theme-toggle>切换明暗</button><button onclick="window.print()">打印</button></div><p>源码：<a href="https://github.com/earendil-works/pi/tree/eb326d265ae0b88489a6d10319307780df827cdf/" target="_blank" rel="noopener noreferrer">eb326d2</a><br>包版本：1.0.4<br>本地整理：2026-10-26</p></aside><main class="main"><header class="hero"><div class="eyebrow">PI STUDY NOTES / 01—12</div><h1>第 07 节：会话与历史——保存过的内容，为什么模型未必看得见</h1><p>逐段看代码怎样接收输入、请求模型、执行工具、保存历史，并处理取消、重试和恢复。</p><div class="meta"><span>12 节完整讲解</span><span>固定提交源码引用</span><span>解释 · 例子 · 练习 · 面试追问</span></div><div class="downloads"><a href="../PI-Agent-Harness-01-12.md" download>下载 Markdown 合订本</a><a href="../README.md">阅读说明</a></div><div class="notice">静态源码伴读。示意轨迹、待执行练习与实际运行结果分别说明。本文提供源码分析与待执行练习，不将源码阅读作为模型实测或生产验收。</div></header><section class="chapter" data-chapter="7"><h1 id="chapter-07" tabindex="-1">第 07 节：会话与历史——保存过的内容，为什么模型未必看得见</h1><details class="chapter-toc"><summary>本节小节目录 · 12 项</summary><ol><li><a href="#c7-s1">一、先区分四份数据</a></li><li><a href="#c7-s2">二、entry 和 message 为什么分开</a></li><li><a href="#c7-s3">三、appendMessage 怎样把历史接成树</a></li><li><a href="#c7-s4">四、回到旧节点，怎样出现第二个分支</a></li><li><a href="#c7-s5">五、context_edit 怎样隐藏一条消息</a></li><li><a href="#c7-s6">六、为什么 projection 保留 sourceEntry</a></li><li><a href="#c7-s7">七、压缩记录为什么放在文件尾部、模型输入前部</a></li><li><a href="#c7-s8">八、为什么只改 agent.state.messages 不够</a></li><li><a href="#c7-s9">九、什么时候真正写会话文件</a></li><li><a href="#c7-s10">十、branch、fork、resume 分别做什么</a></li><li><a href="#c7-s11">十一、会话记录为什么还不是长期 Memory</a></li><li><a href="#c7-s12">十二、手推练习与面试追问</a></li></ol></details>
+<p>前面的例子主要观察一次运行。现在假设你已经聊了半天，试过两个方案，回退过一次，还压缩过历史。下一次请求模型时，PI 究竟发送哪些内容？</p>
+<p>本节从 <code>SessionManager</code> 的数据结构和投影函数回答这个问题。版本仍为 <code>eb326d2</code>，以下历史树和结果列表是源码推演，未实际创建或恢复会话。</p>
+<h2 id="c7-s1" tabindex="-1">一、先区分四份数据</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>数据</th>
+<th>内容</th>
+<th>主要入口</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>raw 历史</td>
+<td>已保存的全部 entry，包括分支、压缩和上下文编辑记录</td>
+<td>getEntries</td>
+</tr>
+<tr>
+<td>当前分支</td>
+<td>从当前 leaf 沿 parentId 回到根的一条路径</td>
+<td>getBranch / buildSessionPath</td>
+</tr>
+<tr>
+<td>projection</td>
+<td>当前分支应用压缩和上下文编辑后贡献的消息</td>
+<td>buildSessionProjection</td>
+</tr>
+<tr>
+<td>最终请求</td>
+<td>projection 再经过转换和 Provider 适配得到的请求</td>
+<td>prepareRequest / convertToLlm / adapter</td>
+</tr>
+</tbody></table></div>
+<p>raw 用于保存事实和来源；projection 用于组织当前上下文。这两种需求可以共存，不必为了减少模型输入就删除旧记录。</p>
+<p>例如一条失败响应仍在 raw 中，但被 context_edit 隐藏，下一次模型请求可以不再看到它。这正是第 05 节重试所用的机制。</p>
+<h2 id="c7-s2" tabindex="-1">二、entry 和 message 为什么分开</h2>
+<p>消息是用户输入、模型响应、工具结果等内容。entry 则是会话文件里的一条记录，外面还有 id、parentId、时间等信息。</p>
+<p>简化示意：</p>
+<pre><code class="language-ts">{
+  type: &quot;message&quot;,
+  id: &quot;A2&quot;,
+  parentId: &quot;U1&quot;,
+  timestamp: &quot;...&quot;,
+  message: {
+    role: &quot;assistant&quot;,
+    content: [{ type: &quot;text&quot;, text: &quot;我先读取配置&quot; }],
+    // 其他字段省略
+  },
+}
+</code></pre>
+<p>同一文件中还可以有 model_change、thinking_level_change、compaction、context_edit、branch_summary 等 entry。它们不都对应一条可直接发送给模型的普通消息。</p>
+<p>看 <a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/coding-agent/src/core/session-manager.ts#L435-L465">sessionEntryToContextMessages</a>：普通 message 贡献一条消息；普通自定义状态 entry 可以贡献零条；带 system checkpoint 的 compaction 可以贡献 system 和摘要两条。</p>
+<p>所以不能用“文件有 100 行”直接推断“模型看到了 100 条对话”。</p>
+<h2 id="c7-s3" tabindex="-1">三、appendMessage 怎样把历史接成树</h2>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/coding-agent/src/core/session-manager.ts#L1198-L1213">appendMessage</a> 创建一个新 entry：</p>
+<pre><code class="language-ts">const entry = {
+  type: &quot;message&quot;,
+  id: generateId(this.byId),
+  parentId: this.leafId,
+  timestamp: new Date().toISOString(),
+  message,
+};
+this._appendEntry(entry);
+</code></pre>
+<p><code>parentId</code> 取当前 leaf。追加后，新 entry 成为新的 leaf，并更新 ID 索引及持久化记录。</p>
+<pre><code class="language-text">原来：U1 → A2，leaf=A2
+追加 U3
+之后：U1 → A2 → U3，leaf=U3
+</code></pre>
+<p>这里的 leaf 是“当前对话走到哪个节点”，不是文件系统叶子目录，也不是模型调用 ID。</p>
+<h2 id="c7-s4" tabindex="-1">四、回到旧节点，怎样出现第二个分支</h2>
+<p>假设已经有：</p>
+<pre><code class="language-text">S0 → U1 → A2 → U3 → A4
+</code></pre>
+<p>执行 <code>branch(A2)</code> 后，代码只把内存里的 leafId 改成 A2。已有 U3/A4 不删除。再追加 U5、A6，就得到：</p>
+<pre><code class="language-text">S0 → U1 → A2 ─┬→ U3 → A4
+               └→ U5 → A6
+</code></pre>
+<p>文件写入顺序可以是 S0、U1、A2、U3、A4、U5、A6，但当前分支是 S0、U1、A2、U5、A6。</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/coding-agent/src/core/session-manager.ts#L390-L416">buildSessionPath</a> 从 leaf 往前追 parentId，然后 reverse，使结果回到根到叶的顺序。</p>
+<p>这说明文件追加顺序与当前对话路径不是一回事。模型若沿当前分支继续，不会自动把兄弟分支的完整内容一起带入。</p>
+<h2 id="c7-s5" tabindex="-1">五、context_edit 怎样隐藏一条消息</h2>
+<p>在 A6 后追加 E7：</p>
+<pre><code class="language-text">E7 = context_edit(targetId=A6, replacement=null)
+</code></pre>
+<p>此时：</p>
+<pre><code class="language-text">raw：S0、U1、A2、U3、A4、U5、A6、E7
+branch：S0、U1、A2、U5、A6、E7
+projection.messages：S0、U1、A2、U5
+</code></pre>
+<p>U3/A4 属于旁支；A6 位于当前路径，但 E7 将它从当前模型视图中隐藏；E7 自己是一条上下文编辑记录，不是发给模型的“请忽略 A6”自然语言。</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/coding-agent/src/core/session-manager.ts#L519-L539">projectContextEntry</a> 的这句决定隐藏：</p>
+<pre><code class="language-ts">if (replacement === null) return [];
+</code></pre>
+<p>如果是替换内容，保留该消息的其他字段，改变内容贡献。对同一个目标，投影代码按顺序放进 Map，后面的编辑覆盖前面的编辑。编辑的作用范围随当前分支选择；从更早节点另开分支，不会无条件继承另一支上的所有编辑。</p>
+<p>“隐藏”并未擦除原始信息，磁盘、备份和导出仍可能保存 A6。需要删除敏感数据时，不能只调用这种上下文选择操作。</p>
+<h2 id="c7-s6" tabindex="-1">六、为什么 projection 保留 sourceEntry</h2>
+<p>看 <a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/coding-agent/src/core/session-manager.ts#L543-L572">buildSessionProjection</a>，中间结果是：</p>
+<pre><code class="language-ts">{
+  sourceEntry,
+  messages: /* 这条 entry 当前贡献的消息 */,
+}
+</code></pre>
+<p>最后才将各项 messages 展平。保留 sourceEntry，程序才能回答：“眼前这条模型输入来自哪个原始记录？”</p>
+<p>重试要隐藏某次失败时，需要定位对应 entry ID；压缩要保留哪段尾部，也需要稳定来源。若只剩一串纯文本，后续无法可靠区分原始用户输入、摘要和替换内容。</p>
+<p>这份来源映射会增加投影逻辑，但能让调整上下文的动作有据可查。</p>
+<h2 id="c7-s7" tabindex="-1">七、压缩记录为什么放在文件尾部、模型输入前部</h2>
+<p>本节先看投影效果，摘要如何生成留到第 08 节。</p>
+<pre><code class="language-text">raw：旧历史 → U4 → A5 → U6 → A7 → C8
+C8：摘要旧历史，firstKeptEntryId=U4
+</code></pre>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/coding-agent/src/core/session-manager.ts#L476-L512">buildContextEntries</a> 会找当前路径上最新的 compaction，然后构造：</p>
+<pre><code class="language-text">C8 的 system checkpoint 和摘要
+→ 从 U4 开始保留的原文
+→ C8 后新追加的记录
+</code></pre>
+<p>C8 在磁盘里最后追加，在模型上下文里却贡献前面的摘要。旧历史没有被物理删掉，只是当前投影不再逐条包含它们。</p>
+<p>保留区间中的旧 system 消息会避免重复加入，因为 C8 已带完整的当前 system 状态。旧 compaction 即使因 ID 范围被保留，也不再次贡献一份旧摘要。</p>
+<h2 id="c7-s8" tabindex="-1">八、为什么只改 agent.state.messages 不够</h2>
+<p>假设你直接从 <code>agent.state.messages</code> 删除一条失败消息。下一次请求时，AgentSession 可能又从 SessionManager 的 projection 重建它。</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/coding-agent/src/core/agent-session.ts#L788-L809">prepareRequest 包装</a> 明确执行：</p>
+<pre><code class="language-ts">const projection = this.sessionManager.buildSessionProjection();
+const canonicalContext = {
+  ...request.context,
+  messages: projection.messages,
+  tools: this.agent.state.tools.slice(),
+};
+</code></pre>
+<p>因此，要让“这条失败以后不再给模型看”成为可恢复的会话决定，应修改持久历史对上下文的贡献，例如追加 context_edit。只改某个临时数组，容易在下一次重建时失效。</p>
+<p>后续 prepareRequest 扩展和 transformContext 仍可能改请求。canonical projection 是默认重建依据，不意味着 Provider 最终 payload 每个字都必须原样存在 raw 文件中。</p>
+<h2 id="c7-s9" tabindex="-1">九、什么时候真正写会话文件</h2>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/coding-agent/src/core/session-manager.ts#L1160-L1188">持久化实现</a> 中，只有模型、思考等级等初始化记录时，会话可以先留在内存。出现 user 或 assistant 消息后，才创建文件并写入已有记录；之后逐条追加。</p>
+<p>这样用户第一条问题已经开始时，即使模型没有成功回答，也可以保留输入。<code>SessionManager.inMemory()</code> 则不写文件。</p>
+<p>要分清事件和写入顺序：AgentSession 的 message_end 处理会先通知扩展和公开监听器，再调用对应的 append 方法。看到 message_end，不等于拿到了磁盘事务提交确认。底层同步文件写也不等于外部服务副作用和会话记录处于同一事务。</p>
+<p>会话 JSONL 与第 03 节对外 stdout JSONL 都采用一行一个 JSON，但记录用途和结构不同：一个存历史 entry，一个传运行事件。不能把 stdout 原样当完整会话数据库使用。</p>
+<h2 id="c7-s10" tabindex="-1">十、branch、fork、resume 分别做什么</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>操作</th>
+<th>主要效果</th>
+<th>需要另管的东西</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>branch</td>
+<td>在同一会话树中改变当前 leaf，后续形成新分支</td>
+<td>工作目录内容</td>
+</tr>
+<tr>
+<td>fork</td>
+<td>将选中的根到叶路径复制到新会话文件</td>
+<td>外部进程、文件版本和权限</td>
+</tr>
+<tr>
+<td>resume/open</td>
+<td>加载历史，重建索引与当前上下文</td>
+<td>在途工具、未记账副作用和执行现场</td>
+</tr>
+</tbody></table></div>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/coding-agent/src/core/session-manager.ts#L1627-L1682">createBranchedSession</a> 不会复制所有兄弟分支；还需要处理标签节点过滤后的 parent 链和 compaction 引用。</p>
+<p>还有一个小细节：branch 只改内存 leaf。若切到旧节点后立刻退出、没有追加记录，重开时不保证仍保持那个导航位置；加载过程按文件记录构建 leaf。这与“从该节点继续追加后形成的新分支可恢复”并不矛盾。</p>
+<p>fork 到编辑文件之前的消息，并不会把磁盘上的文件恢复到当时内容。要撤销文件改动，需要版本控制或独立快照机制。</p>
+<h2 id="c7-s11" tabindex="-1">十一、会话记录为什么还不是长期 Memory</h2>
+<p>当前会话解决“这段交互记录了什么、当前模型应该看到什么”。跨会话长期记忆还要解决：保存哪些事实、如何更新冲突、作用于哪个用户或项目、何时失效、怎样检索。</p>
+<p>例如同一用户上月说用 Node 20，本月项目已升级。如果只不断追加摘要，却没有作用域和更新规则，下一次检索可能同时拿到两个互相冲突的版本。</p>
+<p>这些是应用需要继续设计的问题，不能仅凭有 JSONL 或有摘要就宣称已实现完整长期 Memory。</p>
+<h2 id="c7-s12" tabindex="-1">十二、手推练习与面试追问</h2>
+<p>画出本节 S0/U1/A2 的两条分支，再加 E7 隐藏 A6。分别列出 raw、branch、projection，说明每个被排除节点的原因。然后做三个变化：</p>
+<ol>
+<li>从 A2 再开第三分支，E7 是否自动生效？解释分支范围。</li>
+<li>删除 state.messages 中一项，但不写 context_edit，下次请求会怎样？定位 prepareRequest。</li>
+<li>fork 到文件修改前，磁盘文件是否回滚？指出历史状态与环境状态分别由谁管理。</li>
+</ol>
+<p>面试官问“会话怎么持久化”时，可以按这条顺序回答：entry 用 id/parentId 保存树；leaf 选择分支；最新压缩和上下文编辑生成带来源的 projection；请求前从这里重建；恢复聊天上下文与恢复外部动作分别处理。</p>
+<p>下一节进一步分析压缩的预算、切点和信息损失。</p>
+<div class="chapter-links"><a href="06-%E9%A2%84%E6%B5%8B%E4%B8%8E%E9%AA%8C%E8%AF%81.html">← 第 6 节</a><a href="08-%E4%B8%8A%E4%B8%8B%E6%96%87%E5%8E%8B%E7%BC%A9.html">第 8 节 →</a><a href="07-%E4%BC%9A%E8%AF%9D%E4%B8%8E%E5%8E%86%E5%8F%B2.md" download>本节 Markdown</a><a href="../index.html">返回合订本</a></div></section><footer class="footer">本系列按固定版本源码整理。源码链接固定到研究提交；本地源码若更新，请按函数名复核。HTML 内嵌样式和脚本，正文可离线阅读。</footer></main></div><button class="back-top" data-top aria-label="返回顶部">↑ 顶部</button><script>
+const root=document.documentElement;
+try{root.dataset.theme=localStorage.getItem('pi-study-theme')||'light'}catch{}
+document.querySelectorAll('[data-theme-toggle]').forEach(b=>b.addEventListener('click',()=>{root.dataset.theme=root.dataset.theme==='dark'?'light':'dark';try{localStorage.setItem('pi-study-theme',root.dataset.theme)}catch{}}));
+document.querySelector('[data-menu]')?.addEventListener('click',e=>{const expanded=document.querySelector('.sidebar').classList.toggle('open');e.currentTarget.setAttribute('aria-expanded',String(expanded))});
+document.querySelector('[data-search]')?.addEventListener('input',e=>{const q=e.target.value.trim().toLowerCase();document.querySelectorAll('.nav-link').forEach(a=>a.hidden=!a.textContent.toLowerCase().includes(q))});
+document.querySelector('[data-top]')?.addEventListener('click',()=>window.scrollTo({top:0,behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth'}));
+function progress(){const total=document.documentElement.scrollHeight-innerHeight;document.querySelector('.read-progress').style.width=(total>0?scrollY/total*100:100)+'%'}
+addEventListener('scroll',progress,{passive:true});addEventListener('resize',progress);progress();
+const observer=new IntersectionObserver(entries=>{for(const entry of entries)if(entry.isIntersecting){const id=entry.target.id;document.querySelectorAll('.nav-link[href^="#"]').forEach(a=>a.setAttribute('aria-current',String(a.getAttribute('href')==='#'+id))) }},{rootMargin:'-5% 0px -75% 0px'});
+document.querySelectorAll('.chapter>h1').forEach(h=>observer.observe(h));
+</script></body></html>

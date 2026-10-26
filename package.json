@@ -1,0 +1,16 @@
+{
+  "name": "agent-notes-blog",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "check": "node scripts/check.mjs",
+    "preview": "python3 -m http.server 8790 --bind 127.0.0.1 --directory docs"
+  },
+  "dependencies": {
+    "marked": "18.0.5"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

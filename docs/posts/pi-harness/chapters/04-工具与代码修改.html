@@ -1,0 +1,979 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light dark"><title>第 04 节：工具与代码修改——从模型意图到真实副作用</title><style>
+.blog-back{display:block;max-width:1440px;margin:18px auto 0;padding:0 28px;font-size:14px}
+:root{color-scheme:light;--bg:#f5f3ee;--paper:#fffefa;--text:#26332e;--muted:#65736b;--line:#d9dfd6;--accent:#28664e;--code:#eef2ed;--nav:#edf1e9}
+:root[data-theme=dark]{color-scheme:dark;--bg:#151c19;--paper:#1c2520;--text:#e0e8df;--muted:#abb9ad;--line:#3b4b40;--accent:#9ed4ac;--code:#25332a;--nav:#202c24}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:28px}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.9 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}a{color:var(--accent);text-underline-offset:3px;overflow-wrap:anywhere}a:hover{text-decoration-thickness:2px}button,input{font:inherit}button{cursor:pointer;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--text);padding:7px 13px}button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+.layout{max-width:1440px;margin:0 auto;display:grid;grid-template-columns:275px minmax(0,1fr);gap:30px;padding:28px 28px 70px}.sidebar{position:sticky;top:24px;max-height:calc(100vh - 48px);overflow:auto;padding:5px 15px 20px 0;scrollbar-width:thin}.brand{font-size:20px;font-weight:700;line-height:1.5;margin-bottom:8px}.eyebrow{font-size:12px;letter-spacing:.13em;color:var(--muted)}.sidebar p{font-size:13px;color:var(--muted);margin:8px 0 18px}.nav-link{display:block;padding:10px 12px;border-radius:7px;font-size:14px;text-decoration:none;line-height:1.7}.nav-link:hover,.nav-link.current{background:var(--nav)}.nav-link[aria-current=true]{background:var(--nav);font-weight:600}.nav-tools{display:flex;gap:8px;margin:16px 0}.nav-tools button{font-size:13px}.nav-search{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:7px;background:var(--paper);color:var(--text);margin:0 0 13px}.main{min-width:0}.hero{padding:34px 44px;background:var(--paper);border:1px solid var(--line);border-radius:12px;margin-bottom:24px}.hero h1{font-size:30px;line-height:1.5;margin:8px 0 12px}.hero p{margin:9px 0}.meta{display:flex;gap:8px 18px;flex-wrap:wrap;font-size:13px;color:var(--muted)}.downloads{display:flex;gap:20px;flex-wrap:wrap;font-size:14px;margin-top:18px}.notice{border-left:3px solid var(--accent);padding:8px 14px;background:var(--nav);margin:18px 0 0;font-size:14px}
+.chapter{padding:35px 44px 40px;background:var(--paper);border:1px solid var(--line);border-radius:12px;margin-bottom:26px;overflow-wrap:break-word}.chapter h1{font-size:27px;line-height:1.55;margin:0 0 24px}.chapter h2{font-size:22px;line-height:1.65;margin:42px 0 16px;padding-top:8px;border-top:1px solid var(--line)}.chapter h3{font-size:18px;line-height:1.7;margin:28px 0 12px}.chapter h4{font-size:16px;margin:22px 0 10px}p{margin:14px 0}ul,ol{padding-left:1.55em}li{margin:6px 0}blockquote{border-left:3px solid var(--accent);margin:20px 0;padding:1px 18px;color:var(--muted);background:var(--nav);border-radius:0 7px 7px 0}blockquote p{margin:12px 0}code{font: .88em/1.65 ui-monospace,SFMono-Regular,Consolas,monospace;background:var(--code);padding:2px 5px;border-radius:4px;overflow-wrap:anywhere}pre{background:var(--code);padding:18px 20px;border:1px solid var(--line);border-radius:9px;overflow-x:auto;max-width:100%;font-size:14px;line-height:1.75;tab-size:2}pre code{padding:0;background:transparent;white-space:pre;overflow-wrap:normal;word-break:normal;font-size:inherit}.table-wrap{overflow-x:auto;margin:22px 0;border:1px solid var(--line);border-radius:8px}table{border-collapse:collapse;width:100%;min-width:440px;font-size:14px;line-height:1.75}th,td{padding:11px 14px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}th{background:var(--nav);font-weight:600}tr:last-child td{border-bottom:0}hr{border:0;border-top:1px solid var(--line);margin:30px 0}strong{font-weight:650}.chapter-toc{background:var(--nav);border-radius:8px;padding:12px 16px;margin:0 0 24px}.chapter-toc summary{cursor:pointer;font-size:14px}.chapter-toc ol{columns:2;font-size:13px;line-height:1.7;margin:12px 0 3px}.chapter-toc li{break-inside:avoid;margin:5px 0}.chapter-toc a{text-decoration:none}.chapter-links{display:flex;flex-wrap:wrap;gap:16px;margin:25px 0 0;font-size:13px;color:var(--muted);border-top:1px solid var(--line);padding-top:17px}.mobile-head{display:none}.footer{color:var(--muted);font-size:13px;padding:8px 8px 0}.back-top{position:fixed;right:20px;bottom:20px;font-size:13px;box-shadow:0 2px 12px #0001}.read-progress{position:fixed;top:0;left:0;height:3px;background:var(--accent);width:0;z-index:10}.source-tag{font-size:12px;color:var(--muted)}
+@media(max-width:900px){.layout{grid-template-columns:1fr;padding:15px 14px 60px;gap:15px}.sidebar{position:static;max-height:none;display:none;padding:16px;background:var(--paper);border:1px solid var(--line);border-radius:10px}.sidebar.open{display:block}.mobile-head{display:flex;justify-content:space-between;align-items:center;padding:14px 16px 0}.hero,.chapter{padding:24px}.hero h1{font-size:26px}.chapter h1{font-size:24px}.chapter h2{font-size:21px}.chapter-toc ol{columns:1}.back-top{bottom:12px;right:12px}}
+@media(max-width:480px){body{font-size:15px}.hero,.chapter{padding:19px 17px}.hero h1{font-size:24px}.chapter h1{font-size:23px}pre{padding:14px;font-size:12px}.table-wrap{margin:18px 0}.chapter h2{font-size:19px}.meta{font-size:12px}}
+@media print{body{background:white;color:#111;font-size:11pt}.layout{display:block;padding:0}.sidebar,.mobile-head,.nav-tools,.back-top,.read-progress,.downloads,.chapter-links,.chapter-toc{display:none!important}.hero,.chapter{border:none;padding:0;border-radius:0}.chapter{break-before:page}pre{white-space:pre-wrap;overflow-wrap:anywhere;border:1px solid #ddd;font-size:9pt}pre code{white-space:pre-wrap;overflow-wrap:anywhere}table{min-width:0}.table-wrap{overflow:visible}a{color:#111}h1,h2,h3{break-after:avoid}tr{break-inside:avoid}}
+.nav-link[hidden]{display:none}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+
+.pi-overview{position:relative;margin:0 0 28px;border:1px solid var(--line);border-radius:10px;background:var(--paper);padding:24px;min-width:0;max-width:100%;color:var(--text)}.overview-target{position:absolute;top:0;left:0;width:1px;height:1px;scroll-margin-top:20px}.overview-head{margin:0 0 16px}.overview-head .overview-kicker{font:12px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:.1em;color:var(--muted)}.overview-head h2{font-size:25px;line-height:1.5;margin:6px 0 9px;border:0;padding:0}.overview-head p{font-size:14px;line-height:1.8;color:var(--muted);margin:7px 0}.overview-head a{font-size:13px}.overview-panel{display:none;grid-template-columns:minmax(0,1.45fr) minmax(220px,1fr);gap:20px;border:1px solid var(--line);border-radius:8px;padding:18px 20px;margin-bottom:18px;min-height:210px;background:var(--nav)}.overview-panel[data-detail="loop"]{display:grid}.pi-overview:has(.overview-target:target) .overview-panel{display:none}.pi-overview:has(#pi-map-session:target) .overview-panel[data-detail="session"]{display:grid}.pi-overview:has(#pi-map-session:target) [data-map-node="session"] .node-outline{stroke:var(--accent);stroke-width:2.4;fill:var(--nav)}
+.pi-overview:has(#pi-map-loop:target) .overview-panel[data-detail="loop"]{display:grid}.pi-overview:has(#pi-map-loop:target) [data-map-node="loop"] .node-outline{stroke:var(--accent);stroke-width:2.4;fill:var(--nav)}
+.pi-overview:has(#pi-map-model:target) .overview-panel[data-detail="model"]{display:grid}.pi-overview:has(#pi-map-model:target) [data-map-node="model"] .node-outline{stroke:var(--accent);stroke-width:2.4;fill:var(--nav)}
+.pi-overview:has(#pi-map-history:target) .overview-panel[data-detail="history"]{display:grid}.pi-overview:has(#pi-map-history:target) [data-map-node="history"] .node-outline{stroke:var(--accent);stroke-width:2.4;fill:var(--nav)}
+.pi-overview:has(#pi-map-tools:target) .overview-panel[data-detail="tools"]{display:grid}.pi-overview:has(#pi-map-tools:target) [data-map-node="tools"] .node-outline{stroke:var(--accent);stroke-width:2.4;fill:var(--nav)}
+.pi-overview:has(#pi-map-extensions:target) .overview-panel[data-detail="extensions"]{display:grid}.pi-overview:has(#pi-map-extensions:target) [data-map-node="extensions"] .node-outline{stroke:var(--accent);stroke-width:2.4;fill:var(--nav)}
+.pi-overview:has(#pi-map-validation:target) .overview-panel[data-detail="validation"]{display:grid}.pi-overview:has(#pi-map-validation:target) [data-map-node="validation"] .node-outline{stroke:var(--accent);stroke-width:2.4;fill:var(--nav)}
+.pi-overview:has(#pi-map-subagents:target) .overview-panel[data-detail="subagents"]{display:grid}.pi-overview:has(#pi-map-subagents:target) [data-map-node="subagents"] .node-outline{stroke:var(--accent);stroke-width:2.4;fill:var(--nav)}
+.overview-panel h3{margin:0 0 7px;font-size:19px;line-height:1.6}.overview-panel p{margin:6px 0;font-size:14px;line-height:1.8}.overview-io{display:grid;grid-template-columns:38px minmax(0,1fr);gap:4px 8px;font-size:13px;line-height:1.75;margin:12px 0 0}.overview-io dt{color:var(--muted)}.overview-io dd{margin:0}.overview-chapter-links{display:flex;gap:8px;flex-wrap:wrap;margin:3px 0 12px}.overview-chapter-links a{display:inline-block;background:var(--paper);border:1px solid var(--line);border-radius:5px;padding:5px 10px;font-size:13px;text-decoration:none}.overview-sources{list-style:none;padding:0;margin:0;font-size:12px;line-height:1.8}.overview-sources li{margin:7px 0}.overview-sources code{background:none;padding:0;font-size:11px;overflow-wrap:anywhere}.overview-diagram-container{width:100%;max-width:100%;overflow-x:auto;overscroll-behavior-x:contain;border:1px solid var(--line);border-radius:8px;background:var(--paper)}.pi-overview svg{width:100%;min-width:960px;display:block;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}.pi-overview svg text{fill:var(--text)}.pi-overview svg .svg-muted{fill:var(--muted)}.pi-overview svg .svg-mono{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}.pi-overview svg .node-outline{fill:var(--paper);stroke:var(--line);stroke-width:1.4}.pi-overview svg .node-state{fill:var(--code)}.pi-overview svg .node-optional{stroke-dasharray:5 4}.pi-overview svg .node-focal{stroke:var(--accent);stroke-width:2;fill:var(--nav)}.pi-overview svg a:hover .node-outline,.pi-overview svg a:focus-visible .node-outline{stroke:var(--accent);stroke-width:2.4}.pi-overview svg a:focus-visible{outline:none}.pi-overview svg .edge{fill:none;stroke:var(--muted);stroke-width:1.5}.pi-overview svg .edge-return{stroke-dasharray:5 4}.pi-overview svg .label-mask{fill:var(--paper)}.pi-overview svg .type-tag{fill:var(--code);stroke:var(--line);stroke-width:.8}.overview-chapter-index{display:flex;gap:7px;flex-wrap:wrap;margin-top:15px;font-size:12px;line-height:1.6}.overview-chapter-index a{border:1px solid var(--line);padding:5px 8px;border-radius:5px;text-decoration:none;color:var(--muted)}.overview-chapter-index a:hover{color:var(--accent);border-color:var(--accent)}.overview-note{font-size:12px;line-height:1.8;color:var(--muted);margin:13px 0 0}.overview-bounds{border-left:3px solid var(--accent);padding-left:11px;color:var(--muted)}
+@media(max-width:1000px){.overview-panel{grid-template-columns:1fr;min-height:0;gap:14px}.overview-panel-side{border-top:1px solid var(--line);padding-top:12px}}
+@media(max-width:600px){.pi-overview{padding:17px}.overview-head h2{font-size:22px}.overview-panel{padding:15px}.overview-panel h3{font-size:17px}.overview-head p{font-size:13px}}
+@media print{.pi-overview{break-before:page;padding:0;border:0}.overview-diagram-container{overflow:visible;border:0}.pi-overview svg{min-width:0;width:100%}.overview-panel{display:block!important;break-inside:avoid;background:none;min-height:0}.overview-chapter-index,.overview-head>a{display:none}.overview-target{display:none}}
+</style></head><body><a class="blog-back" href="../../../index.html">← Agent 笔记 · 所有文章</a><div class="read-progress" aria-hidden="true"></div><div class="mobile-head"><span>PI · 源码伴读</span><button data-menu aria-expanded="false" aria-controls="chapter-nav">章节目录</button></div><div class="layout"><aside class="sidebar" id="chapter-nav"><div class="eyebrow">SOURCE WALKTHROUGH</div><div class="brand">PI Agent Harness</div><p>从一次请求到执行、历史和恢复。<br>按 01 → 12 顺序阅读。</p><input class="nav-search" data-search aria-label="筛选章节" placeholder="筛选章节标题"><nav aria-label="章节目录"><a class="nav-link" href="../pi-overview.html">总览 · 各部分怎样配合</a><a class="nav-link" href="01-%E5%87%86%E5%A4%87%E4%B8%8E%E6%9E%B6%E6%9E%84.html">01 · 准备与架构——先认清对象和职责</a><a class="nav-link" href="02-Agent-Loop.html">02 · Agent Loop——工具执行后，为什么还要请求模型？</a><a class="nav-link" href="03-%E6%A8%A1%E5%9E%8B%E5%8D%8F%E8%AE%AE%E4%B8%8E%E6%B5%81.html">03 · 模型协议与流——从数据片段到完整消息</a><a class="nav-link current" href="04-%E5%B7%A5%E5%85%B7%E4%B8%8E%E4%BB%A3%E7%A0%81%E4%BF%AE%E6%94%B9.html">04 · 工具与代码修改——从模型意图到真实副作用</a><a class="nav-link" href="05-%E8%B0%83%E5%BA%A6%E4%B8%8E%E6%94%B6%E5%B0%BE.html">05 · 调度与收尾——并行、队列、停止、取消与重试</a><a class="nav-link" href="06-%E9%A2%84%E6%B5%8B%E4%B8%8E%E9%AA%8C%E8%AF%81.html">06 · 预测与验证——怎样用测试检查自己读懂了没有</a><a class="nav-link" href="07-%E4%BC%9A%E8%AF%9D%E4%B8%8E%E5%8E%86%E5%8F%B2.html">07 · 会话与历史——保存过的内容，为什么模型未必看得见</a><a class="nav-link" href="08-%E4%B8%8A%E4%B8%8B%E6%96%87%E5%8E%8B%E7%BC%A9.html">08 · 上下文压缩——预算、切点、信息损失与缓存</a><a class="nav-link" href="09-Extension%E4%B8%8ESkill.html">09 · Extension 与 Skill——怎样增加工具和工作方法</a><a class="nav-link" href="10-MCP%E5%8F%91%E7%8E%B0%E4%B8%8E%E8%B0%83%E7%94%A8.html">10 · MCP——外部工具怎样进入 PI 的执行循环</a><a class="nav-link" href="11-Subagent%E4%B8%8EDurable.html">11 · Subagent 与 durable——委派、后台工作和恢复</a><a class="nav-link" href="12-%E5%AE%89%E5%85%A8%E8%AF%84%E6%B5%8B%E4%B8%8E%E6%9C%8D%E5%8A%A1.html">12 · 安全、评测与服务——怎样判断 Agent 真正完成了任务</a></nav><div class="nav-tools"><button data-theme-toggle>切换明暗</button><button onclick="window.print()">打印</button></div><p>源码：<a href="https://github.com/earendil-works/pi/tree/eb326d265ae0b88489a6d10319307780df827cdf/" target="_blank" rel="noopener noreferrer">eb326d2</a><br>包版本：1.0.4<br>本地整理：2026-10-26</p></aside><main class="main"><header class="hero"><div class="eyebrow">PI STUDY NOTES / 01—12</div><h1>第 04 节：工具与代码修改——从模型意图到真实副作用</h1><p>逐段看代码怎样接收输入、请求模型、执行工具、保存历史，并处理取消、重试和恢复。</p><div class="meta"><span>12 节完整讲解</span><span>固定提交源码引用</span><span>解释 · 例子 · 练习 · 面试追问</span></div><div class="downloads"><a href="../PI-Agent-Harness-01-12.md" download>下载 Markdown 合订本</a><a href="../README.md">阅读说明</a></div><div class="notice">静态源码伴读。示意轨迹、待执行练习与实际运行结果分别说明。本文提供源码分析与待执行练习，不将源码阅读作为模型实测或生产验收。</div></header><section class="chapter" data-chapter="4"><h1 id="chapter-04" tabindex="-1">第 04 节：工具与代码修改——从模型意图到真实副作用</h1><details class="chapter-toc"><summary>本节小节目录 · 17 项</summary><ol><li><a href="#c4-s1">一、先看完整的工具执行链</a></li><li><a href="#c4-s2">二、工具声明和工具实现，为什么要区分？</a></li><li><a href="#c4-s6">三、prepareToolCall()：把“可以执行”和“立即返回错误”分开</a></li><li><a href="#c4-s10">四、参数准备与参数验证：两者为什么不是一回事？</a></li><li><a href="#c4-s14">五、为什么 TypeScript 类型不能代替运行时校验？</a></li><li><a href="#c4-s20">六、beforeToolCall：执行前的控制点</a></li><li><a href="#c4-s23">七、真正执行：execute() 的四个参数分别做什么？</a></li><li><a href="#c4-s26">八、错误怎样处理：不是所有失败都结束 Agent</a></li><li><a href="#c4-s31">九、afterToolCall：处理结果，但不会撤销动作</a></li><li><a href="#c4-s35">十、工具返回的三个字段，为什么给不同使用者？</a></li><li><a href="#c4-s39">十一、具体工具一：read 怎样读取与限制输出？</a></li><li><a href="#c4-s44">十二、具体工具二：edit 为什么基于同一份原始文件？</a></li><li><a href="#c4-s49">十三、exact 与 fuzzy：容错怎样做到不随意乱改？</a></li><li><a href="#c4-s52">十四、为什么 Node 单线程仍然需要文件修改队列？</a></li><li><a href="#c4-s56">十五、最重要的失败边界：取消不是回滚</a></li><li><a href="#c4-s60">十六、把一项 edit 从头到尾串起来</a></li><li><a href="#c4-s61">十七、这一节怎样练，怎样接受面试追问？</a></li></ol></details>
+<p>前三节讲到：</p>
+<pre><code class="language-text">用户提出问题
+→ 模型生成响应
+→ Pi 将流式片段组合成完整 AssistantMessage
+</code></pre>
+<p>第四节继续往下：</p>
+<blockquote>
+<p><strong>模型提出的 <code>toolCall</code>，怎样安全、可解释地进入真正的工具函数？工具执行失败、文件修改和取消分别意味着什么？</strong></p>
+</blockquote>
+<p>这一节是从“会调用模型”走向“会开发 Agent”的关键。</p>
+<p>先记住三个判断：</p>
+<ol>
+<li><strong>参数能解析，不等于参数合法。</strong></li>
+<li><strong>参数合法，不等于动作被授权或业务正确。</strong></li>
+<li><strong>工具返回错误，不等于副作用没有发生。</strong></li>
+</ol>
+<p>本次依据已核对的 Pi 提交 <code>eb326d2</code>，只做源码解释，没有修改文件或执行测试。</p>
+<hr>
+<h2 id="c4-s1" tabindex="-1">一、先看完整的工具执行链</h2>
+<p>假设模型生成：</p>
+<pre><code class="language-json">{
+  &quot;type&quot;: &quot;toolCall&quot;,
+  &quot;id&quot;: &quot;call_1&quot;,
+  &quot;name&quot;: &quot;read&quot;,
+  &quot;arguments&quot;: {
+    &quot;path&quot;: &quot;package.json&quot;
+  }
+}
+</code></pre>
+<p>它表达的是：</p>
+<pre><code class="language-text">调用 read，参数为 package.json。
+</code></pre>
+<p>模型并没有直接执行文件读取。</p>
+<p>Pi 接下来走：</p>
+<pre><code class="language-text">按名称查找工具
+    ↓
+prepareArguments：兼容参数表示
+    ↓
+validateToolArguments：运行时校验
+    ↓
+beforeToolCall：执行前检查
+    ↓
+tool.execute：真实动作
+    ↓
+afterToolCall：结果处理
+    ↓
+生成 ToolResultMessage
+    ↓
+结果回灌给模型
+</code></pre>
+<p>核心源码：</p>
+<ul>
+<li><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/agent/src/agent-loop.ts#L694-L777">工具准备：agent-loop.ts:694–777</a></li>
+<li><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/agent/src/agent-loop.ts#L821-L910">执行与结果处理：821–910</a></li>
+<li><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/agent/src/agent-loop.ts#L930-L949">生成工具结果消息：930–949</a></li>
+</ul>
+<p>为什么分成这些阶段？</p>
+<p>因为每个阶段解决的问题不同：</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>阶段</th>
+<th>回答的问题</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>工具查找</td>
+<td>程序是否真的提供这个工具？</td>
+</tr>
+<tr>
+<td>参数准备</td>
+<td>模型的参数表示能否转换为约定形式？</td>
+</tr>
+<tr>
+<td>Schema 校验</td>
+<td>字段和类型是否符合要求？</td>
+</tr>
+<tr>
+<td>前置 hook</td>
+<td>在当前条件下是否允许执行？</td>
+</tr>
+<tr>
+<td>execute</td>
+<td>实际动作是否完成？</td>
+</tr>
+<tr>
+<td>后置 hook</td>
+<td>什么结果应该返回，是否需要处理？</td>
+</tr>
+<tr>
+<td>ToolResult</td>
+<td>模型如何关联和理解执行反馈？</td>
+</tr>
+</tbody></table></div>
+<p><strong>如果把这些问题全部塞进一个工具函数，会很难判断错误发生在哪里，也很难复用统一控制。</strong></p>
+<hr>
+<h2 id="c4-s2" tabindex="-1">二、工具声明和工具实现，为什么要区分？</h2>
+<h3 id="c4-s3" tabindex="-1">1. 工具声明给模型看</h3>
+<p>它告诉模型：</p>
+<pre><code class="language-text">工具叫什么？
+什么时候使用？
+参数怎么填写？
+</code></pre>
+<p>例如 <code>read</code> 的参数 schema：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/coding-agent/src/core/tools/read.ts#L14-L18">read.ts:14–18</a></p>
+<pre><code class="language-ts">const readSchema = Type.Object({
+    path: Type.String({
+        description: &quot;Path to the file to read (relative or absolute)&quot;
+    }),
+    offset: Type.Optional(Type.Number({
+        description: &quot;Line number to start reading from (1-indexed)&quot;
+    })),
+    limit: Type.Optional(Type.Number({
+        description: &quot;Maximum number of lines to read&quot;
+    })),
+});
+</code></pre>
+<p><code>Type.Object()</code> 创建的是<strong>运行时可以使用的 schema 对象</strong>。</p>
+<p>它既可以作为模型的工具参数说明，也可以被本地验证器使用。</p>
+<h3 id="c4-s4" tabindex="-1">2. 工具实现给程序执行</h3>
+<p>核心 <code>AgentTool</code> 在声明之外，还提供：</p>
+<pre><code class="language-ts">execute(
+    toolCallId,
+    params,
+    signal,
+    onUpdate
+)
+</code></pre>
+<p>定义见：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/agent/src/types.ts#L466-L498">types.ts:466–498</a></p>
+<p>这才是真正执行：</p>
+<ul>
+<li>文件读取；</li>
+<li>文件修改；</li>
+<li>HTTP 请求；</li>
+<li>数据库操作；</li>
+<li>外部命令；</li>
+</ul>
+<p>的入口。</p>
+<h3 id="c4-s5" tabindex="-1">为什么不能让模型直接指定任意函数执行？</h3>
+<p>模型的输出不可信。它可能：</p>
+<ul>
+<li>编造工具名称；</li>
+<li>拼错参数；</li>
+<li>使用不存在的路径；</li>
+<li>提出不允许的动作。</li>
+</ul>
+<p>因此程序必须维护一套实际可执行的工具集合。</p>
+<p>模型只是在这套能力上提出调用意图，不应该因为输出了一个名字就获得任意执行权。</p>
+<hr>
+<h2 id="c4-s6" tabindex="-1">三、<code>prepareToolCall()</code>：把“可以执行”和“立即返回错误”分开</h2>
+<p>打开：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/agent/src/agent-loop.ts#L708-L777">agent-loop.ts:708–777</a></p>
+<p>先看工具查找：</p>
+<pre><code class="language-ts">const tool = tools.find((t) =&gt; t.name === toolCall.name);
+
+if (!tool) {
+    return {
+        kind: &quot;immediate&quot;,
+        result: createErrorToolResult(`Tool ${toolCall.name} not found`),
+        isError: true,
+    };
+}
+</code></pre>
+<p>如果模型请求：</p>
+<pre><code class="language-text">delete_entire_project
+</code></pre>
+<p>但程序没有提供这个工具，就直接返回错误。</p>
+<p>不会动态执行同名函数，也不会因为模型说“这是必要操作”就补造能力。</p>
+<h3 id="c4-s7" tabindex="-1">为什么返回 <code>kind: &quot;immediate&quot;</code>？</h3>
+<p>这个函数有两类结果。</p>
+<h4 id="c4-s8" tabindex="-1">情况 A：准备失败，不执行</h4>
+<pre><code class="language-ts">{
+    kind: &quot;immediate&quot;,
+    result: 错误结果,
+    isError: true
+}
+</code></pre>
+<h4 id="c4-s9" tabindex="-1">情况 B：准备完成，可以进入执行阶段</h4>
+<pre><code class="language-ts">{
+    kind: &quot;prepared&quot;,
+    toolCall,
+    tool,
+    args: validatedArgs
+}
+</code></pre>
+<p>这是一个带标签的联合结构。调用者通过 <code>kind</code> 就知道下一步：</p>
+<pre><code class="language-text">immediate → 不执行，直接形成工具结果
+prepared  → 调用 execute
+</code></pre>
+<p><strong>设计收益：执行阶段不需要重复判断工具是否存在、参数是否已通过准备。</strong></p>
+<p>这里的 <code>prepared</code> 是“经过准备”，不是“工具已经执行成功”。</p>
+<hr>
+<h2 id="c4-s10" tabindex="-1">四、参数准备与参数验证：两者为什么不是一回事？</h2>
+<h3 id="c4-s11" tabindex="-1">1. <code>prepareArguments</code> 处理表示兼容</h3>
+<p>模型有时传回：</p>
+<pre><code class="language-json">{
+  &quot;edits&quot;: &quot;{\&quot;oldText\&quot;:\&quot;foo\&quot;,\&quot;newText\&quot;:\&quot;bar\&quot;}&quot;
+}
+</code></pre>
+<p>或者：</p>
+<pre><code class="language-json">{
+  &quot;edits&quot;: {
+    &quot;oldText&quot;: &quot;foo&quot;,
+    &quot;newText&quot;: &quot;bar&quot;
+  }
+}
+</code></pre>
+<p>但工具约定的结构是：</p>
+<pre><code class="language-json">{
+  &quot;edits&quot;: [
+    {
+      &quot;oldText&quot;: &quot;foo&quot;,
+      &quot;newText&quot;: &quot;bar&quot;
+    }
+  ]
+}
+</code></pre>
+<p>Pi 的 edit 工具在：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/coding-agent/src/core/tools/edit.ts#L103-L134">edit.ts:103–134</a></p>
+<p>将部分明确的兼容表示转换为标准结构，例如：</p>
+<ul>
+<li>JSON 字符串解析为数组；</li>
+<li>单项对象包装成数组；</li>
+<li>兼容旧式单项参数。</li>
+</ul>
+<p>通用准备阶段调用它：</p>
+<pre><code class="language-ts">const preparedArguments = tool.prepareArguments(toolCall.arguments);
+</code></pre>
+<p>见：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/agent/src/agent-loop.ts#L694-L705">agent-loop.ts:694–705</a></p>
+<h3 id="c4-s12" tabindex="-1">这里的设计取舍是什么？</h3>
+<p>收益是：不因模型输出的可兼容格式差异，轻易让整个任务失败。</p>
+<p>代价是：转换逻辑会增加复杂性，甚至可能改变意图。</p>
+<p>所以它应该处理<strong>明确的表示兼容</strong>，不能悄悄把：</p>
+<pre><code class="language-text">读取文件
+</code></pre>
+<p>转换成：</p>
+<pre><code class="language-text">修改文件
+</code></pre>
+<p>也不能因为想减少错误，就给所有缺失业务字段填猜测值。</p>
+<h3 id="c4-s13" tabindex="-1">2. <code>validateToolArguments</code> 检查转换后的参数</h3>
+<p>随后：</p>
+<pre><code class="language-ts">const validatedArgs = validateToolArguments(tool, preparedToolCall);
+</code></pre>
+<p>见：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/agent/src/agent-loop.ts#L725-L727">agent-loop.ts:725–727</a></p>
+<p><strong>prepareArguments 负责整理表示，validation 负责检查结构。</strong> 整理完仍然要验证。</p>
+<hr>
+<h2 id="c4-s14" tabindex="-1">五、为什么 TypeScript 类型不能代替运行时校验？</h2>
+<p>工具函数可能写：</p>
+<pre><code class="language-ts">params: {
+    path: string;
+}
+</code></pre>
+<p>这帮助开发者在写代码时检查类型。</p>
+<p>但是模型返回的是外部 JSON：</p>
+<pre><code class="language-json">{}
+</code></pre>
+<p>TypeScript 类型不会在程序运行时自动把这个 JSON 拦下来。</p>
+<p>类似：</p>
+<pre><code class="language-ts">const params = input as ReadToolInput;
+</code></pre>
+<p>也只是类型断言，不会检查 <code>path</code> 是否存在。</p>
+<p>因此需要 schema 验证。</p>
+<h3 id="c4-s15" tabindex="-1">Pi 验证器的实际过程</h3>
+<p>打开：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/ai/src/utils/validation.ts#L317-L350">validation.ts:317–350</a></p>
+<pre><code class="language-ts">const args = structuredClone(toolCall.arguments);
+
+normalizeOptionalNulls(args, tool.parameters);
+Value.Convert(tool.parameters, args);
+
+const validator = getValidator(tool.parameters);
+
+// 部分普通 JSON Schema 的转换路径
+
+if (validator.Check(args)) {
+    return args;
+}
+
+// 格式化错误并抛出
+</code></pre>
+<p>主要步骤：</p>
+<ol>
+<li>克隆参数；</li>
+<li>处理部分可选字段的 <code>null</code>；</li>
+<li>按 schema 尝试类型转换；</li>
+<li>取得编译后的验证器；</li>
+<li>检查参数；</li>
+<li>不通过则产生带字段位置的错误。</li>
+</ol>
+<h3 id="c4-s16" tabindex="-1">为什么先克隆？</h3>
+<p>验证过程中可能发生归一化和转换。</p>
+<p>因此：</p>
+<pre><code class="language-text">模型原始 arguments
+</code></pre>
+<p>与：</p>
+<pre><code class="language-text">execute 收到的 args
+</code></pre>
+<p>可能不同。</p>
+<p>保留原始参数，有助于解释：</p>
+<pre><code class="language-text">模型实际传了什么？
+程序转换了什么？
+最终执行了什么？
+</code></pre>
+<p>注意，之前的工具专用 <code>prepareArguments</code> 仍可能修改原对象；不能据此说整个准备过程绝对不修改原始输入。</p>
+<h3 id="c4-s17" tabindex="-1">为什么处理可选 <code>null</code>？</h3>
+<p>有些模型会为没有填写的可选字段生成：</p>
+<pre><code class="language-json">{
+  &quot;path&quot;: &quot;package.json&quot;,
+  &quot;offset&quot;: null
+}
+</code></pre>
+<p>如果 schema 不允许 <code>null</code>，但该字段又不是必填，Pi 可以把它归一化为“未提供”，而不是让调用仅因这个表示问题失败。</p>
+<p>规则见：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/ai/src/utils/validation.ts#L240-L269">validation.ts:240–269</a></p>
+<h3 id="c4-s18" tabindex="-1">为什么缓存验证器？</h3>
+<p>编译 schema 有成本，同一工具会被多次调用。</p>
+<p>Pi 使用 <code>WeakMap</code> 缓存对应验证器：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/ai/src/utils/validation.ts#L271-L280">validation.ts:271–280</a></p>
+<p>这样不必每次重新编译同一份 schema。</p>
+<h3 id="c4-s19" tabindex="-1">Schema 通过之后还缺什么？</h3>
+<p>例如：</p>
+<pre><code class="language-json">{
+  &quot;path&quot;: &quot;/某个敏感文件&quot;
+}
+</code></pre>
+<p>结构可能完全合法：</p>
+<ul>
+<li><code>path</code> 存在；</li>
+<li>类型是字符串。</li>
+</ul>
+<p>但这不证明用户允许读取它。</p>
+<p>所以：</p>
+<blockquote>
+<p><strong>结构校验不是资源授权，也不是业务验收。</strong></p>
+</blockquote>
+<hr>
+<h2 id="c4-s20" tabindex="-1">六、<code>beforeToolCall</code>：执行前的控制点</h2>
+<p>参数验证后：</p>
+<pre><code class="language-ts">const beforeResult = await config.beforeToolCall(
+    {
+        assistantMessage,
+        toolCall,
+        args: validatedArgs,
+        context: currentContext,
+    },
+    signal,
+);
+</code></pre>
+<p>如果返回：</p>
+<pre><code class="language-ts">{
+    block: true,
+    reason: &quot;当前任务不允许修改文件&quot;
+}
+</code></pre>
+<p>就不进入 <code>execute()</code>。</p>
+<p>源码：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/agent/src/agent-loop.ts#L728-L755">agent-loop.ts:728–755</a></p>
+<p>这个位置适合接入：</p>
+<ul>
+<li>参数涉及的资源范围检查；</li>
+<li>业务前置条件；</li>
+<li>人工审批；</li>
+<li>风险规则；</li>
+<li>自定义访问策略。</li>
+</ul>
+<p><strong>这些是可接入能力，不是 Pi 默认已经提供一整套生产权限系统。</strong></p>
+<h3 id="c4-s21" tabindex="-1">一个必须知道的当前行为：hook 可以修改已验证参数</h3>
+<p>例如：</p>
+<pre><code class="language-text">schema：value 必须是字符串
+原始参数：{ value: &quot;hello&quot; }
+验证：通过
+before hook：把 value 改成 123
+execute：收到 123
+</code></pre>
+<p>普通 core 在 before hook 后<strong>没有自动再次校验</strong>。</p>
+<p>已有测试明确覆盖：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/agent/test/agent-loop.test.ts#L528-L587">agent-loop.test.ts:528–587</a></p>
+<p>测试最后断言：</p>
+<pre><code class="language-ts">expect(executed).toEqual([123]);
+</code></pre>
+<h3 id="c4-s22" tabindex="-1">为什么这点值得学？</h3>
+<p>因为不能认为：</p>
+<pre><code class="language-text">进入 execute 的参数以前验证过
+</code></pre>
+<p>就代表：</p>
+<pre><code class="language-text">进入 execute 的这个最终值一定符合 schema
+</code></pre>
+<p>中间的 hook 也是信任边界的一部分。插件修改参数时，需要自己维护校验和意图一致性。</p>
+<p>这里是源码事实，不是在建议你修改校验边界。</p>
+<hr>
+<h2 id="c4-s23" tabindex="-1">七、真正执行：<code>execute()</code> 的四个参数分别做什么？</h2>
+<p>打开：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/agent/src/agent-loop.ts#L821-L857">agent-loop.ts:821–857</a></p>
+<p>核心：</p>
+<pre><code class="language-ts">const result = await prepared.tool.execute(
+    prepared.toolCall.id,
+    prepared.args,
+    signal,
+    onUpdate,
+);
+</code></pre>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>参数</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>toolCallId</code></td>
+<td>关联本次调用、进度和结果</td>
+</tr>
+<tr>
+<td><code>args</code></td>
+<td>准备后的执行参数</td>
+</tr>
+<tr>
+<td><code>signal</code></td>
+<td>合作式取消</td>
+</tr>
+<tr>
+<td><code>onUpdate</code></td>
+<td>工具执行中的进度反馈</td>
+</tr>
+</tbody></table></div>
+<h3 id="c4-s24" tabindex="-1">为什么工具也需要进度更新？</h3>
+<p>模型文本生成可能很快，但工具可能执行较久，例如：</p>
+<pre><code class="language-text">下载数据
+→ 分析
+→ 执行测试
+</code></pre>
+<p><code>onUpdate</code> 可以报告过程，不需要等最终结果。</p>
+<p>Pi 将它映射成 <code>tool_execution_update</code>：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/agent/src/agent-loop.ts#L779-L787">agent-loop.ts:779–787</a></p>
+<p>但：</p>
+<blockquote>
+<p><strong>工具进度不是最终工具结果，也不证明任务完成。</strong></p>
+</blockquote>
+<p>执行完成后再调用更新回调，当前 core 会忽略它；执行期间产生的更新 Promise 会被等待，然后进入后处理。</p>
+<h3 id="c4-s25" tabindex="-1"><code>durationMs</code> 测量了什么？</h3>
+<p>这里主要计量 <code>execute()</code> 的耗时。</p>
+<p>它不包含前置 hook 和后置 hook；也不能当作整个 Agent 任务耗时。</p>
+<p>测量时先明确边界，避免把多个不同指标都叫“工具延迟”。</p>
+<hr>
+<h2 id="c4-s26" tabindex="-1">八、错误怎样处理：不是所有失败都结束 Agent</h2>
+<h3 id="c4-s27" tabindex="-1">1. execute 抛异常</h3>
+<p>例如：</p>
+<pre><code class="language-ts">throw new Error(&quot;File not found&quot;);
+</code></pre>
+<p>通用执行器会把异常转换成：</p>
+<pre><code class="language-text">错误工具结果
+</code></pre>
+<p>而不是默认让整个 Agent 崩溃。</p>
+<h3 id="c4-s28" tabindex="-1">2. execute 返回显式错误</h3>
+<p>例如：</p>
+<pre><code class="language-ts">{
+    content: [{ type: &quot;text&quot;, text: &quot;操作被业务规则拒绝&quot; }],
+    details: {},
+    isError: true,
+}
+</code></pre>
+<p>同样作为错误结果处理。</p>
+<h3 id="c4-s29" tabindex="-1">3. 只在文字里说失败，不会自动设置错误标记</h3>
+<p>下面的结果：</p>
+<pre><code class="language-ts">{
+    content: [{ type: &quot;text&quot;, text: &quot;失败了&quot; }],
+    details: {},
+}
+</code></pre>
+<p>在 core 看来，不会仅因为出现“失败”这个词就自动成为错误结果。</p>
+<p>所以工具契约要求：</p>
+<blockquote>
+<p>失败时抛异常，或明确返回 <code>isError: true</code>。</p>
+</blockquote>
+<h3 id="c4-s30" tabindex="-1">各阶段失败的区别</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>情况</th>
+<th align="right">execute 是否调用</th>
+<th align="right">after hook 是否调用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>工具不存在</td>
+<td align="right">否</td>
+<td align="right">否</td>
+</tr>
+<tr>
+<td>参数校验失败</td>
+<td align="right">否</td>
+<td align="right">否</td>
+</tr>
+<tr>
+<td>before 返回 block</td>
+<td align="right">否</td>
+<td align="right">否</td>
+</tr>
+<tr>
+<td>before 抛错</td>
+<td align="right">否</td>
+<td align="right">否</td>
+</tr>
+<tr>
+<td>execute 抛错</td>
+<td align="right">是</td>
+<td align="right">有配置时会调用</td>
+</tr>
+<tr>
+<td>execute 正常返回</td>
+<td align="right">是</td>
+<td align="right">有配置时会调用</td>
+</tr>
+</tbody></table></div>
+<p>这张表很重要。它帮你判断：</p>
+<pre><code class="language-text">只是请求被拒绝？
+还是动作已经开始，后来失败？
+</code></pre>
+<hr>
+<h2 id="c4-s31" tabindex="-1">九、<code>afterToolCall</code>：处理结果，但不会撤销动作</h2>
+<p>打开：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/agent/src/agent-loop.ts#L859-L910">agent-loop.ts:859–910</a></p>
+<p>它接收：</p>
+<pre><code class="language-text">调用、参数、结果、错误标记、当前上下文
+</code></pre>
+<p>可以改写：</p>
+<ul>
+<li>content；</li>
+<li>details；</li>
+<li>structuredContent；</li>
+<li>isError；</li>
+<li>usage；</li>
+<li>terminate。</li>
+</ul>
+<p>这些是按字段替换，不是深度合并。</p>
+<h3 id="c4-s32" tabindex="-1">为什么需要后处理？</h3>
+<p>工具可能返回：</p>
+<ul>
+<li>过长内容；</li>
+<li>需要脱敏的数据；</li>
+<li>图片；</li>
+<li>底层错误；</li>
+<li>不适合模型直接阅读的结构。</li>
+</ul>
+<p>后处理可以调整最终反馈。</p>
+<p>Pi 产品层把扩展的 <code>tool_call</code> 和 <code>tool_result</code> 接到前后 hooks：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/coding-agent/src/core/agent-session.ts#L644-L724">agent-session.ts:644–724</a></p>
+<h3 id="c4-s33" tabindex="-1">为什么替换 content 时可能删除 structuredContent？</h3>
+<p>如果文字已经变成：</p>
+<pre><code class="language-text">数据已脱敏
+</code></pre>
+<p>但结构化结果仍保留原始敏感字段，两种结果就不一致。</p>
+<p>所以当前逻辑在替换 content 而没有提供对应 structuredContent 时，会丢弃旧 structuredContent。</p>
+<h3 id="c4-s34" tabindex="-1">后置 hook 失败意味着什么？</h3>
+<p>假设：</p>
+<pre><code class="language-text">文件写入成功
+→ after hook 抛错
+→ 最终工具结果被标记为错误
+</code></pre>
+<p><strong>文件不会因此自动恢复原样。</strong></p>
+<p>后处理发生在动作之后，不能作为回滚机制或执行前授权机制。</p>
+<hr>
+<h2 id="c4-s35" tabindex="-1">十、工具返回的三个字段，为什么给不同使用者？</h2>
+<p>定义：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/agent/src/types.ts#L423-L445">types.ts:423–445</a></p>
+<h3 id="c4-s36" tabindex="-1"><code>content</code>：给模型看</h3>
+<p>例如：</p>
+<pre><code class="language-text">Successfully replaced 2 block(s) in example.txt.
+</code></pre>
+<p>用于下一轮模型判断。</p>
+<h3 id="c4-s37" tabindex="-1"><code>details</code>：给 UI、日志或程序记录</h3>
+<p>例如 edit 返回：</p>
+<pre><code class="language-ts">{
+    diff,
+    patch,
+    firstChangedLine
+}
+</code></pre>
+<p>见：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/coding-agent/src/core/tools/edit.ts#L201-L210">edit.ts:201–210</a></p>
+<p>模型不需要接收所有展示细节，但 UI 需要知道改了哪里。</p>
+<h3 id="c4-s38" tabindex="-1"><code>structuredContent</code>：给程序调用者</h3>
+<p>例如某个工具供 codemode 脚本调用，需要获得稳定结构，而不是解析一段自然语言。</p>
+<p><strong>声明 <code>outputSchema</code> 不代表普通 core 在这里自动验证输出。</strong> 当前执行管线没有因此增加统一输出校验。</p>
+<p>最终 <code>ToolResultMessage</code> 带上：</p>
+<pre><code class="language-text">toolCallId
+toolName
+content
+details
+isError
+timestamp
+</code></pre>
+<p>见：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/agent/src/agent-loop.ts#L930-L943">agent-loop.ts:930–943</a></p>
+<p>这样模型可以把结果关联到正确的工具调用。</p>
+<hr>
+<h2 id="c4-s39" tabindex="-1">十一、具体工具一：<code>read</code> 怎样读取与限制输出？</h2>
+<p>打开：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/coding-agent/src/core/tools/read.ts#L86-L216">read.ts:86–216</a></p>
+<p>文本路径大致是：</p>
+<pre><code class="language-text">解析文件路径
+→ 检查可读
+→ readFile 取得 Buffer
+→ 转 UTF-8 文本
+→ 按 offset/limit 选行
+→ 按行数和字节预算截断
+→ 返回内容与继续读取提示
+</code></pre>
+<h3 id="c4-s40" tabindex="-1">1. <code>offset</code> 为什么减一？</h3>
+<p>用户看到的是从 1 开始的行号，数组从 0 开始。</p>
+<pre><code class="language-text">offset=3
+→ allLines[2] 开始
+</code></pre>
+<p>对应：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/coding-agent/src/core/tools/read.ts#L154-L175">read.ts:154–175</a></p>
+<h3 id="c4-s41" tabindex="-1">2. limit 限的是模型输出，不是全部文件 I/O</h3>
+<p>代码先：</p>
+<pre><code class="language-ts">const buffer = await ops.readFile(absolutePath);
+</code></pre>
+<p>再：</p>
+<pre><code class="language-ts">allLines.slice(startLine, endLine)
+</code></pre>
+<p>因此：</p>
+<pre><code class="language-text">limit=20
+</code></pre>
+<p>不等于：</p>
+<pre><code class="language-text">底层只读20行，内存只存20行。
+</code></pre>
+<p>它主要减少返回给模型的内容。面对巨大文件，还需要考虑实际读取和内存成本。</p>
+<h3 id="c4-s42" tabindex="-1">3. 为什么截断后告诉模型 next offset？</h3>
+<p>如果文件没有读完，只返回前半部分而不说明，模型可能误以为已经掌握全文。</p>
+<p>Pi 会附加类似：</p>
+<pre><code class="language-text">Showing lines 1–2000 ...
+Use offset=2001 to continue.
+</code></pre>
+<p>源码：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/coding-agent/src/core/tools/read.ts#L176-L199">read.ts:176–199</a></p>
+<p>这是一个重要的工具设计原则：</p>
+<blockquote>
+<p><strong>结果不完整时，要明确告诉调用者缺了什么、怎样继续，不要伪装成完整证据。</strong></p>
+</blockquote>
+<h3 id="c4-s43" tabindex="-1">4. 为什么 operations 可以替换？</h3>
+<p><code>ReadOperations</code> 把底层读取动作作为接口：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/coding-agent/src/core/tools/read.ts#L44-L69">read.ts:44–69</a></p>
+<p>默认是本地文件系统，也可以替换为：</p>
+<ul>
+<li>远程文件读取；</li>
+<li>受限执行环境；</li>
+<li>测试替身。</li>
+</ul>
+<p>这和 <code>StreamFn</code> 注入模型是相同思想：</p>
+<blockquote>
+<p>保留工具语义，替换实际执行后端。</p>
+</blockquote>
+<p>但“可替换后端”不等于默认已经有沙箱。</p>
+<hr>
+<h2 id="c4-s44" tabindex="-1">十二、具体工具二：<code>edit</code> 为什么基于同一份原始文件？</h2>
+<p>打开：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/coding-agent/src/core/tools/edit.ts">edit.ts</a></p>
+<p>当前参数是：</p>
+<pre><code class="language-json">{
+  &quot;path&quot;: &quot;example.txt&quot;,
+  &quot;edits&quot;: [
+    {&quot;oldText&quot;: &quot;foo\n&quot;, &quot;newText&quot;: &quot;foo bar\n&quot;},
+    {&quot;oldText&quot;: &quot;bar\n&quot;, &quot;newText&quot;: &quot;BAR\n&quot;}
+  ]
+}
+</code></pre>
+<p>原文件：</p>
+<pre><code class="language-text">foo
+bar
+baz
+</code></pre>
+<p>正确结果：</p>
+<pre><code class="language-text">foo bar
+BAR
+baz
+</code></pre>
+<h3 id="c4-s45" tabindex="-1">如果逐项改完再重新匹配，会发生什么？</h3>
+<p>第一项造出了一个新的 <code>bar</code>：</p>
+<pre><code class="language-text">foo bar
+bar
+baz
+</code></pre>
+<p>若第二项基于修改后的文本搜索，可能匹配到第一项新生成的内容，导致位置或唯一性发生变化。</p>
+<p>所以 Pi 的规则是：</p>
+<blockquote>
+<p><strong>所有 edits 先在同一份原始内容中定位，再统一应用。</strong></p>
+</blockquote>
+<p>算法：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/coding-agent/src/core/tools/edit-diff.ts#L300-L361">edit-diff.ts:300–361</a></p>
+<p>主要步骤：</p>
+<ol>
+<li>统一行结束表示；</li>
+<li>禁止空 oldText；</li>
+<li>查找每个 oldText；</li>
+<li>检查唯一性；</li>
+<li>记录匹配位置；</li>
+<li>检查匹配区域不重叠；</li>
+<li>统一生成新内容；</li>
+<li>最后才写文件。</li>
+</ol>
+<h3 id="c4-s46" tabindex="-1">为什么从后向前替换？</h3>
+<p>如果先替换文件前面的内容，长度变化会让后面的位置偏移。</p>
+<pre><code class="language-text">先改后面的区域
+→ 前面区域的原偏移仍然有效
+</code></pre>
+<p>因此定位后按逆序应用，可保持原始偏移。</p>
+<h3 id="c4-s47" tabindex="-1">为什么禁止重叠 edits？</h3>
+<p>例如：</p>
+<pre><code class="language-text">原文件：one / two / three
+
+编辑A：替换 one+two
+编辑B：替换 two+three
+</code></pre>
+<p>两项同时声明修改 <code>two</code>，存在冲突。</p>
+<p>Pi 不猜先后优先级，直接要求合并或拆成不重叠区域。</p>
+<h3 id="c4-s48" tabindex="-1">为什么一项失败，不会先写一半？</h3>
+<p>因为实际 <code>writeFile()</code> 在全部匹配与检查之后。</p>
+<p>测试：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/coding-agent/test/tools.test.ts#L425-L441">tools.test.ts:425–441</a></p>
+<p>第一项合法、第二项不存在时，测试要求原文件保持不变。</p>
+<p><strong>但这只是匹配失败时不会部分应用，不是崩溃安全的文件事务。</strong> 写入期间的失败、多文件操作或外部服务，不在这个保证内。</p>
+<hr>
+<h2 id="c4-s49" tabindex="-1">十三、exact 与 fuzzy：容错怎样做到不随意乱改？</h2>
+<p>Pi 先找 exact match，找不到再尝试受控字符归一化匹配：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/coding-agent/src/core/tools/edit-diff.ts#L201-L244">edit-diff.ts:201–244</a></p>
+<p>例如处理：</p>
+<ul>
+<li>智能引号；</li>
+<li>Unicode 空格；</li>
+<li>特定破折号；</li>
+<li>行尾空白。</li>
+</ul>
+<p>这不是“意思相似就替换”，也不是让另一个模型猜目标段落。</p>
+<p>它是确定性的文本归一化。</p>
+<h3 id="c4-s50" tabindex="-1">为什么需要？</h3>
+<p>模型可能把文件中的智能引号写成普通引号。纯字符差异会造成合理修改无法定位。</p>
+<h3 id="c4-s51" tabindex="-1">为什么又要保持严格？</h3>
+<p>过强的模糊匹配可能把多个位置归一化成相同内容。</p>
+<p>因此还要验证唯一性。当前出现次数检查也使用 fuzzy-normalized 形式，见：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/coding-agent/src/core/tools/edit-diff.ts#L247-L250">edit-diff.ts:247–250</a></p>
+<p><strong>收益是容忍明确表示差异；代价是匹配空间更复杂，需要防止歧义。</strong></p>
+<p>另外，工具还会去掉 BOM 后匹配，并尽量恢复原有换行格式：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/coding-agent/src/core/tools/edit.ts#L190-L198">edit.ts:190–198</a></p>
+<p>避免为了一个局部修改，把文件格式一起改掉。</p>
+<hr>
+<h2 id="c4-s52" tabindex="-1">十四、为什么 Node 单线程仍然需要文件修改队列？</h2>
+<p>假设两项 edit 并发：</p>
+<pre><code class="language-text">A 读到：alpha / beta
+B 读到：alpha / beta
+
+A 写出：ALPHA / beta
+B 写出：alpha / BETA
+</code></pre>
+<p>最终 B 可能覆盖 A 的修改。</p>
+<p>Node 的 JavaScript 执行是单线程，不代表：</p>
+<pre><code class="language-text">所有异步读写操作自动串行。
+</code></pre>
+<p>多个 async 操作会在 <code>await</code> 处交错。</p>
+<h3 id="c4-s53" tabindex="-1">Pi 的解决办法</h3>
+<p>edit 将整个读—改—写过程包在：</p>
+<pre><code class="language-ts">withFileMutationQueue(absolutePath, async () =&gt; {
+    // 检查、读、计算新内容、写
+});
+</code></pre>
+<p>见：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/coding-agent/src/core/tools/edit.ts#L159-L212">edit.ts:159–212</a></p>
+<p>队列实现：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/coding-agent/src/core/tools/file-mutation-queue.ts">file-mutation-queue.ts</a></p>
+<p>它按路径维护 Promise 链：</p>
+<pre><code class="language-text">操作A等待之前的操作
+→ 执行A
+→ finally释放
+→ 操作B才开始
+</code></pre>
+<p>已有文件会尝试用 realpath 作为键，让符号链接别名尽量共享同一队列。</p>
+<h3 id="c4-s54" tabindex="-1">为什么只锁写操作不够？</h3>
+<p>如果 A、B 已经同时读了旧内容，只把最后两次写串行，B 仍会写出基于旧版本计算的结果。</p>
+<p>所以需要串行化：</p>
+<pre><code class="language-text">读当前内容 → 计算修改 → 写入
+</code></pre>
+<p>这一整段。</p>
+<h3 id="c4-s55" tabindex="-1">能保证什么，不能保证什么？</h3>
+<ul>
+<li>同进程、参与该队列、针对同一个键的修改可串行；</li>
+<li>不同文件仍可并行；</li>
+<li><strong>不是跨进程文件锁</strong>；</li>
+<li>外部编辑器、其他子 Pi 或不走这队列的动作不受它统一保护。</li>
+</ul>
+<p>不要把一个进程内队列说成完整的并发文件系统协调。</p>
+<hr>
+<h2 id="c4-s56" tabindex="-1">十五、最重要的失败边界：取消不是回滚</h2>
+<p>edit 的源码在每个主要 <code>await</code> 后检查 signal：</p>
+<pre><code class="language-ts">await ops.writeFile(absolutePath, finalContent);
+throwIfAborted();
+</code></pre>
+<p>见：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/coding-agent/src/core/tools/edit.ts#L163-L199">edit.ts:163–199</a></p>
+<p>所以可以出现：</p>
+<pre><code class="language-text">开始 writeFile
+    ↓
+用户取消
+    ↓
+在途 writeFile 完成
+    ↓
+signal 检查发现取消
+    ↓
+工具返回 aborted 错误
+</code></pre>
+<p>此时文件已经变了。</p>
+<h3 id="c4-s57" tabindex="-1">为什么不在 abort listener 中立即释放队列？</h3>
+<p>如果立即 reject 并释放：</p>
+<pre><code class="language-text">A 的写仍在进行
+→ B 开始读写
+→ A 后来才落盘
+</code></pre>
+<p>可能破坏顺序。</p>
+<p>Pi 选择等在途操作完成，再释放修改队列。</p>
+<p>测试：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/coding-agent/test/file-mutation-queue.test.ts#L221-L273">file-mutation-queue.test.ts:221–273</a></p>
+<p>测试明确要求：</p>
+<ul>
+<li>A 写期间取消；</li>
+<li>B 仍要等待；</li>
+<li>A 完成后报取消；</li>
+<li>B 读到 A 已发生的修改后继续；</li>
+<li>最终两项修改都体现在文件中。</li>
+</ul>
+<h3 id="c4-s58" tabindex="-1">read 的取消为什么可以不同？</h3>
+<p>read 没有文件修改副作用，可以较早向调用者返回取消，并避免把后续结果交出去。</p>
+<p>但当前底层 <code>readFile()</code> 没因为这个包装层取消就一定被物理中断。</p>
+<p><strong>取消策略取决于操作语义，不能所有工具统一写一个 <code>Promise.race</code> 就认为安全。</strong></p>
+<h3 id="c4-s59" tabindex="-1">这与业务工具有什么关系？</h3>
+<p>订单、通知、付款工具也会遇到：</p>
+<pre><code class="language-text">外部动作成功
+→ 超时或取消
+→ 本地结果报错
+</code></pre>
+<p>要判断是否重试，必须查询效果、使用幂等键或进行人工确认，不能直接把“报错”解释为“没做”。</p>
+<hr>
+<h2 id="c4-s60" tabindex="-1">十六、把一项 edit 从头到尾串起来</h2>
+<p>正常路径：</p>
+<pre><code class="language-text">模型生成完整 toolCall(edit)
+    ↓
+当前可执行集合查到 edit
+    ↓
+prepareEditArguments 整理表示
+    ↓
+schema 校验参数结构
+    ↓
+beforeToolCall 准入
+    ↓
+进入 execute
+    ↓
+validateEditInput 检查非空 edits
+    ↓
+解析路径
+    ↓
+进入同文件修改队列
+    ↓
+检查可读可写
+    ↓
+读当前文件
+    ↓
+BOM与换行处理
+    ↓
+定位全部 edits，检查唯一和不重叠
+    ↓
+计算全部新内容
+    ↓
+写文件
+    ↓
+检查取消
+    ↓
+生成 diff、patch和工具结果
+    ↓
+afterToolCall
+    ↓
+ToolResult 回灌
+    ↓
+模型根据结果继续
+</code></pre>
+<p>这条链里有几种不同的“正确”：</p>
+<pre><code class="language-text">JSON结构正确
+→ 修改位置正确
+→ 文件写入完成
+→ 修改实现需求
+→ 测试与验收通过
+</code></pre>
+<p>前一项不会自动保证后一项。</p>
+<p><strong>Pi 的 edit 工具可靠地约束了一部分修改动作，但不会因为替换成功，就证明代码功能正确。</strong></p>
+<hr>
+<h2 id="c4-s61" tabindex="-1">十七、这一节怎样练，怎样接受面试追问？</h2>
+<h3 id="c4-s62" tabindex="-1">练习 1：参数与 hook</h3>
+<p>准备一个 echo 工具，schema 要求 <code>value</code> 为字符串。</p>
+<p>分别预测：</p>
+<ol>
+<li>缺少 value；</li>
+<li>合法 value，但 before block；</li>
+<li>before 把 value 改成数字；</li>
+<li>execute 抛错，after 对错误结果脱敏。</li>
+</ol>
+<p>你需要说出：</p>
+<pre><code class="language-text">execute 调用了几次？
+after 调用了几次？
+最终 isError 是什么？
+原始参数与执行参数是否相同？
+</code></pre>
+<p>参考：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/agent/test/agent-loop.test.ts#L528-L587">before 参数修改测试</a></p>
+<h3 id="c4-s63" tabindex="-1">练习 2：原始文件多项编辑</h3>
+<p>原文件：</p>
+<pre><code class="language-text">foo
+bar
+baz
+</code></pre>
+<p>替换：</p>
+<pre><code class="language-text">foo → foo bar
+bar → BAR
+</code></pre>
+<p>先预测结果，再解释为什么不能增量匹配。</p>
+<p>参考：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/coding-agent/test/tools.test.ts#L383-L395">tools.test.ts:383–395</a></p>
+<h3 id="c4-s64" tabindex="-1">练习 3：一项找不到</h3>
+<p>第一项合法，第二项 oldText 不存在。</p>
+<p>预测文件是否被部分修改，并指出真正写入的位置。</p>
+<h3 id="c4-s65" tabindex="-1">练习 4：写期间取消</h3>
+<p>问自己：</p>
+<blockquote>
+<p>如果最终工具结果是错误，我有哪些证据可以判断文件是否已经变了？</p>
+</blockquote>
+<p>正确方向是检查真实文件、diff、执行端记录等，而不是只读错误标记。</p>
+<h3 id="c4-s66" tabindex="-1">面试回答模板</h3>
+<blockquote>
+<p>Pi 将工具处理分为准备、执行和结果处理。先按名称查找可执行工具，整理参数并做运行时 schema 校验，再进入前置 hook 和 execute。工具错误作为可关联的 ToolResult 回灌，后置 hook可以处理结果，但不能撤销已发生动作。read 的输出预算不等于底层资源预算；edit 先在同一原始文件中定位全部唯一、不重叠替换，再统一写入，并用进程内队列避免异步读改写错序。取消是合作式通知，写期间取消仍可能留下副作用，最终工具成功也不等于业务验收通过。</p>
+</blockquote>
+<p><strong>能讲清“结构、授权、执行效果、结果反馈、业务验收”这五层区别，并解释原始文件编辑和写期间取消两个反例，就掌握了第四节最重要的设计思想。</strong></p>
+<div class="chapter-links"><a href="03-%E6%A8%A1%E5%9E%8B%E5%8D%8F%E8%AE%AE%E4%B8%8E%E6%B5%81.html">← 第 3 节</a><a href="05-%E8%B0%83%E5%BA%A6%E4%B8%8E%E6%94%B6%E5%B0%BE.html">第 5 节 →</a><a href="04-%E5%B7%A5%E5%85%B7%E4%B8%8E%E4%BB%A3%E7%A0%81%E4%BF%AE%E6%94%B9.md" download>本节 Markdown</a><a href="../index.html">返回合订本</a></div></section><footer class="footer">本系列按固定版本源码整理。源码链接固定到研究提交；本地源码若更新，请按函数名复核。HTML 内嵌样式和脚本，正文可离线阅读。</footer></main></div><button class="back-top" data-top aria-label="返回顶部">↑ 顶部</button><script>
+const root=document.documentElement;
+try{root.dataset.theme=localStorage.getItem('pi-study-theme')||'light'}catch{}
+document.querySelectorAll('[data-theme-toggle]').forEach(b=>b.addEventListener('click',()=>{root.dataset.theme=root.dataset.theme==='dark'?'light':'dark';try{localStorage.setItem('pi-study-theme',root.dataset.theme)}catch{}}));
+document.querySelector('[data-menu]')?.addEventListener('click',e=>{const expanded=document.querySelector('.sidebar').classList.toggle('open');e.currentTarget.setAttribute('aria-expanded',String(expanded))});
+document.querySelector('[data-search]')?.addEventListener('input',e=>{const q=e.target.value.trim().toLowerCase();document.querySelectorAll('.nav-link').forEach(a=>a.hidden=!a.textContent.toLowerCase().includes(q))});
+document.querySelector('[data-top]')?.addEventListener('click',()=>window.scrollTo({top:0,behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth'}));
+function progress(){const total=document.documentElement.scrollHeight-innerHeight;document.querySelector('.read-progress').style.width=(total>0?scrollY/total*100:100)+'%'}
+addEventListener('scroll',progress,{passive:true});addEventListener('resize',progress);progress();
+const observer=new IntersectionObserver(entries=>{for(const entry of entries)if(entry.isIntersecting){const id=entry.target.id;document.querySelectorAll('.nav-link[href^="#"]').forEach(a=>a.setAttribute('aria-current',String(a.getAttribute('href')==='#'+id))) }},{rootMargin:'-5% 0px -75% 0px'});
+document.querySelectorAll('.chapter>h1').forEach(h=>observer.observe(h));
+</script></body></html>

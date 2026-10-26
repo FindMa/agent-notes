@@ -1,0 +1,253 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light dark"><title>第 06 节：预测与验证——怎样用测试检查自己读懂了没有</title><style>
+.blog-back{display:block;max-width:1440px;margin:18px auto 0;padding:0 28px;font-size:14px}
+:root{color-scheme:light;--bg:#f5f3ee;--paper:#fffefa;--text:#26332e;--muted:#65736b;--line:#d9dfd6;--accent:#28664e;--code:#eef2ed;--nav:#edf1e9}
+:root[data-theme=dark]{color-scheme:dark;--bg:#151c19;--paper:#1c2520;--text:#e0e8df;--muted:#abb9ad;--line:#3b4b40;--accent:#9ed4ac;--code:#25332a;--nav:#202c24}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:28px}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.9 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}a{color:var(--accent);text-underline-offset:3px;overflow-wrap:anywhere}a:hover{text-decoration-thickness:2px}button,input{font:inherit}button{cursor:pointer;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--text);padding:7px 13px}button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+.layout{max-width:1440px;margin:0 auto;display:grid;grid-template-columns:275px minmax(0,1fr);gap:30px;padding:28px 28px 70px}.sidebar{position:sticky;top:24px;max-height:calc(100vh - 48px);overflow:auto;padding:5px 15px 20px 0;scrollbar-width:thin}.brand{font-size:20px;font-weight:700;line-height:1.5;margin-bottom:8px}.eyebrow{font-size:12px;letter-spacing:.13em;color:var(--muted)}.sidebar p{font-size:13px;color:var(--muted);margin:8px 0 18px}.nav-link{display:block;padding:10px 12px;border-radius:7px;font-size:14px;text-decoration:none;line-height:1.7}.nav-link:hover,.nav-link.current{background:var(--nav)}.nav-link[aria-current=true]{background:var(--nav);font-weight:600}.nav-tools{display:flex;gap:8px;margin:16px 0}.nav-tools button{font-size:13px}.nav-search{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:7px;background:var(--paper);color:var(--text);margin:0 0 13px}.main{min-width:0}.hero{padding:34px 44px;background:var(--paper);border:1px solid var(--line);border-radius:12px;margin-bottom:24px}.hero h1{font-size:30px;line-height:1.5;margin:8px 0 12px}.hero p{margin:9px 0}.meta{display:flex;gap:8px 18px;flex-wrap:wrap;font-size:13px;color:var(--muted)}.downloads{display:flex;gap:20px;flex-wrap:wrap;font-size:14px;margin-top:18px}.notice{border-left:3px solid var(--accent);padding:8px 14px;background:var(--nav);margin:18px 0 0;font-size:14px}
+.chapter{padding:35px 44px 40px;background:var(--paper);border:1px solid var(--line);border-radius:12px;margin-bottom:26px;overflow-wrap:break-word}.chapter h1{font-size:27px;line-height:1.55;margin:0 0 24px}.chapter h2{font-size:22px;line-height:1.65;margin:42px 0 16px;padding-top:8px;border-top:1px solid var(--line)}.chapter h3{font-size:18px;line-height:1.7;margin:28px 0 12px}.chapter h4{font-size:16px;margin:22px 0 10px}p{margin:14px 0}ul,ol{padding-left:1.55em}li{margin:6px 0}blockquote{border-left:3px solid var(--accent);margin:20px 0;padding:1px 18px;color:var(--muted);background:var(--nav);border-radius:0 7px 7px 0}blockquote p{margin:12px 0}code{font: .88em/1.65 ui-monospace,SFMono-Regular,Consolas,monospace;background:var(--code);padding:2px 5px;border-radius:4px;overflow-wrap:anywhere}pre{background:var(--code);padding:18px 20px;border:1px solid var(--line);border-radius:9px;overflow-x:auto;max-width:100%;font-size:14px;line-height:1.75;tab-size:2}pre code{padding:0;background:transparent;white-space:pre;overflow-wrap:normal;word-break:normal;font-size:inherit}.table-wrap{overflow-x:auto;margin:22px 0;border:1px solid var(--line);border-radius:8px}table{border-collapse:collapse;width:100%;min-width:440px;font-size:14px;line-height:1.75}th,td{padding:11px 14px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}th{background:var(--nav);font-weight:600}tr:last-child td{border-bottom:0}hr{border:0;border-top:1px solid var(--line);margin:30px 0}strong{font-weight:650}.chapter-toc{background:var(--nav);border-radius:8px;padding:12px 16px;margin:0 0 24px}.chapter-toc summary{cursor:pointer;font-size:14px}.chapter-toc ol{columns:2;font-size:13px;line-height:1.7;margin:12px 0 3px}.chapter-toc li{break-inside:avoid;margin:5px 0}.chapter-toc a{text-decoration:none}.chapter-links{display:flex;flex-wrap:wrap;gap:16px;margin:25px 0 0;font-size:13px;color:var(--muted);border-top:1px solid var(--line);padding-top:17px}.mobile-head{display:none}.footer{color:var(--muted);font-size:13px;padding:8px 8px 0}.back-top{position:fixed;right:20px;bottom:20px;font-size:13px;box-shadow:0 2px 12px #0001}.read-progress{position:fixed;top:0;left:0;height:3px;background:var(--accent);width:0;z-index:10}.source-tag{font-size:12px;color:var(--muted)}
+@media(max-width:900px){.layout{grid-template-columns:1fr;padding:15px 14px 60px;gap:15px}.sidebar{position:static;max-height:none;display:none;padding:16px;background:var(--paper);border:1px solid var(--line);border-radius:10px}.sidebar.open{display:block}.mobile-head{display:flex;justify-content:space-between;align-items:center;padding:14px 16px 0}.hero,.chapter{padding:24px}.hero h1{font-size:26px}.chapter h1{font-size:24px}.chapter h2{font-size:21px}.chapter-toc ol{columns:1}.back-top{bottom:12px;right:12px}}
+@media(max-width:480px){body{font-size:15px}.hero,.chapter{padding:19px 17px}.hero h1{font-size:24px}.chapter h1{font-size:23px}pre{padding:14px;font-size:12px}.table-wrap{margin:18px 0}.chapter h2{font-size:19px}.meta{font-size:12px}}
+@media print{body{background:white;color:#111;font-size:11pt}.layout{display:block;padding:0}.sidebar,.mobile-head,.nav-tools,.back-top,.read-progress,.downloads,.chapter-links,.chapter-toc{display:none!important}.hero,.chapter{border:none;padding:0;border-radius:0}.chapter{break-before:page}pre{white-space:pre-wrap;overflow-wrap:anywhere;border:1px solid #ddd;font-size:9pt}pre code{white-space:pre-wrap;overflow-wrap:anywhere}table{min-width:0}.table-wrap{overflow:visible}a{color:#111}h1,h2,h3{break-after:avoid}tr{break-inside:avoid}}
+.nav-link[hidden]{display:none}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+
+.pi-overview{position:relative;margin:0 0 28px;border:1px solid var(--line);border-radius:10px;background:var(--paper);padding:24px;min-width:0;max-width:100%;color:var(--text)}.overview-target{position:absolute;top:0;left:0;width:1px;height:1px;scroll-margin-top:20px}.overview-head{margin:0 0 16px}.overview-head .overview-kicker{font:12px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:.1em;color:var(--muted)}.overview-head h2{font-size:25px;line-height:1.5;margin:6px 0 9px;border:0;padding:0}.overview-head p{font-size:14px;line-height:1.8;color:var(--muted);margin:7px 0}.overview-head a{font-size:13px}.overview-panel{display:none;grid-template-columns:minmax(0,1.45fr) minmax(220px,1fr);gap:20px;border:1px solid var(--line);border-radius:8px;padding:18px 20px;margin-bottom:18px;min-height:210px;background:var(--nav)}.overview-panel[data-detail="loop"]{display:grid}.pi-overview:has(.overview-target:target) .overview-panel{display:none}.pi-overview:has(#pi-map-session:target) .overview-panel[data-detail="session"]{display:grid}.pi-overview:has(#pi-map-session:target) [data-map-node="session"] .node-outline{stroke:var(--accent);stroke-width:2.4;fill:var(--nav)}
+.pi-overview:has(#pi-map-loop:target) .overview-panel[data-detail="loop"]{display:grid}.pi-overview:has(#pi-map-loop:target) [data-map-node="loop"] .node-outline{stroke:var(--accent);stroke-width:2.4;fill:var(--nav)}
+.pi-overview:has(#pi-map-model:target) .overview-panel[data-detail="model"]{display:grid}.pi-overview:has(#pi-map-model:target) [data-map-node="model"] .node-outline{stroke:var(--accent);stroke-width:2.4;fill:var(--nav)}
+.pi-overview:has(#pi-map-history:target) .overview-panel[data-detail="history"]{display:grid}.pi-overview:has(#pi-map-history:target) [data-map-node="history"] .node-outline{stroke:var(--accent);stroke-width:2.4;fill:var(--nav)}
+.pi-overview:has(#pi-map-tools:target) .overview-panel[data-detail="tools"]{display:grid}.pi-overview:has(#pi-map-tools:target) [data-map-node="tools"] .node-outline{stroke:var(--accent);stroke-width:2.4;fill:var(--nav)}
+.pi-overview:has(#pi-map-extensions:target) .overview-panel[data-detail="extensions"]{display:grid}.pi-overview:has(#pi-map-extensions:target) [data-map-node="extensions"] .node-outline{stroke:var(--accent);stroke-width:2.4;fill:var(--nav)}
+.pi-overview:has(#pi-map-validation:target) .overview-panel[data-detail="validation"]{display:grid}.pi-overview:has(#pi-map-validation:target) [data-map-node="validation"] .node-outline{stroke:var(--accent);stroke-width:2.4;fill:var(--nav)}
+.pi-overview:has(#pi-map-subagents:target) .overview-panel[data-detail="subagents"]{display:grid}.pi-overview:has(#pi-map-subagents:target) [data-map-node="subagents"] .node-outline{stroke:var(--accent);stroke-width:2.4;fill:var(--nav)}
+.overview-panel h3{margin:0 0 7px;font-size:19px;line-height:1.6}.overview-panel p{margin:6px 0;font-size:14px;line-height:1.8}.overview-io{display:grid;grid-template-columns:38px minmax(0,1fr);gap:4px 8px;font-size:13px;line-height:1.75;margin:12px 0 0}.overview-io dt{color:var(--muted)}.overview-io dd{margin:0}.overview-chapter-links{display:flex;gap:8px;flex-wrap:wrap;margin:3px 0 12px}.overview-chapter-links a{display:inline-block;background:var(--paper);border:1px solid var(--line);border-radius:5px;padding:5px 10px;font-size:13px;text-decoration:none}.overview-sources{list-style:none;padding:0;margin:0;font-size:12px;line-height:1.8}.overview-sources li{margin:7px 0}.overview-sources code{background:none;padding:0;font-size:11px;overflow-wrap:anywhere}.overview-diagram-container{width:100%;max-width:100%;overflow-x:auto;overscroll-behavior-x:contain;border:1px solid var(--line);border-radius:8px;background:var(--paper)}.pi-overview svg{width:100%;min-width:960px;display:block;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}.pi-overview svg text{fill:var(--text)}.pi-overview svg .svg-muted{fill:var(--muted)}.pi-overview svg .svg-mono{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}.pi-overview svg .node-outline{fill:var(--paper);stroke:var(--line);stroke-width:1.4}.pi-overview svg .node-state{fill:var(--code)}.pi-overview svg .node-optional{stroke-dasharray:5 4}.pi-overview svg .node-focal{stroke:var(--accent);stroke-width:2;fill:var(--nav)}.pi-overview svg a:hover .node-outline,.pi-overview svg a:focus-visible .node-outline{stroke:var(--accent);stroke-width:2.4}.pi-overview svg a:focus-visible{outline:none}.pi-overview svg .edge{fill:none;stroke:var(--muted);stroke-width:1.5}.pi-overview svg .edge-return{stroke-dasharray:5 4}.pi-overview svg .label-mask{fill:var(--paper)}.pi-overview svg .type-tag{fill:var(--code);stroke:var(--line);stroke-width:.8}.overview-chapter-index{display:flex;gap:7px;flex-wrap:wrap;margin-top:15px;font-size:12px;line-height:1.6}.overview-chapter-index a{border:1px solid var(--line);padding:5px 8px;border-radius:5px;text-decoration:none;color:var(--muted)}.overview-chapter-index a:hover{color:var(--accent);border-color:var(--accent)}.overview-note{font-size:12px;line-height:1.8;color:var(--muted);margin:13px 0 0}.overview-bounds{border-left:3px solid var(--accent);padding-left:11px;color:var(--muted)}
+@media(max-width:1000px){.overview-panel{grid-template-columns:1fr;min-height:0;gap:14px}.overview-panel-side{border-top:1px solid var(--line);padding-top:12px}}
+@media(max-width:600px){.pi-overview{padding:17px}.overview-head h2{font-size:22px}.overview-panel{padding:15px}.overview-panel h3{font-size:17px}.overview-head p{font-size:13px}}
+@media print{.pi-overview{break-before:page;padding:0;border:0}.overview-diagram-container{overflow:visible;border:0}.pi-overview svg{min-width:0;width:100%}.overview-panel{display:block!important;break-inside:avoid;background:none;min-height:0}.overview-chapter-index,.overview-head>a{display:none}.overview-target{display:none}}
+</style></head><body><a class="blog-back" href="../../../index.html">← Agent 笔记 · 所有文章</a><div class="read-progress" aria-hidden="true"></div><div class="mobile-head"><span>PI · 源码伴读</span><button data-menu aria-expanded="false" aria-controls="chapter-nav">章节目录</button></div><div class="layout"><aside class="sidebar" id="chapter-nav"><div class="eyebrow">SOURCE WALKTHROUGH</div><div class="brand">PI Agent Harness</div><p>从一次请求到执行、历史和恢复。<br>按 01 → 12 顺序阅读。</p><input class="nav-search" data-search aria-label="筛选章节" placeholder="筛选章节标题"><nav aria-label="章节目录"><a class="nav-link" href="../pi-overview.html">总览 · 各部分怎样配合</a><a class="nav-link" href="01-%E5%87%86%E5%A4%87%E4%B8%8E%E6%9E%B6%E6%9E%84.html">01 · 准备与架构——先认清对象和职责</a><a class="nav-link" href="02-Agent-Loop.html">02 · Agent Loop——工具执行后，为什么还要请求模型？</a><a class="nav-link" href="03-%E6%A8%A1%E5%9E%8B%E5%8D%8F%E8%AE%AE%E4%B8%8E%E6%B5%81.html">03 · 模型协议与流——从数据片段到完整消息</a><a class="nav-link" href="04-%E5%B7%A5%E5%85%B7%E4%B8%8E%E4%BB%A3%E7%A0%81%E4%BF%AE%E6%94%B9.html">04 · 工具与代码修改——从模型意图到真实副作用</a><a class="nav-link" href="05-%E8%B0%83%E5%BA%A6%E4%B8%8E%E6%94%B6%E5%B0%BE.html">05 · 调度与收尾——并行、队列、停止、取消与重试</a><a class="nav-link current" href="06-%E9%A2%84%E6%B5%8B%E4%B8%8E%E9%AA%8C%E8%AF%81.html">06 · 预测与验证——怎样用测试检查自己读懂了没有</a><a class="nav-link" href="07-%E4%BC%9A%E8%AF%9D%E4%B8%8E%E5%8E%86%E5%8F%B2.html">07 · 会话与历史——保存过的内容，为什么模型未必看得见</a><a class="nav-link" href="08-%E4%B8%8A%E4%B8%8B%E6%96%87%E5%8E%8B%E7%BC%A9.html">08 · 上下文压缩——预算、切点、信息损失与缓存</a><a class="nav-link" href="09-Extension%E4%B8%8ESkill.html">09 · Extension 与 Skill——怎样增加工具和工作方法</a><a class="nav-link" href="10-MCP%E5%8F%91%E7%8E%B0%E4%B8%8E%E8%B0%83%E7%94%A8.html">10 · MCP——外部工具怎样进入 PI 的执行循环</a><a class="nav-link" href="11-Subagent%E4%B8%8EDurable.html">11 · Subagent 与 durable——委派、后台工作和恢复</a><a class="nav-link" href="12-%E5%AE%89%E5%85%A8%E8%AF%84%E6%B5%8B%E4%B8%8E%E6%9C%8D%E5%8A%A1.html">12 · 安全、评测与服务——怎样判断 Agent 真正完成了任务</a></nav><div class="nav-tools"><button data-theme-toggle>切换明暗</button><button onclick="window.print()">打印</button></div><p>源码：<a href="https://github.com/earendil-works/pi/tree/eb326d265ae0b88489a6d10319307780df827cdf/" target="_blank" rel="noopener noreferrer">eb326d2</a><br>包版本：1.0.4<br>本地整理：2026-10-26</p></aside><main class="main"><header class="hero"><div class="eyebrow">PI STUDY NOTES / 01—12</div><h1>第 06 节：预测与验证——怎样用测试检查自己读懂了没有</h1><p>逐段看代码怎样接收输入、请求模型、执行工具、保存历史，并处理取消、重试和恢复。</p><div class="meta"><span>12 节完整讲解</span><span>固定提交源码引用</span><span>解释 · 例子 · 练习 · 面试追问</span></div><div class="downloads"><a href="../PI-Agent-Harness-01-12.md" download>下载 Markdown 合订本</a><a href="../README.md">阅读说明</a></div><div class="notice">静态源码伴读。示意轨迹、待执行练习与实际运行结果分别说明。本文提供源码分析与待执行练习，不将源码阅读作为模型实测或生产验收。</div></header><section class="chapter" data-chapter="6"><h1 id="chapter-06" tabindex="-1">第 06 节：预测与验证——怎样用测试检查自己读懂了没有</h1><details class="chapter-toc"><summary>本节小节目录 · 11 项</summary><ol><li><a href="#c6-s1">一、先写预测，再打开答案</a></li><li><a href="#c6-s2">二、先认识已有测试的四个组成部分</a></li><li><a href="#c6-s3">三、两轮闭环：最先核对请求内容</a></li><li><a href="#c6-s4">四、并行练习：读懂手动闸门</a></li><li><a href="#c6-s5">五、截断练习：合法结构仍可能不执行</a></li><li><a href="#c6-s6">六、参数和 hook 练习：记录函数调用次数</a></li><li><a href="#c6-s7">七、文件练习：断言真实内容</a></li><li><a href="#c6-s8">八、取消与结束：观察什么时候真的 idle</a></li><li><a href="#c6-s9">九、怎样运行一个已有测试</a></li><li><a href="#c6-s10">十、把新增学习变体与现有断言分开</a></li><li><a href="#c6-s11">十一、练习编号与验收记录</a></li></ol></details>
+<p>前五节已经看到输入、循环、模型流、工具和调度。这一节练习把一句理解变成具体断言，例如“B 先完成，但结果仍按 A/B 排列”。</p>
+<p>本节的测试命令和新增变体是学习建议，未在本次文档制作中执行。使用已有确定性测试来观察调度；真实模型的工具选择和任务效果在第 12 节另作评测。</p>
+<h2 id="c6-s1" tabindex="-1">一、先写预测，再打开答案</h2>
+<p>“读懂”最容易被代码熟悉感替代。看见 <code>Promise.all</code> 就觉得懂并发，看见 <code>AbortSignal</code> 就觉得支持取消，但换一个条件，答案可能不同。</p>
+<p>每个练习先记五项：</p>
+<pre><code class="language-text">输入：模型返回什么、工具做什么
+改变：只改变哪一个条件
+预测：执行次数、事件顺序、最终状态
+依据：哪个函数决定这个结果
+实际：只有运行过才填写；没运行写“未执行”
+</code></pre>
+<p>可以先关掉实现，只读测试的输入。写完预测后再读断言，再回到实现解释原因。先运行测试也能看到绿灯，但更难知道你是否真正理解了它保护的行为。</p>
+<h2 id="c6-s2" tabindex="-1">二、先认识已有测试的四个组成部分</h2>
+<p>打开 <a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/agent/test/agent-loop.test.ts#L22-L77">agent-loop.test.ts 的工厂</a>：</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>部分</th>
+<th>在测试中承担什么</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>createModel</td>
+<td>提供符合类型的模型元数据</td>
+</tr>
+<tr>
+<td>createAssistantMessage</td>
+<td>构造一条预设模型响应</td>
+</tr>
+<tr>
+<td>streamFn</td>
+<td>按顺序返回预设响应流</td>
+</tr>
+<tr>
+<td>execute 与事件数组</td>
+<td>观察真实调度是否按预期执行</td>
+</tr>
+</tbody></table></div>
+<p>测试模型的地址是 <code>https://example.invalid</code>，但不联网的关键是注入的 streamFn 只返回内存事件流，没有调用 Provider。仅仅把 model.id 起名为 mock，不能保证不会联网。</p>
+<p>工厂里 usage 为零，是因为没有真实模型用量；不能拿这个值计算“优化后免费”或“成本下降”。</p>
+<p>已有调度测试有些直接 push <code>done</code>，省略 start 和 delta。这足以验证某些调度行为，但不会验证完整流式解析。测试的证明范围取决于它实际走了哪些步骤。</p>
+<h2 id="c6-s3" tabindex="-1">三、两轮闭环：最先核对请求内容</h2>
+<p>沿用学习计划的 F1：第一轮模型要求 add(2,3)，第二轮回答 5。这里只描述应当构造的实验，不把它说成已存在的新文件。</p>
+<pre><code class="language-text">streamFn 第一次：assistant(toolCall id=c1, add(2,3))
+真实调度：查工具、校验、execute，得到 5
+streamFn 第二次：检查输入里有没有 c1 对应的 toolResult
+                 再返回 assistant(&quot;5&quot;)
+</code></pre>
+<p>需要检查：</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>观察值</th>
+<th>预期</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>streamFn 调用次数</td>
+<td>2</td>
+</tr>
+<tr>
+<td>add.execute 次数</td>
+<td>1</td>
+</tr>
+<tr>
+<td>第二次输入</td>
+<td>包含 assistant toolCall 和同 ID 的 toolResult</td>
+</tr>
+<tr>
+<td>工具结果内容</td>
+<td>5</td>
+</tr>
+<tr>
+<td>turn_end 数量</td>
+<td>2</td>
+</tr>
+<tr>
+<td>agent_end 数量</td>
+<td>1</td>
+</tr>
+</tbody></table></div>
+<p>只断言最终文字是 5 不够。一个完全不执行工具、直接返回 5 的错误实现也可能通过。要把“工具实际执行”和“结果正确回到下一次请求”分别检查。</p>
+<p>同理，模型文字说“已经读取”，也不能替代读取记录与实际证据。</p>
+<h2 id="c6-s4" tabindex="-1">四、并行练习：读懂手动闸门</h2>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/agent/test/agent-loop.test.ts#L668-L760">已有并行测试</a> 构造了一个待完成的 Promise：</p>
+<pre><code class="language-ts">let releaseFirst: (() =&gt; void) | undefined;
+const firstDone = new Promise&lt;void&gt;(resolve =&gt; {
+  releaseFirst = resolve;
+});
+</code></pre>
+<p>第一项工具执行时等待 <code>firstDone</code>；第二项工具可以先完成。调用 <code>releaseFirst()</code> 后，第一项才继续。</p>
+<p>这与第二节保存 <code>activeRun.resolve</code> 的思路一样：现在建立等待关系，在另一个明确的位置解除等待。</p>
+<p>原测试在假模型发出工具调用后用定时器释放第一项。你自己写新变体时，可以让第二项结束后显式释放第一项，减少对固定毫秒数的依赖。注意：如果把模式切成串行，第二项尚未开始就无法释放第一项，这种写法会死锁；串行变体需要由测试控制端独立释放。</p>
+<p>至少检查三种顺序：工具是否真正重叠、tool_execution_end 的顺序、ToolResultMessage 的顺序。已有断言分别检查了这三件事，不能只看总耗时更短。</p>
+<p>再改一个条件：给 B 增加一个慢的后置 hook。预测 end(B) 是否仍比 end(A) 早。源码里的 end 在 finalize 之后发出，所以不能只按 execute 时间排序。</p>
+<h2 id="c6-s5" tabindex="-1">五、截断练习：合法结构仍可能不执行</h2>
+<p>打开 <a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/agent/test/agent-loop.test.ts#L456-L526">length-truncated 测试</a>。它让模型返回：</p>
+<pre><code class="language-text">toolCall：echo({ value: &quot;hel&quot; })
+stopReason：length
+</code></pre>
+<p><code>value</code> 是合法字符串，schema 可以接受。但 “hel” 可能只是本来要生成的 “hello” 的一部分。PI 根据整个 assistant 的结束原因，拒绝执行这条响应里的工具。</p>
+<p>测试检查：</p>
+<pre><code class="language-ts">expect(executed).toEqual([]);
+expect(callIndex).toBe(2);
+</code></pre>
+<p>同时检查错误工具结果说明 token limit。第二次模型请求存在，是让模型有机会重新提出完整调用。</p>
+<p>这里证明的是 harness 遇到 length 时的保护逻辑。真实 Provider 是否正确把厂商截断原因映射为 length，需要协议适配层的测试另证。</p>
+<h2 id="c6-s6" tabindex="-1">六、参数和 hook 练习：记录函数调用次数</h2>
+<p>沿用 F3，准备一个 <code>value: string</code> 的 echo 工具。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>变体</th>
+<th align="right">execute 次数</th>
+<th align="right">after 次数</th>
+<th>要解释的原因</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>缺 value</td>
+<td align="right">0</td>
+<td align="right">0</td>
+<td>参数验证失败，直接产生结果</td>
+</tr>
+<tr>
+<td>合法参数，before block</td>
+<td align="right">0</td>
+<td align="right">0</td>
+<td>执行前被拒绝</td>
+</tr>
+<tr>
+<td>before 将 value 改为数字</td>
+<td align="right">1</td>
+<td align="right">1（已配置时）</td>
+<td>普通 core 未自动复验修改值</td>
+</tr>
+<tr>
+<td>execute 抛错</td>
+<td align="right">1</td>
+<td align="right">1（已配置时）</td>
+<td>异常先转成错误结果，再后处理</td>
+</tr>
+</tbody></table></div>
+<p>第三项有 <a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/agent/test/agent-loop.test.ts#L528-L587">现成测试</a>。这个测试在记录当前接口行为，不意味着修改校验后的值一定合理。你开发 hook 时仍要维护参数的有效性。</p>
+<p>观察变量可以很小：<code>executeCount</code>、<code>afterCount</code>、<code>receivedArgs</code>、<code>isError</code>。不要只在最终回答里搜索“拒绝”两个字，因为自然语言与执行状态不是同一个字段。</p>
+<h2 id="c6-s7" tabindex="-1">七、文件练习：断言真实内容</h2>
+<p>F7 有两个不同失败窗口。</p>
+<p>第一种是定位失败：第一项 edit 合法，第二项找不到。由于匹配和检查全部在 writeFile 前完成，文件应保持原内容。见 <a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/coding-agent/test/tools.test.ts#L425-L441">不部分应用测试</a>。</p>
+<p>第二种是写入期间取消：先让写操作开始，再发出取消，随后允许在途写结束。最终可以报取消，但文件已经改变。同文件后续修改还要等第一项写结束，不能提前释放队列。见 <a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/coding-agent/test/file-mutation-queue.test.ts#L221-L273">取消与修改队列测试</a>。</p>
+<p>这两种情况都可能有错误结果，文件效果却不同。测试应检查文件内容、执行顺序和错误状态，不能只断言 Promise reject。</p>
+<p>学习时使用临时文件或可控 operations 替身。不要拿正在使用的配置文件试取消，也不需要访问真实业务系统来验证这种顺序。</p>
+<h2 id="c6-s8" tabindex="-1">八、取消与结束：观察什么时候真的 idle</h2>
+<p>阅读 <a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/agent/test/agent.test.ts#L330-L470">Agent 生命周期测试</a>。其中有异步订阅者阻塞 agent_end 的情况：事件已经发出，监听器尚未完成，Agent 仍不能接受并发 prompt。</p>
+<p>可以记录三个时刻：</p>
+<pre><code class="language-text">t1：观察到 agent_end
+t2：事件监听器处理结束
+t3：prompt / waitForIdle 完成，isStreaming=false
+</code></pre>
+<p>若把 agent_end 当作已释放 activeRun，会误判 t1 和 t3。第二节的 finally 清理发生在等待监听器之后。</p>
+<p>取消实验还要区分合作工具与忽略 signal 的工具。后者若停在一个手动 Promise 上，abort 后仍需释放这个 Promise 才能结束。测试控制端必须有清理路径，避免留下永远等待的测试。</p>
+<h2 id="c6-s9" tabindex="-1">九、怎样运行一个已有测试</h2>
+<p>以下命令仅供学习者后续执行，本轮未运行。先确认依赖已安装、源码版本与本文一致；这组机制测试无需加载含凭据的 <code>.env</code>。</p>
+<pre><code class="language-bash">cd &#39;/path/to/pi/packages/agent&#39;
+node ../../node_modules/vitest/dist/cli.js --run test/agent-loop.test.ts -t &#39;completion order&#39;
+</code></pre>
+<pre><code class="language-bash">cd &#39;/path/to/pi/packages/agent&#39;
+node ../../node_modules/vitest/dist/cli.js --run test/agent-loop.test.ts -t &#39;length-truncated&#39;
+</code></pre>
+<pre><code class="language-bash">cd &#39;/path/to/pi/packages/coding-agent&#39;
+node ../../node_modules/vitest/dist/cli.js --run test/tools.test.ts -t &#39;not partially apply edits&#39;
+</code></pre>
+<p>确认结果中确实有目标测试运行，不能把全部 skipped 当成功。失败时先区分测试断言失败、依赖问题、版本不符和环境初始化失败。</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/agent/vitest.config.ts#L1-L27">agent 的 Vitest 配置</a> 将包名解析到源码；coding-agent 的配置还设置默认离线环境。它们说明测试怎样加载实现，但不替代检查所选测试实际有没有外部请求。按项目规则选择单文件/单用例，避免为读文档启动全仓测试。</p>
+<h2 id="c6-s10" tabindex="-1">十、把新增学习变体与现有断言分开</h2>
+<p>运行作者已有测试只能证明当前环境下那个案例的结果。要检查自己能否迁移理解，至少改一个条件：</p>
+<ul>
+<li>把一个并行工具声明为 sequential，观察 B 是否等待 A。</li>
+<li>给快工具增加慢 after hook，观察结束事件顺序。</li>
+<li>同时安排自然工具续轮和 finishTurn continue，检查是否只多一次请求。</li>
+<li>让模型持续提出失败工具，到第三轮由宿主结束，并记录业务仍未成功。</li>
+</ul>
+<p>先写预期，再写最小实验。不要为了观察两项并行引入真实网络延迟；也不要让 fake 调用真实 Provider，导致“离线实验”实际上依赖账号和额度。</p>
+<h2 id="c6-s11" tabindex="-1">十一、练习编号与验收记录</h2>
+<p>本系列沿用主学习指南的编号：F1 两轮闭环；F2 增量与最终值；F3 校验与 hook；F4 并行与串行；F5 停止与消息队列；F6 历史与压缩；F7 编辑与副作用；F8 取证任务评测。旧 core-loop-study 中同名编号曾代表不同内容，查阅时以练习名称和本表为准。</p>
+<p>建议记录成下面的表，未执行项保持未执行：</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>用例</th>
+<th>我的预测</th>
+<th>实际结果</th>
+<th>结论与源码位置</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>并行 A/B</td>
+<td>end=B/A，消息=A/B</td>
+<td>未执行</td>
+<td>待观察</td>
+</tr>
+<tr>
+<td>length＋合法参数</td>
+<td>execute=0</td>
+<td>未执行</td>
+<td>待观察</td>
+</tr>
+<tr>
+<td>写期间 abort</td>
+<td>文件可能已改</td>
+<td>未执行</td>
+<td>待观察</td>
+</tr>
+</tbody></table></div>
+<p>完成这一节时，应能独立解释至少两条断言，并提出一个不会被现有“最终答案正确”检查发现的错误实现。比如把工具结果配错 ID，或在取消后提前释放文件修改队列。</p>
+<p>面试追问“你怎么验证 Agent”时，可以从一个这样的例子展开：输入如何控制、结果如何观察、失败如何复现、测试没有证明哪些模型能力。接下来第 07 节把这些观察延伸到历史和上下文。</p>
+<div class="chapter-links"><a href="05-%E8%B0%83%E5%BA%A6%E4%B8%8E%E6%94%B6%E5%B0%BE.html">← 第 5 节</a><a href="07-%E4%BC%9A%E8%AF%9D%E4%B8%8E%E5%8E%86%E5%8F%B2.html">第 7 节 →</a><a href="06-%E9%A2%84%E6%B5%8B%E4%B8%8E%E9%AA%8C%E8%AF%81.md" download>本节 Markdown</a><a href="../index.html">返回合订本</a></div></section><footer class="footer">本系列按固定版本源码整理。源码链接固定到研究提交；本地源码若更新，请按函数名复核。HTML 内嵌样式和脚本，正文可离线阅读。</footer></main></div><button class="back-top" data-top aria-label="返回顶部">↑ 顶部</button><script>
+const root=document.documentElement;
+try{root.dataset.theme=localStorage.getItem('pi-study-theme')||'light'}catch{}
+document.querySelectorAll('[data-theme-toggle]').forEach(b=>b.addEventListener('click',()=>{root.dataset.theme=root.dataset.theme==='dark'?'light':'dark';try{localStorage.setItem('pi-study-theme',root.dataset.theme)}catch{}}));
+document.querySelector('[data-menu]')?.addEventListener('click',e=>{const expanded=document.querySelector('.sidebar').classList.toggle('open');e.currentTarget.setAttribute('aria-expanded',String(expanded))});
+document.querySelector('[data-search]')?.addEventListener('input',e=>{const q=e.target.value.trim().toLowerCase();document.querySelectorAll('.nav-link').forEach(a=>a.hidden=!a.textContent.toLowerCase().includes(q))});
+document.querySelector('[data-top]')?.addEventListener('click',()=>window.scrollTo({top:0,behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth'}));
+function progress(){const total=document.documentElement.scrollHeight-innerHeight;document.querySelector('.read-progress').style.width=(total>0?scrollY/total*100:100)+'%'}
+addEventListener('scroll',progress,{passive:true});addEventListener('resize',progress);progress();
+const observer=new IntersectionObserver(entries=>{for(const entry of entries)if(entry.isIntersecting){const id=entry.target.id;document.querySelectorAll('.nav-link[href^="#"]').forEach(a=>a.setAttribute('aria-current',String(a.getAttribute('href')==='#'+id))) }},{rootMargin:'-5% 0px -75% 0px'});
+document.querySelectorAll('.chapter>h1').forEach(h=>observer.observe(h));
+</script></body></html>

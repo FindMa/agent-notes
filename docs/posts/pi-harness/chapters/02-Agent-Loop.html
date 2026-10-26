@@ -1,0 +1,801 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light dark"><title>第 02 节：Agent Loop——工具执行后，为什么还要请求模型？</title><style>
+.blog-back{display:block;max-width:1440px;margin:18px auto 0;padding:0 28px;font-size:14px}
+:root{color-scheme:light;--bg:#f5f3ee;--paper:#fffefa;--text:#26332e;--muted:#65736b;--line:#d9dfd6;--accent:#28664e;--code:#eef2ed;--nav:#edf1e9}
+:root[data-theme=dark]{color-scheme:dark;--bg:#151c19;--paper:#1c2520;--text:#e0e8df;--muted:#abb9ad;--line:#3b4b40;--accent:#9ed4ac;--code:#25332a;--nav:#202c24}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:28px}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.9 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}a{color:var(--accent);text-underline-offset:3px;overflow-wrap:anywhere}a:hover{text-decoration-thickness:2px}button,input{font:inherit}button{cursor:pointer;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--text);padding:7px 13px}button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+.layout{max-width:1440px;margin:0 auto;display:grid;grid-template-columns:275px minmax(0,1fr);gap:30px;padding:28px 28px 70px}.sidebar{position:sticky;top:24px;max-height:calc(100vh - 48px);overflow:auto;padding:5px 15px 20px 0;scrollbar-width:thin}.brand{font-size:20px;font-weight:700;line-height:1.5;margin-bottom:8px}.eyebrow{font-size:12px;letter-spacing:.13em;color:var(--muted)}.sidebar p{font-size:13px;color:var(--muted);margin:8px 0 18px}.nav-link{display:block;padding:10px 12px;border-radius:7px;font-size:14px;text-decoration:none;line-height:1.7}.nav-link:hover,.nav-link.current{background:var(--nav)}.nav-link[aria-current=true]{background:var(--nav);font-weight:600}.nav-tools{display:flex;gap:8px;margin:16px 0}.nav-tools button{font-size:13px}.nav-search{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:7px;background:var(--paper);color:var(--text);margin:0 0 13px}.main{min-width:0}.hero{padding:34px 44px;background:var(--paper);border:1px solid var(--line);border-radius:12px;margin-bottom:24px}.hero h1{font-size:30px;line-height:1.5;margin:8px 0 12px}.hero p{margin:9px 0}.meta{display:flex;gap:8px 18px;flex-wrap:wrap;font-size:13px;color:var(--muted)}.downloads{display:flex;gap:20px;flex-wrap:wrap;font-size:14px;margin-top:18px}.notice{border-left:3px solid var(--accent);padding:8px 14px;background:var(--nav);margin:18px 0 0;font-size:14px}
+.chapter{padding:35px 44px 40px;background:var(--paper);border:1px solid var(--line);border-radius:12px;margin-bottom:26px;overflow-wrap:break-word}.chapter h1{font-size:27px;line-height:1.55;margin:0 0 24px}.chapter h2{font-size:22px;line-height:1.65;margin:42px 0 16px;padding-top:8px;border-top:1px solid var(--line)}.chapter h3{font-size:18px;line-height:1.7;margin:28px 0 12px}.chapter h4{font-size:16px;margin:22px 0 10px}p{margin:14px 0}ul,ol{padding-left:1.55em}li{margin:6px 0}blockquote{border-left:3px solid var(--accent);margin:20px 0;padding:1px 18px;color:var(--muted);background:var(--nav);border-radius:0 7px 7px 0}blockquote p{margin:12px 0}code{font: .88em/1.65 ui-monospace,SFMono-Regular,Consolas,monospace;background:var(--code);padding:2px 5px;border-radius:4px;overflow-wrap:anywhere}pre{background:var(--code);padding:18px 20px;border:1px solid var(--line);border-radius:9px;overflow-x:auto;max-width:100%;font-size:14px;line-height:1.75;tab-size:2}pre code{padding:0;background:transparent;white-space:pre;overflow-wrap:normal;word-break:normal;font-size:inherit}.table-wrap{overflow-x:auto;margin:22px 0;border:1px solid var(--line);border-radius:8px}table{border-collapse:collapse;width:100%;min-width:440px;font-size:14px;line-height:1.75}th,td{padding:11px 14px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}th{background:var(--nav);font-weight:600}tr:last-child td{border-bottom:0}hr{border:0;border-top:1px solid var(--line);margin:30px 0}strong{font-weight:650}.chapter-toc{background:var(--nav);border-radius:8px;padding:12px 16px;margin:0 0 24px}.chapter-toc summary{cursor:pointer;font-size:14px}.chapter-toc ol{columns:2;font-size:13px;line-height:1.7;margin:12px 0 3px}.chapter-toc li{break-inside:avoid;margin:5px 0}.chapter-toc a{text-decoration:none}.chapter-links{display:flex;flex-wrap:wrap;gap:16px;margin:25px 0 0;font-size:13px;color:var(--muted);border-top:1px solid var(--line);padding-top:17px}.mobile-head{display:none}.footer{color:var(--muted);font-size:13px;padding:8px 8px 0}.back-top{position:fixed;right:20px;bottom:20px;font-size:13px;box-shadow:0 2px 12px #0001}.read-progress{position:fixed;top:0;left:0;height:3px;background:var(--accent);width:0;z-index:10}.source-tag{font-size:12px;color:var(--muted)}
+@media(max-width:900px){.layout{grid-template-columns:1fr;padding:15px 14px 60px;gap:15px}.sidebar{position:static;max-height:none;display:none;padding:16px;background:var(--paper);border:1px solid var(--line);border-radius:10px}.sidebar.open{display:block}.mobile-head{display:flex;justify-content:space-between;align-items:center;padding:14px 16px 0}.hero,.chapter{padding:24px}.hero h1{font-size:26px}.chapter h1{font-size:24px}.chapter h2{font-size:21px}.chapter-toc ol{columns:1}.back-top{bottom:12px;right:12px}}
+@media(max-width:480px){body{font-size:15px}.hero,.chapter{padding:19px 17px}.hero h1{font-size:24px}.chapter h1{font-size:23px}pre{padding:14px;font-size:12px}.table-wrap{margin:18px 0}.chapter h2{font-size:19px}.meta{font-size:12px}}
+@media print{body{background:white;color:#111;font-size:11pt}.layout{display:block;padding:0}.sidebar,.mobile-head,.nav-tools,.back-top,.read-progress,.downloads,.chapter-links,.chapter-toc{display:none!important}.hero,.chapter{border:none;padding:0;border-radius:0}.chapter{break-before:page}pre{white-space:pre-wrap;overflow-wrap:anywhere;border:1px solid #ddd;font-size:9pt}pre code{white-space:pre-wrap;overflow-wrap:anywhere}table{min-width:0}.table-wrap{overflow:visible}a{color:#111}h1,h2,h3{break-after:avoid}tr{break-inside:avoid}}
+.nav-link[hidden]{display:none}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+
+.pi-overview{position:relative;margin:0 0 28px;border:1px solid var(--line);border-radius:10px;background:var(--paper);padding:24px;min-width:0;max-width:100%;color:var(--text)}.overview-target{position:absolute;top:0;left:0;width:1px;height:1px;scroll-margin-top:20px}.overview-head{margin:0 0 16px}.overview-head .overview-kicker{font:12px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:.1em;color:var(--muted)}.overview-head h2{font-size:25px;line-height:1.5;margin:6px 0 9px;border:0;padding:0}.overview-head p{font-size:14px;line-height:1.8;color:var(--muted);margin:7px 0}.overview-head a{font-size:13px}.overview-panel{display:none;grid-template-columns:minmax(0,1.45fr) minmax(220px,1fr);gap:20px;border:1px solid var(--line);border-radius:8px;padding:18px 20px;margin-bottom:18px;min-height:210px;background:var(--nav)}.overview-panel[data-detail="loop"]{display:grid}.pi-overview:has(.overview-target:target) .overview-panel{display:none}.pi-overview:has(#pi-map-session:target) .overview-panel[data-detail="session"]{display:grid}.pi-overview:has(#pi-map-session:target) [data-map-node="session"] .node-outline{stroke:var(--accent);stroke-width:2.4;fill:var(--nav)}
+.pi-overview:has(#pi-map-loop:target) .overview-panel[data-detail="loop"]{display:grid}.pi-overview:has(#pi-map-loop:target) [data-map-node="loop"] .node-outline{stroke:var(--accent);stroke-width:2.4;fill:var(--nav)}
+.pi-overview:has(#pi-map-model:target) .overview-panel[data-detail="model"]{display:grid}.pi-overview:has(#pi-map-model:target) [data-map-node="model"] .node-outline{stroke:var(--accent);stroke-width:2.4;fill:var(--nav)}
+.pi-overview:has(#pi-map-history:target) .overview-panel[data-detail="history"]{display:grid}.pi-overview:has(#pi-map-history:target) [data-map-node="history"] .node-outline{stroke:var(--accent);stroke-width:2.4;fill:var(--nav)}
+.pi-overview:has(#pi-map-tools:target) .overview-panel[data-detail="tools"]{display:grid}.pi-overview:has(#pi-map-tools:target) [data-map-node="tools"] .node-outline{stroke:var(--accent);stroke-width:2.4;fill:var(--nav)}
+.pi-overview:has(#pi-map-extensions:target) .overview-panel[data-detail="extensions"]{display:grid}.pi-overview:has(#pi-map-extensions:target) [data-map-node="extensions"] .node-outline{stroke:var(--accent);stroke-width:2.4;fill:var(--nav)}
+.pi-overview:has(#pi-map-validation:target) .overview-panel[data-detail="validation"]{display:grid}.pi-overview:has(#pi-map-validation:target) [data-map-node="validation"] .node-outline{stroke:var(--accent);stroke-width:2.4;fill:var(--nav)}
+.pi-overview:has(#pi-map-subagents:target) .overview-panel[data-detail="subagents"]{display:grid}.pi-overview:has(#pi-map-subagents:target) [data-map-node="subagents"] .node-outline{stroke:var(--accent);stroke-width:2.4;fill:var(--nav)}
+.overview-panel h3{margin:0 0 7px;font-size:19px;line-height:1.6}.overview-panel p{margin:6px 0;font-size:14px;line-height:1.8}.overview-io{display:grid;grid-template-columns:38px minmax(0,1fr);gap:4px 8px;font-size:13px;line-height:1.75;margin:12px 0 0}.overview-io dt{color:var(--muted)}.overview-io dd{margin:0}.overview-chapter-links{display:flex;gap:8px;flex-wrap:wrap;margin:3px 0 12px}.overview-chapter-links a{display:inline-block;background:var(--paper);border:1px solid var(--line);border-radius:5px;padding:5px 10px;font-size:13px;text-decoration:none}.overview-sources{list-style:none;padding:0;margin:0;font-size:12px;line-height:1.8}.overview-sources li{margin:7px 0}.overview-sources code{background:none;padding:0;font-size:11px;overflow-wrap:anywhere}.overview-diagram-container{width:100%;max-width:100%;overflow-x:auto;overscroll-behavior-x:contain;border:1px solid var(--line);border-radius:8px;background:var(--paper)}.pi-overview svg{width:100%;min-width:960px;display:block;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}.pi-overview svg text{fill:var(--text)}.pi-overview svg .svg-muted{fill:var(--muted)}.pi-overview svg .svg-mono{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}.pi-overview svg .node-outline{fill:var(--paper);stroke:var(--line);stroke-width:1.4}.pi-overview svg .node-state{fill:var(--code)}.pi-overview svg .node-optional{stroke-dasharray:5 4}.pi-overview svg .node-focal{stroke:var(--accent);stroke-width:2;fill:var(--nav)}.pi-overview svg a:hover .node-outline,.pi-overview svg a:focus-visible .node-outline{stroke:var(--accent);stroke-width:2.4}.pi-overview svg a:focus-visible{outline:none}.pi-overview svg .edge{fill:none;stroke:var(--muted);stroke-width:1.5}.pi-overview svg .edge-return{stroke-dasharray:5 4}.pi-overview svg .label-mask{fill:var(--paper)}.pi-overview svg .type-tag{fill:var(--code);stroke:var(--line);stroke-width:.8}.overview-chapter-index{display:flex;gap:7px;flex-wrap:wrap;margin-top:15px;font-size:12px;line-height:1.6}.overview-chapter-index a{border:1px solid var(--line);padding:5px 8px;border-radius:5px;text-decoration:none;color:var(--muted)}.overview-chapter-index a:hover{color:var(--accent);border-color:var(--accent)}.overview-note{font-size:12px;line-height:1.8;color:var(--muted);margin:13px 0 0}.overview-bounds{border-left:3px solid var(--accent);padding-left:11px;color:var(--muted)}
+@media(max-width:1000px){.overview-panel{grid-template-columns:1fr;min-height:0;gap:14px}.overview-panel-side{border-top:1px solid var(--line);padding-top:12px}}
+@media(max-width:600px){.pi-overview{padding:17px}.overview-head h2{font-size:22px}.overview-panel{padding:15px}.overview-panel h3{font-size:17px}.overview-head p{font-size:13px}}
+@media print{.pi-overview{break-before:page;padding:0;border:0}.overview-diagram-container{overflow:visible;border:0}.pi-overview svg{min-width:0;width:100%}.overview-panel{display:block!important;break-inside:avoid;background:none;min-height:0}.overview-chapter-index,.overview-head>a{display:none}.overview-target{display:none}}
+</style></head><body><a class="blog-back" href="../../../index.html">← Agent 笔记 · 所有文章</a><div class="read-progress" aria-hidden="true"></div><div class="mobile-head"><span>PI · 源码伴读</span><button data-menu aria-expanded="false" aria-controls="chapter-nav">章节目录</button></div><div class="layout"><aside class="sidebar" id="chapter-nav"><div class="eyebrow">SOURCE WALKTHROUGH</div><div class="brand">PI Agent Harness</div><p>从一次请求到执行、历史和恢复。<br>按 01 → 12 顺序阅读。</p><input class="nav-search" data-search aria-label="筛选章节" placeholder="筛选章节标题"><nav aria-label="章节目录"><a class="nav-link" href="../pi-overview.html">总览 · 各部分怎样配合</a><a class="nav-link" href="01-%E5%87%86%E5%A4%87%E4%B8%8E%E6%9E%B6%E6%9E%84.html">01 · 准备与架构——先认清对象和职责</a><a class="nav-link current" href="02-Agent-Loop.html">02 · Agent Loop——工具执行后，为什么还要请求模型？</a><a class="nav-link" href="03-%E6%A8%A1%E5%9E%8B%E5%8D%8F%E8%AE%AE%E4%B8%8E%E6%B5%81.html">03 · 模型协议与流——从数据片段到完整消息</a><a class="nav-link" href="04-%E5%B7%A5%E5%85%B7%E4%B8%8E%E4%BB%A3%E7%A0%81%E4%BF%AE%E6%94%B9.html">04 · 工具与代码修改——从模型意图到真实副作用</a><a class="nav-link" href="05-%E8%B0%83%E5%BA%A6%E4%B8%8E%E6%94%B6%E5%B0%BE.html">05 · 调度与收尾——并行、队列、停止、取消与重试</a><a class="nav-link" href="06-%E9%A2%84%E6%B5%8B%E4%B8%8E%E9%AA%8C%E8%AF%81.html">06 · 预测与验证——怎样用测试检查自己读懂了没有</a><a class="nav-link" href="07-%E4%BC%9A%E8%AF%9D%E4%B8%8E%E5%8E%86%E5%8F%B2.html">07 · 会话与历史——保存过的内容，为什么模型未必看得见</a><a class="nav-link" href="08-%E4%B8%8A%E4%B8%8B%E6%96%87%E5%8E%8B%E7%BC%A9.html">08 · 上下文压缩——预算、切点、信息损失与缓存</a><a class="nav-link" href="09-Extension%E4%B8%8ESkill.html">09 · Extension 与 Skill——怎样增加工具和工作方法</a><a class="nav-link" href="10-MCP%E5%8F%91%E7%8E%B0%E4%B8%8E%E8%B0%83%E7%94%A8.html">10 · MCP——外部工具怎样进入 PI 的执行循环</a><a class="nav-link" href="11-Subagent%E4%B8%8EDurable.html">11 · Subagent 与 durable——委派、后台工作和恢复</a><a class="nav-link" href="12-%E5%AE%89%E5%85%A8%E8%AF%84%E6%B5%8B%E4%B8%8E%E6%9C%8D%E5%8A%A1.html">12 · 安全、评测与服务——怎样判断 Agent 真正完成了任务</a></nav><div class="nav-tools"><button data-theme-toggle>切换明暗</button><button onclick="window.print()">打印</button></div><p>源码：<a href="https://github.com/earendil-works/pi/tree/eb326d265ae0b88489a6d10319307780df827cdf/" target="_blank" rel="noopener noreferrer">eb326d2</a><br>包版本：1.0.4<br>本地整理：2026-10-26</p></aside><main class="main"><header class="hero"><div class="eyebrow">PI STUDY NOTES / 01—12</div><h1>第 02 节：Agent Loop——工具执行后，为什么还要请求模型？</h1><p>逐段看代码怎样接收输入、请求模型、执行工具、保存历史，并处理取消、重试和恢复。</p><div class="meta"><span>12 节完整讲解</span><span>固定提交源码引用</span><span>解释 · 例子 · 练习 · 面试追问</span></div><div class="downloads"><a href="../PI-Agent-Harness-01-12.md" download>下载 Markdown 合订本</a><a href="../README.md">阅读说明</a></div><div class="notice">静态源码伴读。示意轨迹、待执行练习与实际运行结果分别说明。本文提供源码分析与待执行练习，不将源码阅读作为模型实测或生产验收。</div></header><section class="chapter" data-chapter="2"><h1 id="chapter-02" tabindex="-1">第 02 节：Agent Loop——工具执行后，为什么还要请求模型？</h1><details class="chapter-toc"><summary>本节小节目录 · 17 项</summary><ol><li><a href="#c2-s1">一、先用加法例子理解循环</a></li><li><a href="#c2-s2">二、先认清三个函数的关系</a></li><li><a href="#c2-s3">三、第一步：Agent.prompt() 整理输入，并禁止同一个 Agent 同时运行</a></li><li><a href="#c2-s6">四、第二步：建立一次运行的生命周期</a></li><li><a href="#c2-s10">五、第三步：建立循环中的上下文</a></li><li><a href="#c2-s15">六、第四步：进入真正的 runLoop()</a></li><li><a href="#c2-s16">七、为什么有两层 while？</a></li><li><a href="#c2-s20">八、一次请求前，为什么有两个准备接口？</a></li><li><a href="#c2-s24">九、一次模型请求到底在哪里发生？</a></li><li><a href="#c2-s26">十、完整 assistant 如何进入上下文？</a></li><li><a href="#c2-s27">十一、模型响应之后，循环做什么？</a></li><li><a href="#c2-s32">十二、为什么工具结束后，内层循环还会再执行一次？</a></li><li><a href="#c2-s34">十三、finishTurn()、队列与正常结束</a></li><li><a href="#c2-s37">十四、Agent.continue() 与内部续轮有什么区别？</a></li><li><a href="#c2-s40">十五、await agent.prompt() 为什么不直接返回答案？</a></li><li><a href="#c2-s41">十六、这一节按什么顺序读源码？</a></li><li><a href="#c2-s46">十七、闭卷验收：先自己回答这六题</a></li></ol></details>
+<p>第一节我们认识了各个对象。这一节要把它们连接成真正的执行过程。</p>
+<p><strong>核心结论：</strong></p>
+<blockquote>
+<p>Pi 不会只请求模型一次，然后结束。它会把模型提出的工具调用执行掉，将结果加入上下文，再请求模型，让模型根据新信息决定下一步。</p>
+</blockquote>
+<p>这一节先学透整体闭环。工具内部如何校验、流式片段如何解析、并行如何调度，后面的章节再展开。</p>
+<p>源码已核对，仍是之前的提交 <code>eb326d2</code>；本次没有修改代码，也没有运行模型。</p>
+<hr>
+<h2 id="c2-s1" tabindex="-1">一、先用加法例子理解循环</h2>
+<p>假设用户提出：</p>
+<pre><code class="language-text">请用 add 工具计算 2 + 3，并告诉我结果。
+</code></pre>
+<p>模型第一次收到问题时，并不知道工具实际执行后的结果。它先生成：</p>
+<pre><code class="language-json">{
+  &quot;type&quot;: &quot;toolCall&quot;,
+  &quot;id&quot;: &quot;call_1&quot;,
+  &quot;name&quot;: &quot;add&quot;,
+  &quot;arguments&quot;: {
+    &quot;a&quot;: 2,
+    &quot;b&quot;: 3
+  }
+}
+</code></pre>
+<p>Pi 的程序看到这个结构后：</p>
+<ol>
+<li>找到 <code>add</code> 工具；</li>
+<li>校验参数；</li>
+<li>执行 <code>add(2, 3)</code>；</li>
+<li>得到结果 <code>5</code>；</li>
+<li>把结果加入对话；</li>
+<li>再请求模型。</li>
+</ol>
+<p>第二次模型收到的不是原来的问题，而是：</p>
+<pre><code class="language-text">用户：计算 2 + 3。
+assistant：调用 add，参数是 2 和 3。
+toolResult：结果是 5。
+</code></pre>
+<p>模型再生成：</p>
+<pre><code class="language-text">结果是 5。
+</code></pre>
+<p>因此：</p>
+<pre><code class="language-text">第一次模型请求
+    ↓
+assistant 提出工具调用
+    ↓
+程序执行工具
+    ↓
+工具结果进入上下文
+    ↓
+第二次模型请求
+    ↓
+assistant 给出答案
+</code></pre>
+<p><strong>工具执行结束，只意味着获得了新信息，不意味着整个任务已经结束。</strong></p>
+<p>复杂任务可能需要继续：</p>
+<pre><code class="language-text">读配置 → 找实现 → 读代码 → 修改 → 执行测试 → 根据错误再次修改
+</code></pre>
+<p>每次工具结果都可能改变模型的下一步选择。这就是循环的意义。</p>
+<hr>
+<h2 id="c2-s2" tabindex="-1">二、先认清三个函数的关系</h2>
+<p>这一节主要读：</p>
+<ul>
+<li><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/agent/src/agent.ts#L370-L556">agent.ts:370–556</a></li>
+<li><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/agent/src/agent-loop.ts#L102-L321">agent-loop.ts:102–321</a></li>
+<li><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/agent/src/types.ts#L19-L37">StreamFn 契约</a></li>
+</ul>
+<p>完整调用关系是：</p>
+<pre><code class="language-text">用户调用 AgentSession.prompt()
+    ↓
+产品层预处理
+    ↓
+Agent.prompt()
+    ↓
+normalizePromptInput()
+    ↓
+runPromptMessages()
+    ↓
+runWithLifecycle()
+    ↓
+runAgentLoop()
+    ↓
+runLoop()
+    ↓
+streamAssistantResponse()
+    ↓
+注入的 StreamFn
+    ↓
+模型接入层
+</code></pre>
+<p>不要被相似名称绕晕：</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>函数／对象</th>
+<th>职责</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>AgentSession.prompt()</code></td>
+<td>产品层提交问题，处理会话和扩展策略</td>
+</tr>
+<tr>
+<td><code>Agent.prompt()</code></td>
+<td>核心执行入口，检查运行状态、整理输入</td>
+</tr>
+<tr>
+<td><code>runAgentLoop()</code></td>
+<td>加入本次输入、建立循环上下文、发出开始事件</td>
+</tr>
+<tr>
+<td><code>runLoop()</code></td>
+<td>真正反复请求模型、执行工具、决定继续或结束</td>
+</tr>
+<tr>
+<td><code>streamAssistantResponse()</code></td>
+<td>完成一次模型响应的消费和消息更新</td>
+</tr>
+</tbody></table></div>
+<p><strong>不是每个函数都在请求模型。</strong> 很多函数是在准备状态、传递配置、管理生命周期。</p>
+<hr>
+<h2 id="c2-s3" tabindex="-1">三、第一步：<code>Agent.prompt()</code> 整理输入，并禁止同一个 Agent 同时运行</h2>
+<p>打开：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/agent/src/agent.ts#L370-L430">agent.ts:370–430</a></p>
+<p>核心代码：</p>
+<pre><code class="language-ts">async prompt(input, images) {
+    if (this.activeRun) {
+        throw new Error(&quot;Agent is already processing...&quot;);
+    }
+
+    const messages = this.normalizePromptInput(input, images);
+    await this.runPromptMessages(messages);
+}
+</code></pre>
+<h3 id="c2-s4" tabindex="-1">1. 为什么检查 <code>activeRun</code>？</h3>
+<p>假设同一个 Agent 正在处理：</p>
+<pre><code class="language-text">任务 A：读取配置并修改代码。
+</code></pre>
+<p>这时另一个调用直接提交：</p>
+<pre><code class="language-text">任务 B：切换模型并分析另一个文件。
+</code></pre>
+<p>如果两次运行都直接修改同一份消息和状态，就可能出现：</p>
+<ul>
+<li>两个模型响应交错；</li>
+<li>工具结果插错位置；</li>
+<li>当前流式消息被覆盖；</li>
+<li>取消信号不知道对应哪个运行；</li>
+<li>会话状态和 UI 显示不一致。</li>
+</ul>
+<p>所以 Pi 对<strong>同一个 Agent 实例</strong>限制一个活跃运行。</p>
+<p>这不表示整个程序只能执行一个 Agent，也不表示一轮只能执行一个工具。它限制的是：</p>
+<blockquote>
+<p>同一个有状态 Agent，不允许两个独立运行同时驱动它。</p>
+</blockquote>
+<p>运行中要追加目标，使用 <code>steer()</code> 或 <code>followUp()</code> 排队，而不是直接再次 <code>prompt()</code>。</p>
+<h3 id="c2-s5" tabindex="-1">2. 为什么把输入统一成 <code>AgentMessage[]</code>？</h3>
+<p><code>prompt()</code> 可以接收字符串、单条消息或消息数组。</p>
+<p>字符串会变成：</p>
+<pre><code class="language-ts">{
+    role: &quot;user&quot;,
+    content: [
+        { type: &quot;text&quot;, text: input }
+    ],
+    timestamp: Date.now()
+}
+</code></pre>
+<p>然后装进数组。</p>
+<p>这样后面的循环只处理一种输入形式：</p>
+<pre><code class="language-ts">AgentMessage[]
+</code></pre>
+<p>不需要在每个阶段重复判断：</p>
+<pre><code class="language-text">这是字符串吗？
+这是一个对象吗？
+这是数组吗？
+</code></pre>
+<p><strong>设计收益：在入口统一数据，让核心循环保持简单。</strong></p>
+<hr>
+<h2 id="c2-s6" tabindex="-1">四、第二步：建立一次运行的生命周期</h2>
+<p>接下来是：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/agent/src/agent.ts#L432-L445">agent.ts:432–445</a></p>
+<pre><code class="language-ts">await this.runWithLifecycle(async (signal) =&gt; {
+    await runAgentLoop(
+        messages,
+        this.createContextSnapshot(),
+        this.createLoopConfig(options),
+        (event) =&gt; this.processEvents(event),
+        signal,
+        this.streamFunction,
+    );
+});
+</code></pre>
+<p>这里传给循环的六项数据值得逐个理解。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>参数</th>
+<th>是什么</th>
+<th>为什么要传</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>messages</code></td>
+<td>本次新输入</td>
+<td>与之前已有历史区分</td>
+</tr>
+<tr>
+<td><code>contextSnapshot</code></td>
+<td>当前历史与可执行工具</td>
+<td>循环需要知道已有信息和能做什么</td>
+</tr>
+<tr>
+<td><code>loopConfig</code></td>
+<td>模型、转换器、hooks、队列读取函数等</td>
+<td>决定运行策略</td>
+</tr>
+<tr>
+<td><code>event =&gt; processEvents(event)</code></td>
+<td>事件接收函数</td>
+<td>将循环过程更新为 Agent 状态，并通知监听器</td>
+</tr>
+<tr>
+<td><code>signal</code></td>
+<td>本次运行的取消信号</td>
+<td>模型、工具、hooks 可以配合取消</td>
+</tr>
+<tr>
+<td><code>streamFunction</code></td>
+<td>模型调用能力</td>
+<td>避免循环直接绑定某家 API</td>
+</tr>
+</tbody></table></div>
+<h3 id="c2-s7" tabindex="-1"><code>runWithLifecycle()</code> 管什么？</h3>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/agent/src/agent.ts#L507-L556">agent.ts:507–556</a></p>
+<p>它大致做：</p>
+<pre><code class="language-text">创建 AbortController
+    ↓
+登记 activeRun
+    ↓
+isStreaming = true
+    ↓
+执行循环
+    ↓
+异常时生成失败消息
+    ↓
+finally 清理本次运行状态
+</code></pre>
+<p>注意，<code>isStreaming</code> 在这里覆盖整个核心运行，包括工具执行和等待监听器，不只是“模型正在吐 token”。</p>
+<h3 id="c2-s8" tabindex="-1">为什么还需要一个运行 Promise？</h3>
+<p>它让 <code>waitForIdle()</code> 等到当前运行和被等待的监听器结束。</p>
+<p>因此：</p>
+<pre><code class="language-text">发出 agent_end
+    ↓
+等待 agent_end 的异步监听器
+    ↓
+finishRun()
+    ↓
+Agent 成为 idle
+</code></pre>
+<p><strong>“结束事件已发出”与“运行完全空闲”是两个时点。</strong></p>
+<h3 id="c2-s9" tabindex="-1"><code>finally</code> 会不会删掉历史？</h3>
+<p>不会。</p>
+<p><code>finishRun()</code> 清理：</p>
+<ul>
+<li><code>isStreaming</code>；</li>
+<li>当前流式消息；</li>
+<li>pending tool call 状态；</li>
+<li>activeRun。</li>
+</ul>
+<p>它不会把本次对话全部删除。历史要保留给下一个用户问题使用。</p>
+<hr>
+<h2 id="c2-s10" tabindex="-1">五、第三步：建立循环中的上下文</h2>
+<p>打开：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/agent/src/agent-loop.ts#L102-L126">agent-loop.ts:102–126</a></p>
+<pre><code class="language-ts">const initialMessages = declareToolChanges(context, prompts);
+
+const newMessages = [...initialMessages];
+
+const currentContext = {
+    ...context,
+    messages: [...context.messages, ...initialMessages],
+};
+</code></pre>
+<p>这里区分了两份列表。</p>
+<h3 id="c2-s11" tabindex="-1">1. <code>currentContext.messages</code></h3>
+<p>表示：</p>
+<blockquote>
+<p>这个循环目前拥有的完整上下文。</p>
+</blockquote>
+<p>它包含旧历史和本次新增内容：</p>
+<pre><code class="language-text">旧历史
+＋
+本次用户输入
+＋
+本次 assistant
+＋
+本次工具结果
+</code></pre>
+<p>它主要供后续模型请求使用。</p>
+<h3 id="c2-s12" tabindex="-1">2. <code>newMessages</code></h3>
+<p>表示：</p>
+<blockquote>
+<p>本次循环新产生或加入了哪些消息。</p>
+</blockquote>
+<p>例如：</p>
+<pre><code class="language-text">本次用户输入
+assistant/toolCall
+toolResult
+assistant/最终回答
+</code></pre>
+<p>它不需要重复包含所有旧历史。</p>
+<h3 id="c2-s13" tabindex="-1">为什么要分开？</h3>
+<p>两种用途不同：</p>
+<ul>
+<li>请求模型，需要已有历史；</li>
+<li>返回本次运行记录，需要知道新增部分。</li>
+</ul>
+<p>否则你每运行一次，都可能把全部旧历史当作本次结果重复处理。</p>
+<h3 id="c2-s14" tabindex="-1"><code>declareToolChanges()</code> 是干什么的？</h3>
+<p>它把当前可执行工具与 transcript 中已声明的工具对照，必要时加入 system 工具声明变化。</p>
+<p>因此本次初始消息不一定只有 user，也可能有 system 更新。</p>
+<p>第一节说过：</p>
+<pre><code class="language-text">工具函数：程序实际能执行的东西。
+工具声明：模型被告知可以调用的东西。
+</code></pre>
+<p>这里负责保持两者的声明关系一致。实现见：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/agent/src/agent-loop.ts#L323-L362">agent-loop.ts:323–362</a></p>
+<hr>
+<h2 id="c2-s15" tabindex="-1">六、第四步：进入真正的 <code>runLoop()</code></h2>
+<p>打开：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/agent/src/agent-loop.ts#L163-L321">agent-loop.ts:163–321</a></p>
+<p>先看这几个变量：</p>
+<pre><code class="language-ts">let currentContext = initialContext;
+let config = initialConfig;
+let lastCompletedTurn;
+let explicitContinuation = false;
+let pendingMessages = await getSteeringMessages();
+</code></pre>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>变量</th>
+<th>可以怎样理解</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>currentContext</code></td>
+<td>当前请求所依据的消息与工具</td>
+</tr>
+<tr>
+<td><code>config</code></td>
+<td>当前模型和运行策略</td>
+</tr>
+<tr>
+<td><code>lastCompletedTurn</code></td>
+<td>上一轮 assistant 和工具结果</td>
+</tr>
+<tr>
+<td><code>pendingMessages</code></td>
+<td>下一请求前准备加入的消息</td>
+</tr>
+<tr>
+<td><code>explicitContinuation</code></td>
+<td>hook 明确要求至少再请求一次</td>
+</tr>
+</tbody></table></div>
+<p>前两项为什么用 <code>let</code>？</p>
+<p>因为下一轮准备过程可以替换上下文、模型或思考配置。例如产品层压缩了历史，需要用新的上下文继续。</p>
+<p><strong>循环不是拿着永远不变的一份输入反复请求。</strong></p>
+<hr>
+<h2 id="c2-s16" tabindex="-1">七、为什么有两层 <code>while</code>？</h2>
+<p>核心结构：</p>
+<pre><code class="language-ts">while (true) {
+    let hasMoreToolCalls = true;
+
+    while (hasMoreToolCalls || pendingMessages.length &gt; 0) {
+        // 准备请求
+        // 请求模型
+        // 执行工具
+        // 更新上下文
+        // 判断下一轮
+    }
+
+    // 原本准备结束，检查 follow-up
+    // 检查显式 continuation
+    // 都没有则结束
+}
+</code></pre>
+<h3 id="c2-s17" tabindex="-1">1. 内层：持续工作阶段</h3>
+<p>处理：</p>
+<pre><code class="language-text">模型请求 → 工具结果 → 下一请求
+</code></pre>
+<p>以及工作过程中排入的 steering。</p>
+<p>例如：</p>
+<pre><code class="language-text">第一次：请求 read
+第二次：请求 find
+第三次：请求 read
+第四次：输出答案
+</code></pre>
+<p>可以一直在同一个内层工作阶段推进。</p>
+<h3 id="c2-s18" tabindex="-1">2. 外层：自然停点后的追加工作</h3>
+<p>当没有工具续轮、没有 steering，Agent 原本要停了。</p>
+<p>但可能还有 follow-up：</p>
+<pre><code class="language-text">完成后再解释一下设计取舍。
+</code></pre>
+<p>外层检查它，然后重新进入内层。</p>
+<h3 id="c2-s19" tabindex="-1">3. <code>hasMoreToolCalls = true</code> 为什么一开始就成立？</h3>
+<p>此时还没请求模型，怎么知道有工具调用？</p>
+<p>实际上，它在这里还承担了一个作用：</p>
+<blockquote>
+<p>保证进入工作循环，至少完成这次应当发生的模型请求。</p>
+</blockquote>
+<p>随后才根据实际响应更新它。</p>
+<p>因此不要把变量名机械解释成：</p>
+<pre><code class="language-text">当前模型肯定还有工具调用。
+</code></pre>
+<p>在后面的调度阶段，它更接近“工具批次是否要求自然续轮”的标记。</p>
+<hr>
+<h2 id="c2-s20" tabindex="-1">八、一次请求前，为什么有两个准备接口？</h2>
+<p>代码位于：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/agent/src/agent-loop.ts#L183-L239">agent-loop.ts:183–239</a></p>
+<h3 id="c2-s21" tabindex="-1">1. <code>prepareNextTurn</code></h3>
+<p>只有已经完成上一轮、准备进入下一轮时才调用。</p>
+<p>它拿到上一轮的：</p>
+<ul>
+<li>assistant；</li>
+<li>toolResults；</li>
+<li>currentContext；</li>
+<li>本次新增消息。</li>
+</ul>
+<p>它可以：</p>
+<ul>
+<li>替换上下文；</li>
+<li>加入下一轮消息；</li>
+<li>更新模型；</li>
+<li>更新思考级别。</li>
+</ul>
+<p>产品层可以在这里做压缩或刷新配置。</p>
+<h3 id="c2-s22" tabindex="-1">2. <code>prepareRequest</code></h3>
+<p>每次模型请求前调用，包括第一次。</p>
+<p>此时待加入的消息已经追加。</p>
+<p>它可以重新确定：</p>
+<ul>
+<li>本次请求上下文；</li>
+<li>本次模型；</li>
+<li>思考配置。</li>
+</ul>
+<p>接口契约见：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/agent/src/types.ts#L160-L189">types.ts:160–189</a></p>
+<h3 id="c2-s23" tabindex="-1">为什么不直接把压缩代码写死在 loop？</h3>
+<p>通用循环需要一种“请求前刷新”的能力，但不一定知道：</p>
+<ul>
+<li>历史存在哪；</li>
+<li>产品怎样摘要；</li>
+<li>是否使用虚拟模型路由；</li>
+<li>是否有自定义上下文策略。</li>
+</ul>
+<p>所以提供接口，由上层注入策略。</p>
+<p><strong>设计思想：循环负责正确的调用时点，产品层负责具体策略。</strong></p>
+<hr>
+<h2 id="c2-s24" tabindex="-1">九、一次模型请求到底在哪里发生？</h2>
+<p>在 Agent Loop 中，一次模型响应从这里开始处理：</p>
+<pre><code class="language-ts">const message = await streamAssistantResponse(
+    currentContext,
+    config,
+    signal,
+    emit,
+    streamFunction,
+);
+</code></pre>
+<p>见 <a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/agent/src/agent-loop.ts#L241-L243">agent-loop.ts:241–243</a>。</p>
+<p>函数内部执行：</p>
+<pre><code class="language-text">应用级消息
+    ↓ transformContext
+转换后的应用消息
+    ↓ convertToLlm
+模型支持的 Message
+    ↓ normalizeContext
+规范化 transcript
+    ↓ StreamFn
+统一模型响应流
+    ↓
+完整 AssistantMessage
+</code></pre>
+<p>函数内部把请求交给注入的 StreamFn；真正的网络调用还会继续进入 ModelRuntime、Provider 和协议适配器：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/agent/src/agent-loop.ts#L388-L407">agent-loop.ts:388–407</a></p>
+<pre><code class="language-ts">const response = await streamFunction(config.model, llmContext, {
+    ...config,
+    apiKey: resolvedApiKey,
+    signal,
+});
+</code></pre>
+<p>这里的第一个 <code>await</code> 取得响应流对象，完整消息还要通过后续事件消费和 <code>response.result()</code> 获得。外层 <code>await streamAssistantResponse()</code> 等的是这次响应处理完。</p>
+<p><code>normalizeContext</code> 在当前路径收到的是 <code>{ messages }</code>。system 和工具声明已在消息里，因此这里主要统一上下文类型；它不自动压缩、清洗或验证整份历史。只有传入独立 systemPrompt/tools 字段时，才将它们折入开头的 system 消息。见 <a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/ai/src/utils/transcript.ts#L25-L34">transcript.ts</a>。</p>
+<h3 id="c2-s25" tabindex="-1">为什么注入 <code>StreamFn</code>？</h3>
+<p>把“怎样调用模型”与“怎样调度 Agent”分离。</p>
+<p>真实环境：</p>
+<pre><code class="language-text">StreamFn → ModelRuntime → Provider → 网络请求
+</code></pre>
+<p>离线测试：</p>
+<pre><code class="language-text">StreamFn → 返回预设的内存消息流
+</code></pre>
+<p>这样可以稳定安排：</p>
+<pre><code class="language-text">第一次一定返回 add 调用。
+第二次一定返回最终文本。
+</code></pre>
+<p>你测试的仍是真实 loop，但模型行为可控。</p>
+<p>不过：</p>
+<blockquote>
+<p>假模型测试证明调度规则，不证明真实模型理解任务或选择工具的能力。</p>
+</blockquote>
+<hr>
+<h2 id="c2-s26" tabindex="-1">十、完整 assistant 如何进入上下文？</h2>
+<p>这里很容易读错。</p>
+<p><code>runLoop()</code> 调用后只做：</p>
+<pre><code class="language-ts">newMessages.push(message);
+</code></pre>
+<p>那 assistant 什么时候进入 <code>currentContext.messages</code>？</p>
+<p><strong>已经在 <code>streamAssistantResponse()</code> 内部加入了。</strong></p>
+<p>见：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/agent/src/agent-loop.ts#L414-L468">agent-loop.ts:414–468</a></p>
+<p>流程大致是：</p>
+<pre><code class="language-text">start：先加入正在生成的 assistant
+    ↓
+updates：替换当前累计 assistant
+    ↓
+done/error：换成最终 AssistantMessage
+</code></pre>
+<p>因此回到 <code>runLoop()</code> 后，不必再向当前上下文追加一次 assistant。</p>
+<p>两份列表的用途仍不同：</p>
+<pre><code class="language-text">currentContext.messages：供本循环的下一请求使用。
+newMessages：记录本次新增消息。
+</code></pre>
+<p>同时 <code>message_end</code> 事件会让 <code>Agent.processEvents()</code> 把最终消息加入公开 state：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/agent/src/agent.ts#L565-L578">agent.ts:565–578</a></p>
+<p><strong>循环上下文和 Agent 公开状态，是通过不同路径更新的。</strong> 它们不是向同一个数组重复插入三次。</p>
+<p>这里的数组复制是浅拷贝，也不要将其理解为完全不可变、完全隔离的快照。</p>
+<hr>
+<h2 id="c2-s27" tabindex="-1">十一、模型响应之后，循环做什么？</h2>
+<h3 id="c2-s28" tabindex="-1">1. 先检查硬错误</h3>
+<pre><code class="language-ts">if (
+    message.stopReason === &quot;error&quot; ||
+    message.stopReason === &quot;aborted&quot;
+) {
+    // 完成本轮事件，结束 core run
+    return;
+}
+</code></pre>
+<p>见 <a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/agent/src/agent-loop.ts#L245-L256">agent-loop.ts:245–256</a>。</p>
+<p>这条路径不继续执行响应里的工具调用。会话层之后是否重试，是外层策略。</p>
+<h3 id="c2-s29" tabindex="-1">2. 从内容中找 toolCall</h3>
+<pre><code class="language-ts">const toolCalls = message.content.filter(
+    c =&gt; c.type === &quot;toolCall&quot;
+);
+</code></pre>
+<p>Pi 不是检查模型文字里有没有“调用工具”四个字，而是检查结构化内容块。</p>
+<p>因此：</p>
+<pre><code class="language-text">文本：“我准备调用 add。”
+</code></pre>
+<p>与：</p>
+<pre><code class="language-json">{&quot;type&quot;: &quot;toolCall&quot;, &quot;name&quot;: &quot;add&quot;, &quot;...&quot;: &quot;...&quot;}
+</code></pre>
+<p>不是一回事。</p>
+<h3 id="c2-s30" tabindex="-1">3. 执行工具，得到结果</h3>
+<p>正常调用走 <code>executeToolCalls()</code>。</p>
+<p>若响应以 <code>length</code> 截断，则这些调用不执行，改为错误工具结果，避免残缺参数造成副作用。</p>
+<p>这里先理解控制流程；执行管线在第 04 步深入。</p>
+<h3 id="c2-s31" tabindex="-1">4. 把结果加入上下文</h3>
+<pre><code class="language-ts">for (const result of toolResults) {
+    currentContext.messages.push(result);
+    newMessages.push(result);
+}
+</code></pre>
+<p>见 <a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/agent/src/agent-loop.ts#L258-L277">agent-loop.ts:258–277</a>。</p>
+<p>到这一步，上下文是：</p>
+<pre><code class="language-text">system
+user
+assistant/toolCall
+toolResult
+</code></pre>
+<p>这就是第二次模型请求的新依据。</p>
+<hr>
+<h2 id="c2-s32" tabindex="-1">十二、为什么工具结束后，内层循环还会再执行一次？</h2>
+<p>执行工具后：</p>
+<pre><code class="language-ts">hasMoreToolCalls = !executedToolBatch.terminate;
+</code></pre>
+<p>正常工具批次没有请求终止时，这个值是 <code>true</code>。</p>
+<p>于是：</p>
+<pre><code class="language-ts">while (hasMoreToolCalls || pendingMessages.length &gt; 0)
+</code></pre>
+<p>再次成立，进入下一轮请求。</p>
+<p><strong>不是第二次调用 <code>agent.prompt()</code>，也不是工具主动调用模型。</strong></p>
+<p>普通工具续轮仍在第一次 <code>Agent.prompt()</code> 启动的同一个 core run 里面。</p>
+<h3 id="c2-s33" tabindex="-1">两轮变量变化</h3>
+<p>假设没有额外队列或 hooks：</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>时点</th>
+<th>模型响应</th>
+<th align="right">工具是否执行</th>
+<th>续轮标记</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>请求 1 前</td>
+<td>尚无</td>
+<td align="right">否</td>
+<td>初始 true，保证开始</td>
+</tr>
+<tr>
+<td>请求 1 后</td>
+<td><code>add(2,3)</code></td>
+<td align="right">是</td>
+<td>正常批次 → true</td>
+</tr>
+<tr>
+<td>请求 2 后</td>
+<td>文本“5”</td>
+<td align="right">否</td>
+<td>没有 toolCall → false</td>
+</tr>
+<tr>
+<td>自然停点</td>
+<td>无待处理消息</td>
+<td align="right">否</td>
+<td>结束</td>
+</tr>
+</tbody></table></div>
+<p>对第二轮来说，模型可以继续请求工具，而不一定输出最终答案。循环根据<strong>新响应</strong>判断，不提前假设任务结束。</p>
+<hr>
+<h2 id="c2-s34" tabindex="-1">十三、<code>finishTurn()</code>、队列与正常结束</h2>
+<p>工具结果加入后：</p>
+<pre><code class="language-ts">const decision = await config.finishTurn?.(lastCompletedTurn, signal);
+await emit({ type: &quot;turn_end&quot;, message, toolResults });
+</code></pre>
+<p>然后：</p>
+<ul>
+<li><code>end</code>：结束本次 run；</li>
+<li><code>continue</code>：要求至少有下一次模型请求；</li>
+<li>不返回决定：保持正常调度。</li>
+</ul>
+<p>之后检查 steering；当原本要停止时再检查 follow-up。</p>
+<p>见：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/agent/src/agent-loop.ts#L280-L321">agent-loop.ts:280–321</a></p>
+<h3 id="c2-s35" tabindex="-1">一个重要细节</h3>
+<p><code>finishTurn()</code> 要求 continue，而工具结果本来就会引发下一请求时，<strong>不会额外再叠加一次请求</strong>。</p>
+<p>它表示“确保发生下一请求”，不是“无论如何多加一次”。</p>
+<h3 id="c2-s36" tabindex="-1">自然停止是什么？</h3>
+<p>大致是：</p>
+<pre><code class="language-text">没有工具自然续轮
+没有 steering
+没有 follow-up
+没有显式 continuation
+</code></pre>
+<p>于是发出 <code>agent_end</code>。</p>
+<p>但这不是业务验收：</p>
+<pre><code class="language-text">模型没有再调用工具
+≠
+代码已经正确
+≠
+测试已经通过
+≠
+用户目标已经满足
+</code></pre>
+<p>当前普通 core loop 也没有通用的内置 max-step 上限。持续工具调用或持续 continuation 可以继续推进。</p>
+<hr>
+<h2 id="c2-s37" tabindex="-1">十四、<code>Agent.continue()</code> 与内部续轮有什么区别？</h2>
+<p>这是第二节必须分清的点。</p>
+<h3 id="c2-s38" tabindex="-1">内部续轮</h3>
+<pre><code class="language-text">请求模型 → 工具执行 → 请求模型
+</code></pre>
+<p>发生在同一个 <code>runLoop()</code> 中，不调用公开的 <code>Agent.continue()</code>。</p>
+<h3 id="c2-s39" tabindex="-1"><code>Agent.continue()</code></h3>
+<p>是在一个 core run 已结束后，利用已有上下文或队列启动新的 core run。</p>
+<p>见：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/agent/src/agent.ts#L383-L458">agent.ts:383–458</a></p>
+<p>它不是无条件“让模型接着说”：</p>
+<ul>
+<li>当前仍在运行：拒绝；</li>
+<li>没有可继续消息：拒绝；</li>
+<li>最后一条是 assistant 且没有排队输入：拒绝；</li>
+<li>有排队输入：可以转为新的 prompt run；</li>
+<li>合适的已有上下文：走 <code>runAgentLoopContinue()</code>。</li>
+</ul>
+<p>产品层做错误恢复或处理新队列时，可能使用这个 API。</p>
+<hr>
+<h2 id="c2-s40" tabindex="-1">十五、<code>await agent.prompt()</code> 为什么不直接返回答案？</h2>
+<p><code>Agent.prompt()</code> 返回的是：</p>
+<pre><code class="language-ts">Promise&lt;void&gt;
+</code></pre>
+<p>它代表这次运行操作结束，不直接返回最终文本。</p>
+<p>你通常通过：</p>
+<ul>
+<li>订阅事件获取过程；</li>
+<li>读取 <code>agent.state.messages</code> 获取当前消息；</li>
+<li>查看错误状态和最终消息了解结果。</li>
+</ul>
+<p>低层 <code>runAgentLoop()</code> 返回本次新增消息，但 <code>Agent</code> 主要通过事件来更新自身状态。</p>
+<p>还要注意：一些执行异常会被 <code>Agent</code> 转成失败 assistant 消息，然后正常收尾。因此：</p>
+<pre><code class="language-text">await prompt() 没抛错
+</code></pre>
+<p><strong>不能直接推出模型或业务成功。</strong></p>
+<p>互斥检查等路径仍然可以抛错，不能反过来说 prompt 永远不会 reject。</p>
+<hr>
+<h2 id="c2-s41" tabindex="-1">十六、这一节按什么顺序读源码？</h2>
+<p>建议分四遍，不要第一次读所有工具内部代码。</p>
+<h3 id="c2-s42" tabindex="-1">第一遍：只画调用链</h3>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/agent/src/agent.ts#L370-L445">agent.ts:370–445</a></p>
+<p>找：</p>
+<pre><code class="language-text">prompt
+→ normalizePromptInput
+→ runPromptMessages
+→ runWithLifecycle
+→ runAgentLoop
+</code></pre>
+<h3 id="c2-s43" tabindex="-1">第二遍：看运行状态</h3>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/agent/src/agent.ts#L460-L556">agent.ts:460–556</a></p>
+<p>找：</p>
+<pre><code class="language-text">contextSnapshot
+loopConfig
+AbortController
+activeRun
+isStreaming
+finally
+</code></pre>
+<h3 id="c2-s44" tabindex="-1">第三遍：看两轮如何推进</h3>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/agent/src/agent-loop.ts#L102-L321">agent-loop.ts:102–321</a></p>
+<p>重点标：</p>
+<ul>
+<li>初始输入在哪加入；</li>
+<li>一次模型请求在哪发生；</li>
+<li>toolCall 在哪检测；</li>
+<li>toolResult 在哪回灌；</li>
+<li>下一轮条件怎样成立；</li>
+<li>退出条件在哪。</li>
+</ul>
+<h3 id="c2-s45" tabindex="-1">第四遍：核对模型边界与状态更新</h3>
+<ul>
+<li><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/agent/src/agent-loop.ts#L381-L469">streamAssistantResponse</a></li>
+<li><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/agent/src/agent.ts#L565-L612">processEvents</a></li>
+<li><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/agent/src/types.ts#L19-L37">StreamFn 类型</a></li>
+</ul>
+<p>回答：assistant 为什么不会漏进上下文，也不会被同一个数组重复加入？</p>
+<hr>
+<h2 id="c2-s46" tabindex="-1">十七、闭卷验收：先自己回答这六题</h2>
+<ol>
+<li><p><strong><code>hasMoreToolCalls</code> 初始为 true，是否证明模型一定调用工具？</strong><br>不证明，它先保证开始一次请求，之后再根据实际结果更新。</p>
+</li>
+<li><p><strong>工具续轮需要调用 <code>Agent.continue()</code> 吗？</strong><br>不需要，仍在当前 <code>runLoop()</code> 中。</p>
+</li>
+<li><p><strong>为什么同时有 currentContext 和 newMessages？</strong><br>前者用于下一请求的完整上下文，后者记录本次新增内容。</p>
+</li>
+<li><p><strong>为什么模型错误、工具错误不是同一种退出方式？</strong><br>最终模型 error/aborted 结束 core run；普通工具错误通常作为反馈送回模型。</p>
+</li>
+<li><p><strong>为什么有 prepareNextTurn 和 prepareRequest？</strong><br>前者根据上一轮准备下一 turn，后者在每次请求前确定请求状态，包括首次。</p>
+</li>
+<li><p><strong><code>agent_end</code>、idle、业务成功是否相同？</strong><br>不同。结束事件后还需等监听器收尾；业务成功需要独立证据。</p>
+</li>
+</ol>
+<h3 id="c2-s47" tabindex="-1">面试时可以这样概括</h3>
+<blockquote>
+<p>Pi 的 Agent 管理运行互斥、状态、取消和事件，runLoop 管理一次运行中的多轮调度。模型响应通过注入的 StreamFn 获得；结构化 toolCall 由宿主执行，结果按调用 ID 配对并加入上下文，再请求模型。内层处理工具和 steering，外层处理自然停点后的 follow-up。自然停止只是没有选出下一请求，不等于业务验收成功。</p>
+</blockquote>
+<p><strong>如果你能不看资料讲清加法例子的两轮过程，并在源码中指出“请求、执行、回灌、续轮、退出”五个位置，就完成了第 02 节的核心学习。</strong></p>
+<div class="chapter-links"><a href="01-%E5%87%86%E5%A4%87%E4%B8%8E%E6%9E%B6%E6%9E%84.html">← 第 1 节</a><a href="03-%E6%A8%A1%E5%9E%8B%E5%8D%8F%E8%AE%AE%E4%B8%8E%E6%B5%81.html">第 3 节 →</a><a href="02-Agent-Loop.md" download>本节 Markdown</a><a href="../index.html">返回合订本</a></div></section><footer class="footer">本系列按固定版本源码整理。源码链接固定到研究提交；本地源码若更新，请按函数名复核。HTML 内嵌样式和脚本，正文可离线阅读。</footer></main></div><button class="back-top" data-top aria-label="返回顶部">↑ 顶部</button><script>
+const root=document.documentElement;
+try{root.dataset.theme=localStorage.getItem('pi-study-theme')||'light'}catch{}
+document.querySelectorAll('[data-theme-toggle]').forEach(b=>b.addEventListener('click',()=>{root.dataset.theme=root.dataset.theme==='dark'?'light':'dark';try{localStorage.setItem('pi-study-theme',root.dataset.theme)}catch{}}));
+document.querySelector('[data-menu]')?.addEventListener('click',e=>{const expanded=document.querySelector('.sidebar').classList.toggle('open');e.currentTarget.setAttribute('aria-expanded',String(expanded))});
+document.querySelector('[data-search]')?.addEventListener('input',e=>{const q=e.target.value.trim().toLowerCase();document.querySelectorAll('.nav-link').forEach(a=>a.hidden=!a.textContent.toLowerCase().includes(q))});
+document.querySelector('[data-top]')?.addEventListener('click',()=>window.scrollTo({top:0,behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth'}));
+function progress(){const total=document.documentElement.scrollHeight-innerHeight;document.querySelector('.read-progress').style.width=(total>0?scrollY/total*100:100)+'%'}
+addEventListener('scroll',progress,{passive:true});addEventListener('resize',progress);progress();
+const observer=new IntersectionObserver(entries=>{for(const entry of entries)if(entry.isIntersecting){const id=entry.target.id;document.querySelectorAll('.nav-link[href^="#"]').forEach(a=>a.setAttribute('aria-current',String(a.getAttribute('href')==='#'+id))) }},{rootMargin:'-5% 0px -75% 0px'});
+document.querySelectorAll('.chapter>h1').forEach(h=>observer.observe(h));
+</script></body></html>

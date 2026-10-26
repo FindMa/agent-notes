@@ -1,0 +1,6 @@
+{
+  "title": "Agent 笔记",
+  "description": "从源码理解 Agent，记录执行机制、上下文与工程实践。",
+  "repository": "https://github.com/FindMa/agent-notes",
+  "url": "https://findma.github.io/agent-notes/"
+}

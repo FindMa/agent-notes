@@ -1,0 +1,276 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light dark"><title>第 05 节：调度与收尾——并行、队列、停止、取消与重试</title><style>
+.blog-back{display:block;max-width:1440px;margin:18px auto 0;padding:0 28px;font-size:14px}
+:root{color-scheme:light;--bg:#f5f3ee;--paper:#fffefa;--text:#26332e;--muted:#65736b;--line:#d9dfd6;--accent:#28664e;--code:#eef2ed;--nav:#edf1e9}
+:root[data-theme=dark]{color-scheme:dark;--bg:#151c19;--paper:#1c2520;--text:#e0e8df;--muted:#abb9ad;--line:#3b4b40;--accent:#9ed4ac;--code:#25332a;--nav:#202c24}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:28px}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.9 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}a{color:var(--accent);text-underline-offset:3px;overflow-wrap:anywhere}a:hover{text-decoration-thickness:2px}button,input{font:inherit}button{cursor:pointer;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--text);padding:7px 13px}button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+.layout{max-width:1440px;margin:0 auto;display:grid;grid-template-columns:275px minmax(0,1fr);gap:30px;padding:28px 28px 70px}.sidebar{position:sticky;top:24px;max-height:calc(100vh - 48px);overflow:auto;padding:5px 15px 20px 0;scrollbar-width:thin}.brand{font-size:20px;font-weight:700;line-height:1.5;margin-bottom:8px}.eyebrow{font-size:12px;letter-spacing:.13em;color:var(--muted)}.sidebar p{font-size:13px;color:var(--muted);margin:8px 0 18px}.nav-link{display:block;padding:10px 12px;border-radius:7px;font-size:14px;text-decoration:none;line-height:1.7}.nav-link:hover,.nav-link.current{background:var(--nav)}.nav-link[aria-current=true]{background:var(--nav);font-weight:600}.nav-tools{display:flex;gap:8px;margin:16px 0}.nav-tools button{font-size:13px}.nav-search{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:7px;background:var(--paper);color:var(--text);margin:0 0 13px}.main{min-width:0}.hero{padding:34px 44px;background:var(--paper);border:1px solid var(--line);border-radius:12px;margin-bottom:24px}.hero h1{font-size:30px;line-height:1.5;margin:8px 0 12px}.hero p{margin:9px 0}.meta{display:flex;gap:8px 18px;flex-wrap:wrap;font-size:13px;color:var(--muted)}.downloads{display:flex;gap:20px;flex-wrap:wrap;font-size:14px;margin-top:18px}.notice{border-left:3px solid var(--accent);padding:8px 14px;background:var(--nav);margin:18px 0 0;font-size:14px}
+.chapter{padding:35px 44px 40px;background:var(--paper);border:1px solid var(--line);border-radius:12px;margin-bottom:26px;overflow-wrap:break-word}.chapter h1{font-size:27px;line-height:1.55;margin:0 0 24px}.chapter h2{font-size:22px;line-height:1.65;margin:42px 0 16px;padding-top:8px;border-top:1px solid var(--line)}.chapter h3{font-size:18px;line-height:1.7;margin:28px 0 12px}.chapter h4{font-size:16px;margin:22px 0 10px}p{margin:14px 0}ul,ol{padding-left:1.55em}li{margin:6px 0}blockquote{border-left:3px solid var(--accent);margin:20px 0;padding:1px 18px;color:var(--muted);background:var(--nav);border-radius:0 7px 7px 0}blockquote p{margin:12px 0}code{font: .88em/1.65 ui-monospace,SFMono-Regular,Consolas,monospace;background:var(--code);padding:2px 5px;border-radius:4px;overflow-wrap:anywhere}pre{background:var(--code);padding:18px 20px;border:1px solid var(--line);border-radius:9px;overflow-x:auto;max-width:100%;font-size:14px;line-height:1.75;tab-size:2}pre code{padding:0;background:transparent;white-space:pre;overflow-wrap:normal;word-break:normal;font-size:inherit}.table-wrap{overflow-x:auto;margin:22px 0;border:1px solid var(--line);border-radius:8px}table{border-collapse:collapse;width:100%;min-width:440px;font-size:14px;line-height:1.75}th,td{padding:11px 14px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}th{background:var(--nav);font-weight:600}tr:last-child td{border-bottom:0}hr{border:0;border-top:1px solid var(--line);margin:30px 0}strong{font-weight:650}.chapter-toc{background:var(--nav);border-radius:8px;padding:12px 16px;margin:0 0 24px}.chapter-toc summary{cursor:pointer;font-size:14px}.chapter-toc ol{columns:2;font-size:13px;line-height:1.7;margin:12px 0 3px}.chapter-toc li{break-inside:avoid;margin:5px 0}.chapter-toc a{text-decoration:none}.chapter-links{display:flex;flex-wrap:wrap;gap:16px;margin:25px 0 0;font-size:13px;color:var(--muted);border-top:1px solid var(--line);padding-top:17px}.mobile-head{display:none}.footer{color:var(--muted);font-size:13px;padding:8px 8px 0}.back-top{position:fixed;right:20px;bottom:20px;font-size:13px;box-shadow:0 2px 12px #0001}.read-progress{position:fixed;top:0;left:0;height:3px;background:var(--accent);width:0;z-index:10}.source-tag{font-size:12px;color:var(--muted)}
+@media(max-width:900px){.layout{grid-template-columns:1fr;padding:15px 14px 60px;gap:15px}.sidebar{position:static;max-height:none;display:none;padding:16px;background:var(--paper);border:1px solid var(--line);border-radius:10px}.sidebar.open{display:block}.mobile-head{display:flex;justify-content:space-between;align-items:center;padding:14px 16px 0}.hero,.chapter{padding:24px}.hero h1{font-size:26px}.chapter h1{font-size:24px}.chapter h2{font-size:21px}.chapter-toc ol{columns:1}.back-top{bottom:12px;right:12px}}
+@media(max-width:480px){body{font-size:15px}.hero,.chapter{padding:19px 17px}.hero h1{font-size:24px}.chapter h1{font-size:23px}pre{padding:14px;font-size:12px}.table-wrap{margin:18px 0}.chapter h2{font-size:19px}.meta{font-size:12px}}
+@media print{body{background:white;color:#111;font-size:11pt}.layout{display:block;padding:0}.sidebar,.mobile-head,.nav-tools,.back-top,.read-progress,.downloads,.chapter-links,.chapter-toc{display:none!important}.hero,.chapter{border:none;padding:0;border-radius:0}.chapter{break-before:page}pre{white-space:pre-wrap;overflow-wrap:anywhere;border:1px solid #ddd;font-size:9pt}pre code{white-space:pre-wrap;overflow-wrap:anywhere}table{min-width:0}.table-wrap{overflow:visible}a{color:#111}h1,h2,h3{break-after:avoid}tr{break-inside:avoid}}
+.nav-link[hidden]{display:none}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+
+.pi-overview{position:relative;margin:0 0 28px;border:1px solid var(--line);border-radius:10px;background:var(--paper);padding:24px;min-width:0;max-width:100%;color:var(--text)}.overview-target{position:absolute;top:0;left:0;width:1px;height:1px;scroll-margin-top:20px}.overview-head{margin:0 0 16px}.overview-head .overview-kicker{font:12px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:.1em;color:var(--muted)}.overview-head h2{font-size:25px;line-height:1.5;margin:6px 0 9px;border:0;padding:0}.overview-head p{font-size:14px;line-height:1.8;color:var(--muted);margin:7px 0}.overview-head a{font-size:13px}.overview-panel{display:none;grid-template-columns:minmax(0,1.45fr) minmax(220px,1fr);gap:20px;border:1px solid var(--line);border-radius:8px;padding:18px 20px;margin-bottom:18px;min-height:210px;background:var(--nav)}.overview-panel[data-detail="loop"]{display:grid}.pi-overview:has(.overview-target:target) .overview-panel{display:none}.pi-overview:has(#pi-map-session:target) .overview-panel[data-detail="session"]{display:grid}.pi-overview:has(#pi-map-session:target) [data-map-node="session"] .node-outline{stroke:var(--accent);stroke-width:2.4;fill:var(--nav)}
+.pi-overview:has(#pi-map-loop:target) .overview-panel[data-detail="loop"]{display:grid}.pi-overview:has(#pi-map-loop:target) [data-map-node="loop"] .node-outline{stroke:var(--accent);stroke-width:2.4;fill:var(--nav)}
+.pi-overview:has(#pi-map-model:target) .overview-panel[data-detail="model"]{display:grid}.pi-overview:has(#pi-map-model:target) [data-map-node="model"] .node-outline{stroke:var(--accent);stroke-width:2.4;fill:var(--nav)}
+.pi-overview:has(#pi-map-history:target) .overview-panel[data-detail="history"]{display:grid}.pi-overview:has(#pi-map-history:target) [data-map-node="history"] .node-outline{stroke:var(--accent);stroke-width:2.4;fill:var(--nav)}
+.pi-overview:has(#pi-map-tools:target) .overview-panel[data-detail="tools"]{display:grid}.pi-overview:has(#pi-map-tools:target) [data-map-node="tools"] .node-outline{stroke:var(--accent);stroke-width:2.4;fill:var(--nav)}
+.pi-overview:has(#pi-map-extensions:target) .overview-panel[data-detail="extensions"]{display:grid}.pi-overview:has(#pi-map-extensions:target) [data-map-node="extensions"] .node-outline{stroke:var(--accent);stroke-width:2.4;fill:var(--nav)}
+.pi-overview:has(#pi-map-validation:target) .overview-panel[data-detail="validation"]{display:grid}.pi-overview:has(#pi-map-validation:target) [data-map-node="validation"] .node-outline{stroke:var(--accent);stroke-width:2.4;fill:var(--nav)}
+.pi-overview:has(#pi-map-subagents:target) .overview-panel[data-detail="subagents"]{display:grid}.pi-overview:has(#pi-map-subagents:target) [data-map-node="subagents"] .node-outline{stroke:var(--accent);stroke-width:2.4;fill:var(--nav)}
+.overview-panel h3{margin:0 0 7px;font-size:19px;line-height:1.6}.overview-panel p{margin:6px 0;font-size:14px;line-height:1.8}.overview-io{display:grid;grid-template-columns:38px minmax(0,1fr);gap:4px 8px;font-size:13px;line-height:1.75;margin:12px 0 0}.overview-io dt{color:var(--muted)}.overview-io dd{margin:0}.overview-chapter-links{display:flex;gap:8px;flex-wrap:wrap;margin:3px 0 12px}.overview-chapter-links a{display:inline-block;background:var(--paper);border:1px solid var(--line);border-radius:5px;padding:5px 10px;font-size:13px;text-decoration:none}.overview-sources{list-style:none;padding:0;margin:0;font-size:12px;line-height:1.8}.overview-sources li{margin:7px 0}.overview-sources code{background:none;padding:0;font-size:11px;overflow-wrap:anywhere}.overview-diagram-container{width:100%;max-width:100%;overflow-x:auto;overscroll-behavior-x:contain;border:1px solid var(--line);border-radius:8px;background:var(--paper)}.pi-overview svg{width:100%;min-width:960px;display:block;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}.pi-overview svg text{fill:var(--text)}.pi-overview svg .svg-muted{fill:var(--muted)}.pi-overview svg .svg-mono{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}.pi-overview svg .node-outline{fill:var(--paper);stroke:var(--line);stroke-width:1.4}.pi-overview svg .node-state{fill:var(--code)}.pi-overview svg .node-optional{stroke-dasharray:5 4}.pi-overview svg .node-focal{stroke:var(--accent);stroke-width:2;fill:var(--nav)}.pi-overview svg a:hover .node-outline,.pi-overview svg a:focus-visible .node-outline{stroke:var(--accent);stroke-width:2.4}.pi-overview svg a:focus-visible{outline:none}.pi-overview svg .edge{fill:none;stroke:var(--muted);stroke-width:1.5}.pi-overview svg .edge-return{stroke-dasharray:5 4}.pi-overview svg .label-mask{fill:var(--paper)}.pi-overview svg .type-tag{fill:var(--code);stroke:var(--line);stroke-width:.8}.overview-chapter-index{display:flex;gap:7px;flex-wrap:wrap;margin-top:15px;font-size:12px;line-height:1.6}.overview-chapter-index a{border:1px solid var(--line);padding:5px 8px;border-radius:5px;text-decoration:none;color:var(--muted)}.overview-chapter-index a:hover{color:var(--accent);border-color:var(--accent)}.overview-note{font-size:12px;line-height:1.8;color:var(--muted);margin:13px 0 0}.overview-bounds{border-left:3px solid var(--accent);padding-left:11px;color:var(--muted)}
+@media(max-width:1000px){.overview-panel{grid-template-columns:1fr;min-height:0;gap:14px}.overview-panel-side{border-top:1px solid var(--line);padding-top:12px}}
+@media(max-width:600px){.pi-overview{padding:17px}.overview-head h2{font-size:22px}.overview-panel{padding:15px}.overview-panel h3{font-size:17px}.overview-head p{font-size:13px}}
+@media print{.pi-overview{break-before:page;padding:0;border:0}.overview-diagram-container{overflow:visible;border:0}.pi-overview svg{min-width:0;width:100%}.overview-panel{display:block!important;break-inside:avoid;background:none;min-height:0}.overview-chapter-index,.overview-head>a{display:none}.overview-target{display:none}}
+</style></head><body><a class="blog-back" href="../../../index.html">← Agent 笔记 · 所有文章</a><div class="read-progress" aria-hidden="true"></div><div class="mobile-head"><span>PI · 源码伴读</span><button data-menu aria-expanded="false" aria-controls="chapter-nav">章节目录</button></div><div class="layout"><aside class="sidebar" id="chapter-nav"><div class="eyebrow">SOURCE WALKTHROUGH</div><div class="brand">PI Agent Harness</div><p>从一次请求到执行、历史和恢复。<br>按 01 → 12 顺序阅读。</p><input class="nav-search" data-search aria-label="筛选章节" placeholder="筛选章节标题"><nav aria-label="章节目录"><a class="nav-link" href="../pi-overview.html">总览 · 各部分怎样配合</a><a class="nav-link" href="01-%E5%87%86%E5%A4%87%E4%B8%8E%E6%9E%B6%E6%9E%84.html">01 · 准备与架构——先认清对象和职责</a><a class="nav-link" href="02-Agent-Loop.html">02 · Agent Loop——工具执行后，为什么还要请求模型？</a><a class="nav-link" href="03-%E6%A8%A1%E5%9E%8B%E5%8D%8F%E8%AE%AE%E4%B8%8E%E6%B5%81.html">03 · 模型协议与流——从数据片段到完整消息</a><a class="nav-link" href="04-%E5%B7%A5%E5%85%B7%E4%B8%8E%E4%BB%A3%E7%A0%81%E4%BF%AE%E6%94%B9.html">04 · 工具与代码修改——从模型意图到真实副作用</a><a class="nav-link current" href="05-%E8%B0%83%E5%BA%A6%E4%B8%8E%E6%94%B6%E5%B0%BE.html">05 · 调度与收尾——并行、队列、停止、取消与重试</a><a class="nav-link" href="06-%E9%A2%84%E6%B5%8B%E4%B8%8E%E9%AA%8C%E8%AF%81.html">06 · 预测与验证——怎样用测试检查自己读懂了没有</a><a class="nav-link" href="07-%E4%BC%9A%E8%AF%9D%E4%B8%8E%E5%8E%86%E5%8F%B2.html">07 · 会话与历史——保存过的内容，为什么模型未必看得见</a><a class="nav-link" href="08-%E4%B8%8A%E4%B8%8B%E6%96%87%E5%8E%8B%E7%BC%A9.html">08 · 上下文压缩——预算、切点、信息损失与缓存</a><a class="nav-link" href="09-Extension%E4%B8%8ESkill.html">09 · Extension 与 Skill——怎样增加工具和工作方法</a><a class="nav-link" href="10-MCP%E5%8F%91%E7%8E%B0%E4%B8%8E%E8%B0%83%E7%94%A8.html">10 · MCP——外部工具怎样进入 PI 的执行循环</a><a class="nav-link" href="11-Subagent%E4%B8%8EDurable.html">11 · Subagent 与 durable——委派、后台工作和恢复</a><a class="nav-link" href="12-%E5%AE%89%E5%85%A8%E8%AF%84%E6%B5%8B%E4%B8%8E%E6%9C%8D%E5%8A%A1.html">12 · 安全、评测与服务——怎样判断 Agent 真正完成了任务</a></nav><div class="nav-tools"><button data-theme-toggle>切换明暗</button><button onclick="window.print()">打印</button></div><p>源码：<a href="https://github.com/earendil-works/pi/tree/eb326d265ae0b88489a6d10319307780df827cdf/" target="_blank" rel="noopener noreferrer">eb326d2</a><br>包版本：1.0.4<br>本地整理：2026-10-26</p></aside><main class="main"><header class="hero"><div class="eyebrow">PI STUDY NOTES / 01—12</div><h1>第 05 节：调度与收尾——并行、队列、停止、取消与重试</h1><p>逐段看代码怎样接收输入、请求模型、执行工具、保存历史，并处理取消、重试和恢复。</p><div class="meta"><span>12 节完整讲解</span><span>固定提交源码引用</span><span>解释 · 例子 · 练习 · 面试追问</span></div><div class="downloads"><a href="../PI-Agent-Harness-01-12.md" download>下载 Markdown 合订本</a><a href="../README.md">阅读说明</a></div><div class="notice">静态源码伴读。示意轨迹、待执行练习与实际运行结果分别说明。本文提供源码分析与待执行练习，不将源码阅读作为模型实测或生产验收。</div></header><section class="chapter" data-chapter="5"><h1 id="chapter-05" tabindex="-1">第 05 节：调度与收尾——并行、队列、停止、取消与重试</h1><details class="chapter-toc"><summary>本节小节目录 · 13 项</summary><ol><li><a href="#c5-s1">一、先分清两层调度</a></li><li><a href="#c5-s2">二、多个工具怎样选择串行或并行</a></li><li><a href="#c5-s3">三、并行时，准备、执行和回写并非同时发生</a></li><li><a href="#c5-s4">四、消息顺序稳定，不能代替副作用顺序</a></li><li><a href="#c5-s5">五、steer 和 followUp：排队动作与消费时机</a></li><li><a href="#c5-s6">六、为什么有两层 while</a></li><li><a href="#c5-s7">七、finishTurn 的三个返回结果</a></li><li><a href="#c5-s8">八、工具错误、模型错误、terminate 分开判断</a></li><li><a href="#c5-s9">九、abort 的通知与真正结束</a></li><li><a href="#c5-s10">十、agent_end 之后是谁继续工作</a></li><li><a href="#c5-s11">十一、普通重试和压缩恢复怎样做</a></li><li><a href="#c5-s12">十二、为什么重试还需要执行端幂等</a></li><li><a href="#c5-s13">十三、把本节连成一次运行</a></li></ol></details>
+<p>第四节已经讲到工具怎样执行。这一节继续追：一次响应提出多个工具时怎样安排；用户中途补充要求时怎样处理；循环什么时候结束；结束后为什么还能重试。</p>
+<p>本节依据 Pi 提交 <code>eb326d265ae0b88489a6d10319307780df827cdf</code>。代码片段有节选和简化，流程例子是按源码推演，未运行项目或测试。</p>
+<h2 id="c5-s1" tabindex="-1">一、先分清两层调度</h2>
+<pre><code class="language-text">AgentSession
+  └─ Agent.prompt / Agent.continue
+       └─ runLoop
+            ├─ 请求模型
+            ├─ 执行工具
+            ├─ 处理 steering / follow-up
+            └─ 判断当前 core run 是否结束
+</code></pre>
+<p><code>runLoop</code> 管一次 core run 内的事情。<code>AgentSession</code> 在它外面，继续处理错误重试、上下文恢复和会话收尾。一次用户提交可能启动不止一个 core run。</p>
+<p>先看 <a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/agent/src/agent-loop.ts#L163-L321">runLoop</a>，再看 <a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/coding-agent/src/core/agent-session.ts#L1821-L1913">AgentSession 外层循环</a>。第一次阅读先圈出 <code>while</code>、<code>return</code>、<code>continue</code> 和 <code>agent.continue()</code>，找出谁能让下一次模型请求发生。</p>
+<h2 id="c5-s2" tabindex="-1">二、多个工具怎样选择串行或并行</h2>
+<p>假设模型提出两个调用：</p>
+<pre><code class="language-text">A = read(&quot;package.json&quot;)
+B = read(&quot;README.md&quot;)
+</code></pre>
+<p>在 <a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/agent/src/agent-loop.ts#L508-L523">executeToolCalls</a> 中，PI 检查全局配置和本批工具的声明：</p>
+<pre><code class="language-ts">const hasSequentialToolCall = toolCalls.some(
+  tc =&gt; currentContext.tools?.find(t =&gt; t.name === tc.name)
+    ?.executionMode === &quot;sequential&quot;,
+);
+
+if (config.toolExecution === &quot;sequential&quot; || hasSequentialToolCall) {
+  return executeToolCallsSequential(/* ... */);
+}
+return executeToolCallsParallel(/* ... */);
+</code></pre>
+<p>当前普通 Agent 默认使用 <code>parallel</code>。全局要求串行，或者本批任意一个被调用工具声明 <code>sequential</code>，都会让整批串行。</p>
+<p>串行意味着 A 完成准备、执行、后处理和结果事件后，才轮到 B。并行允许执行阶段重叠。PI 在这里没有自动分析“B 的参数依赖 A 的结果”的业务依赖图；这种依赖需要在调用安排或工具契约中表达。</p>
+<p>例如“读取配置后，根据里面的目录再读取文件”，通常需要两轮：第一轮取得配置，第二轮模型才知道下一次的路径。</p>
+<h2 id="c5-s3" tabindex="-1">三、并行时，准备、执行和回写并非同时发生</h2>
+<p>看 <a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/agent/src/agent-loop.ts#L586-L660">executeToolCallsParallel</a>。准备阶段使用 <code>for</code>，每项都 <code>await prepareToolCall()</code>。工具查找、参数检查、前置 hook 先按原顺序执行。</p>
+<p>准备通过后，代码保存一个函数：</p>
+<pre><code class="language-ts">finalizedCalls.push(async () =&gt; {
+  const executed = await executePreparedToolCall(/* ... */);
+  const finalized = await finalizeExecutedToolCall(/* ... */);
+  await emitToolExecutionEnd(finalized, emit);
+  return finalized;
+});
+</code></pre>
+<p><code>push(async () =&gt; {...})</code> 只把函数存进数组，没有调用函数体。准备结束后，这里才启动它们：</p>
+<pre><code class="language-ts">const orderedFinalizedCalls = await Promise.all(
+  finalizedCalls.map(entry =&gt;
+    typeof entry === &quot;function&quot; ? entry() : Promise.resolve(entry)
+  ),
+);
+</code></pre>
+<p>数组还可能包含已经形成的错误结果。例如某项参数不合法，它不需要执行，直接形成结果。</p>
+<p>假设 A 慢、B 快，两个工具都正常通过准备：</p>
+<pre><code class="language-text">prepare A → prepare B
+          ↓
+     并发启动 A、B
+          ↓
+B 的 execute 和 after hook 完成 → tool_execution_end(B)
+A 的 execute 和 after hook 完成 → tool_execution_end(A)
+          ↓
+Promise.all 得到 [A结果, B结果]
+          ↓
+依次产生 A、B 的 ToolResultMessage
+</code></pre>
+<p><code>Promise.all</code> 的返回数组保持输入顺序；结束事件在每项工作完成时发送，因此可以是 B/A。快工具的完成状态可以先显示，但本批之后的模型请求仍要等整批收齐。</p>
+<p>另外，<code>tool_execution_end</code> 在后置 hook 之后发出。B 的执行函数很快，但 B 的后置 hook 很慢，仍可能比 A 更晚发出结束事件。</p>
+<p>仓库的 <a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/agent/test/agent-loop.test.ts#L668-L760">并行测试</a> 明确断言：结束事件是 tool-2/tool-1，工具结果消息是 tool-1/tool-2。本次只读了这些断言。</p>
+<h2 id="c5-s4" tabindex="-1">四、消息顺序稳定，不能代替副作用顺序</h2>
+<p>如果 A 写文件、B 读同一文件，并发时 B 可能读到 A 写入之前的内容。最终把结果排列成 A/B，不会改变当时真正发生的读写顺序。</p>
+<pre><code class="language-text">A 开始写，但尚未完成
+B 已读取旧内容
+A 写入完成
+最终结果数组仍然可以是 [A, B]
+</code></pre>
+<p>一项工具失败也不会自动回滚其他项的动作。批量执行结果的组织方式，与外部动作的事务保证，是两件需要分别实现的事。</p>
+<p>第四节里的同文件修改队列只保护参与该队列的修改；普通读取、外部编辑器和其他进程不会因为这里用了 <code>Promise.all</code> 就共享那把队列锁。</p>
+<h2 id="c5-s5" tabindex="-1">五、steer 和 followUp：排队动作与消费时机</h2>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/agent/src/agent.ts#L298-L306">Agent 的两个方法</a> 只把消息放进不同队列：</p>
+<pre><code class="language-ts">steer(message) {
+  this.steeringQueue.enqueue(message);
+}
+
+followUp(message) {
+  this.followUpQueue.enqueue(message);
+}
+</code></pre>
+<p>模型何时看到消息，由 <code>runLoop</code> 取队列的位置决定。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>队列</th>
+<th>正常运行中的消费时机</th>
+<th>例子</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>steering</td>
+<td>当前 assistant 响应及其工具处理完后，在后续请求前加入</td>
+<td>“重点看测试配置”</td>
+</tr>
+<tr>
+<td>follow-up</td>
+<td>没有工具续轮，也没有 steering，原本准备停下时</td>
+<td>“分析完再写一份操作清单”</td>
+</tr>
+</tbody></table></div>
+<p>执行中的工具不会因为收到 steering 就被跳过。用户说“别再写了”并以 steer 入队，不能保证阻止本轮已经提出的写入。</p>
+<p>当前两个队列默认 <code>one-at-a-time</code>，每次 drain 取最早一条；<code>all</code> 会取出当时队列里的全部消息。取出的消息从队列移除。“一次一条”指每次消费，不是一个 run 只能处理一条。见 <a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/agent/src/agent.ts#L143-L174">PendingMessageQueue</a>。</p>
+<p>调用初始时也会检查 steering；下一轮准备可能耗时，因此准备后还有一次有条件的补查。刚到达的消息是否赶上眼前请求，取决于它到达时是否已经经过取队列的位置，不能理解成模型生成到任何一个 token 都会立即读到新输入。</p>
+<h2 id="c5-s6" tabindex="-1">六、为什么有两层 while</h2>
+<p>下面是简化后的控制顺序：</p>
+<pre><code class="language-text">外层循环：
+  内层循环：
+    加入准备好的消息和 steering
+    准备请求、调用模型
+    处理工具结果
+    调用 finishTurn
+    若明确 end，退出当前 core run
+    读取 steering
+    有工具续轮或 steering，就再进行一轮
+
+  内层停下后，检查 follow-up
+  有 follow-up，放入下一轮并继续外层
+  没有自然请求，但有显式 continue，再请求一次
+  否则结束
+</code></pre>
+<p>源码的 <code>hasMoreToolCalls</code> 容易让人以为“工具还没执行完”。走到轮末时，该批工具已经处理过。它主要表达“这轮工具调用是否使模型需要再响应一次”。模型需要看到读取结果后才能解释文件，所以正常工具调用通常引发下一轮。</p>
+<p><code>hasMoreToolCalls = true</code> 在进入外层时初始化，也保证初始输入或 follow-up 能进入内层完成一次请求。见 <a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/agent/src/agent-loop.ts#L175-L207">循环条件</a>。</p>
+<h2 id="c5-s7" tabindex="-1">七、finishTurn 的三个返回结果</h2>
+<p>工具结果进入上下文之后，PI 调用：</p>
+<pre><code class="language-ts">const decision = await config.finishTurn?.(lastCompletedTurn, signal);
+await emit({ type: &quot;turn_end&quot;, message, toolResults });
+</code></pre>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>返回值</th>
+<th>正常 turn 下的行为</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>undefined</td>
+<td>保持默认调度</td>
+</tr>
+<tr>
+<td><code>{ action: &quot;end&quot; }</code></td>
+<td>结束当前 core run，不再检查后面的队列</td>
+</tr>
+<tr>
+<td><code>{ action: &quot;continue&quot; }</code></td>
+<td>确保至少有紧接着的一次后续模型请求</td>
+</tr>
+</tbody></table></div>
+<p>如果工具结果本来就要触发下一次请求，<code>continue</code> 不会额外叠加另一轮；steering 或 follow-up 引发的请求也可以满足它。只有没有自然请求时，才用现有上下文再请求一次。见 <a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/agent/src/types.ts#L146-L158">FinishTurn 契约</a>。</p>
+<p><code>finishTurn</code> 调用时，本轮工具动作已经发生。因此它可以控制后续调度，不能当作阻止本轮写入的前置权限检查。</p>
+<p>这里没有通用的内置 <code>maxSteps</code>。如果宿主需要“最多运行三轮”，可以在自己的控制逻辑中计数，并返回 end；同时另记 <code>budget_exhausted</code> 等业务状态。这个计数只约束后续调度，卡住的在途请求仍需超时和取消配合。</p>
+<h2 id="c5-s8" tabindex="-1">八、工具错误、模型错误、terminate 分开判断</h2>
+<p>工具抛错后通常会变成 <code>isError=true</code> 的工具结果，模型可以继续看结果、换参数或报告失败。模型最终响应的 <code>stopReason=error/aborted</code> 则让当前 core run 退出。</p>
+<p>在 <a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/agent/src/agent-loop.ts#L245-L255">硬错误分支</a> 中，PI 仍调用 finishTurn，但不采用它返回的 continue。后面直接发送 turn_end、agent_end 并返回。</p>
+<p>工具结果的 <code>terminate</code> 是另一种控制：</p>
+<pre><code class="language-ts">return finalizedCalls.length &gt; 0 &amp;&amp;
+  finalizedCalls.every(x =&gt; x.result.terminate === true);
+</code></pre>
+<p>只有本批已形成的全部最终结果都为 true，才关闭“因这批工具而自然续轮”。一项 true、一项未设置，整批为 false。它不会让已经开始的工具瞬间停下；队列消息和 finishTurn 的 continue 仍可能继续请求模型。见 <a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/agent/src/agent-loop.ts#L690-L692">批次判断</a>。</p>
+<h2 id="c5-s9" tabindex="-1">九、abort 的通知与真正结束</h2>
+<p>底层 <code>Agent.abort()</code> 只调用当前控制器的 <code>abort()</code>。signal 状态变化后，Provider、工具和其他等待过程各自响应。忽略 signal 的工具仍可能运行到自己的操作完成。</p>
+<p>串行执行在处理当前项后检查取消，可能停止后面的调用；并行执行中，已启动的工作需要各自结束，聚合等待不会自动强杀任意 Promise。</p>
+<p>你在第二节读过的 <code>finishRun()</code> 清理 isStreaming、streamingMessage 和 pendingToolCalls，通知等待者，并清除 activeRun。清空跟踪集合不等于终止外部进程，也不会撤销写入。</p>
+<p>上层 <a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/coding-agent/src/core/agent-session.ts#L2430-L2449">AgentSession.abort</a> 还会处理重试、压缩和分支摘要：</p>
+<pre><code class="language-ts">this.abortRetry();
+this.abortCompaction();
+this.abortBranchSummary();
+this.agent.abort();
+await this.waitForIdle();
+</code></pre>
+<p>停止显示、取消网络请求、停止工具、停止后续调度、回滚已发生动作，分别需要具体实现。比如 edit 的在途 writeFile 可以先写完，再观察到取消并报错，此时必须检查真实文件状态。</p>
+<h2 id="c5-s10" tabindex="-1">十、agent_end 之后是谁继续工作</h2>
+<p><code>AgentSession._runAgentPrompt()</code> 先 await 底层 agent.prompt，再调用 <code>_handlePostAgentRun()</code>。如果需要恢复或有新入队消息，就调用 agent.continue，形成新的 core run。</p>
+<pre><code class="language-text">session.prompt
+  → core run 1：agent_start ... agent_end
+  → 检查错误重试、压缩恢复、排队消息
+  → core run 2：agent_start ... agent_end
+  → 检查 agent_before_settle 扩展
+  → 清理与 flush
+  → agent_settled
+</code></pre>
+<p><code>agent_end</code> 是低层循环的最终事件，但异步监听器可能尚未完成；底层 Agent 等待它们后才清理 activeRun。<code>agent_settled</code> 说明这组会话活动完成外层收尾，也可能是失败或取消后的收尾。它不自动证明业务正确。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>观察点</th>
+<th>可以说明什么</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>message_end</td>
+<td>一条消息完成</td>
+</tr>
+<tr>
+<td>turn_end</td>
+<td>一次响应及工具结果处理完</td>
+</tr>
+<tr>
+<td>agent_end</td>
+<td>当前 core run 的循环事件结束</td>
+</tr>
+<tr>
+<td>底层 Agent idle</td>
+<td>当前 run 及等待中的监听器已结束</td>
+</tr>
+<tr>
+<td>agent_settled</td>
+<td>当前这组会话活动经过外层处理后收尾</td>
+</tr>
+<tr>
+<td>验收结果通过</td>
+<td>实际任务满足单独定义的要求</td>
+</tr>
+</tbody></table></div>
+<h2 id="c5-s11" tabindex="-1">十一、普通重试和压缩恢复怎样做</h2>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/coding-agent/src/core/agent-session.ts#L3761-L3800">普通重试</a> 先检查是否启用、是否超过 maxRetries，再计算退避时间。允许重试时，保留原始失败记录，追加上下文编辑把该失败尝试从当前模型视图中隐藏，等待可取消的退避，再让外层 continue。</p>
+<p><code>maxRetries=1</code> 表示初始请求加一次重试。若两次都失败，仍要报告失败；“发生了重试”不是成功证据。</p>
+<p>超窗由另一条恢复路径处理，因为相同的大上下文原样重试通常仍会超窗。<a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/coding-agent/src/core/agent-session.ts#L3002-L3045">恢复分支</a> 判断上下文溢出或可恢复 length，检查恢复预算，先隐藏选中的失败尝试，再压缩；成功后才安排后续恢复请求。</p>
+<p>摘要也可能调用模型失败。此时前面的隐藏记录不会自动撤销：raw 还有失败原文，projection 已经不含它，没有成功 compaction。这是当前源码和 <a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/coding-agent/test/suite/agent-session-boundaries.test.ts#L1032-L1061">测试</a> 保护的行为。</p>
+<p>要分别统计 Provider 内部请求重试、AgentSession 普通重试、压缩恢复、摘要调用重试；外层请求次数不一定等于实际 HTTP 次数。</p>
+<h2 id="c5-s12" tabindex="-1">十二、为什么重试还需要执行端幂等</h2>
+<p>纸面故障：通知已经发送成功，但进程在保存工具结果前退出。恢复后只有调用、没有成功结果。仅靠会话记录，无法区分“没发送”和“已发送但没记下来”。</p>
+<p>对于这样的工具，需要稳定业务操作 ID、执行端去重和可查询结果；恢复时先对照真实状态再决定是否重复提交。普通会话 JSONL 记录不能把外部服务和本地历史变成同一笔原子事务。</p>
+<h2 id="c5-s13" tabindex="-1">十三、把本节连成一次运行</h2>
+<p>假设没有错误、没有强制结束 hook：</p>
+<pre><code class="language-text">用户 prompt：读取两个配置文件并解释启动方式
+turn 1：模型提出 A、B；并发执行；end 顺序 B/A，结果消息 A/B
+        工具执行时收到了 steer：“重点看测试配置”
+turn 2：模型看到结果和 steer，生成分析；自然停点发现 follow-up
+turn 3：处理 follow-up：“再写一份操作清单”
+agent_end → 监听器和状态清理 → 外层收尾 → agent_settled
+</code></pre>
+<p>这个例子有三次对话层模型请求、两次工具执行、三个 turn、一个 core run。若发生外层重试，core run 数量可能增加。</p>
+<p>闭卷检查：B 的后置 hook 变慢时结束事件顺序会怎样？steer 能否阻止本轮已有工具？finishTurn end 能否撤销动作？agent_end 后是谁判断重试？写成功但结果没保存时应查什么？回答时指出代码中的控制位置，而不是只说“异步”“队列”“重试”。</p>
+<p>下一节把这些预测变成可以检查的测试条件。</p>
+<div class="chapter-links"><a href="04-%E5%B7%A5%E5%85%B7%E4%B8%8E%E4%BB%A3%E7%A0%81%E4%BF%AE%E6%94%B9.html">← 第 4 节</a><a href="06-%E9%A2%84%E6%B5%8B%E4%B8%8E%E9%AA%8C%E8%AF%81.html">第 6 节 →</a><a href="05-%E8%B0%83%E5%BA%A6%E4%B8%8E%E6%94%B6%E5%B0%BE.md" download>本节 Markdown</a><a href="../index.html">返回合订本</a></div></section><footer class="footer">本系列按固定版本源码整理。源码链接固定到研究提交；本地源码若更新，请按函数名复核。HTML 内嵌样式和脚本，正文可离线阅读。</footer></main></div><button class="back-top" data-top aria-label="返回顶部">↑ 顶部</button><script>
+const root=document.documentElement;
+try{root.dataset.theme=localStorage.getItem('pi-study-theme')||'light'}catch{}
+document.querySelectorAll('[data-theme-toggle]').forEach(b=>b.addEventListener('click',()=>{root.dataset.theme=root.dataset.theme==='dark'?'light':'dark';try{localStorage.setItem('pi-study-theme',root.dataset.theme)}catch{}}));
+document.querySelector('[data-menu]')?.addEventListener('click',e=>{const expanded=document.querySelector('.sidebar').classList.toggle('open');e.currentTarget.setAttribute('aria-expanded',String(expanded))});
+document.querySelector('[data-search]')?.addEventListener('input',e=>{const q=e.target.value.trim().toLowerCase();document.querySelectorAll('.nav-link').forEach(a=>a.hidden=!a.textContent.toLowerCase().includes(q))});
+document.querySelector('[data-top]')?.addEventListener('click',()=>window.scrollTo({top:0,behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth'}));
+function progress(){const total=document.documentElement.scrollHeight-innerHeight;document.querySelector('.read-progress').style.width=(total>0?scrollY/total*100:100)+'%'}
+addEventListener('scroll',progress,{passive:true});addEventListener('resize',progress);progress();
+const observer=new IntersectionObserver(entries=>{for(const entry of entries)if(entry.isIntersecting){const id=entry.target.id;document.querySelectorAll('.nav-link[href^="#"]').forEach(a=>a.setAttribute('aria-current',String(a.getAttribute('href')==='#'+id))) }},{rootMargin:'-5% 0px -75% 0px'});
+document.querySelectorAll('.chapter>h1').forEach(h=>observer.observe(h));
+</script></body></html>

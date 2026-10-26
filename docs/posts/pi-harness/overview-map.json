@@ -1,0 +1,277 @@
+{
+  "type": "architecture",
+  "semanticPattern": "component responsibilities and runtime relationships; no exact semantic pattern required",
+  "preset": "doc-inline",
+  "viewBox": [
+    0,
+    0,
+    960,
+    600
+  ],
+  "revision": "eb326d265ae0b88489a6d10319307780df827cdf",
+  "nodes": [
+    {
+      "id": "session",
+      "name": "会话与运行控制",
+      "tag": "01 / 05",
+      "tech": "AgentSession",
+      "line": "接收输入 · 排队 · 重试与收尾",
+      "x": 40,
+      "y": 92,
+      "w": 224,
+      "h": 104,
+      "chapters": [
+        1,
+        5
+      ],
+      "role": "把用户输入交给 Agent；管理资源、运行中的追加消息，以及 core run 结束后的重试和收尾。",
+      "input": "用户问题、配置、steer / follow-up",
+      "output": "启动或继续一次 core run，最终发出 agent_settled",
+      "boundary": "agent_settled 表示会话活动收尾，结果是否正确还要验收。",
+      "source": [
+        [
+          "AgentSession._runAgentPrompt",
+          "packages/coding-agent/src/core/agent-session.ts",
+          1821
+        ],
+        [
+          "SDK 组装",
+          "packages/coding-agent/src/core/sdk.ts",
+          411
+        ]
+      ]
+    },
+    {
+      "id": "loop",
+      "name": "Agent Loop",
+      "tag": "02 / 05",
+      "tech": "Agent → runLoop",
+      "line": "模型提议 → 工具反馈 → 再次请求",
+      "x": 360,
+      "y": 92,
+      "w": 240,
+      "h": 104,
+      "chapters": [
+        2,
+        5
+      ],
+      "role": "安排模型请求与工具执行，把结果加入上下文；根据工具、消息队列和 hook 决定下一轮或结束。",
+      "input": "当前消息、可执行工具、调度配置、取消信号",
+      "output": "assistant / toolResult、运行事件、agent_end",
+      "boundary": "循环停下不等于业务成功；普通 loop 没有通用内置 maxSteps。",
+      "source": [
+        [
+          "runLoop",
+          "packages/agent/src/agent-loop.ts",
+          163
+        ],
+        [
+          "Agent 生命周期",
+          "packages/agent/src/agent.ts",
+          507
+        ]
+      ]
+    },
+    {
+      "id": "model",
+      "name": "模型接入与响应流",
+      "tag": "03",
+      "tech": "StreamFn → Provider / API",
+      "line": "转换协议 · 接收流 · 形成消息",
+      "x": 704,
+      "y": 92,
+      "w": 216,
+      "h": 104,
+      "chapters": [
+        3
+      ],
+      "role": "把统一消息转换为模型协议，接收流式片段，产出文本、思考或工具调用组成的完整 assistant 响应。",
+      "input": "模型配置、规范化 transcript、请求选项",
+      "output": "start / delta / done / error，以及最终 AssistantMessage",
+      "boundary": "模型提出 toolCall；真实工具由宿主执行。截断参数不能直接执行。",
+      "source": [
+        [
+          "streamAssistantResponse",
+          "packages/agent/src/agent-loop.ts",
+          381
+        ],
+        [
+          "StreamFn 契约",
+          "packages/agent/src/types.ts",
+          19
+        ]
+      ]
+    },
+    {
+      "id": "history",
+      "name": "历史与上下文",
+      "tag": "07 / 08",
+      "tech": "SessionManager · Compaction",
+      "line": "保存历史 · 选择分支 · 摘要旧内容",
+      "x": 40,
+      "y": 300,
+      "w": 224,
+      "h": 112,
+      "chapters": [
+        7,
+        8
+      ],
+      "role": "用 entry 树保存历史，通过分支、context_edit 和最新压缩生成当前 projection，再组织下一次模型输入。",
+      "input": "消息、当前 leaf、上下文编辑、压缩预算",
+      "output": "持久历史、当前分支和模型可见的消息投影",
+      "boundary": "原文在磁盘上不表示模型本次看得到；摘要有损，恢复历史不回滚文件。",
+      "source": [
+        [
+          "buildSessionProjection",
+          "packages/coding-agent/src/core/session-manager.ts",
+          543
+        ],
+        [
+          "prepareCompaction",
+          "packages/coding-agent/src/core/compaction/compaction.ts",
+          872
+        ]
+      ]
+    },
+    {
+      "id": "tools",
+      "name": "工具执行与真实动作",
+      "tag": "04",
+      "tech": "schema → hooks → execute",
+      "line": "校验参数 · 检查准入 · 执行动作",
+      "x": 360,
+      "y": 300,
+      "w": 240,
+      "h": 112,
+      "chapters": [
+        4
+      ],
+      "role": "找到实际工具，准备和校验参数，执行前检查，调用 execute，再处理结果并生成可关联的 ToolResult。",
+      "input": "完整 toolCall、schema、宿主权限与执行后端",
+      "output": "文件或服务效果、content / details、isError",
+      "boundary": "工具成功不保证需求满足；错误或取消也不保证动作没有发生。",
+      "source": [
+        [
+          "prepareToolCall",
+          "packages/agent/src/agent-loop.ts",
+          708
+        ],
+        [
+          "execute 与后处理",
+          "packages/agent/src/agent-loop.ts",
+          821
+        ]
+      ]
+    },
+    {
+      "id": "extensions",
+      "name": "能力与方法扩展",
+      "tag": "09 / 10",
+      "tech": "Extension · Skill · MCP",
+      "line": "注册工具与 hook · 按需加载方法",
+      "x": 704,
+      "y": 300,
+      "w": 216,
+      "h": 112,
+      "chapters": [
+        9,
+        10
+      ],
+      "role": "Extension 接入代码与 hook；Skill 提供工作步骤；MCP 发现并调用外部工具，再适配回统一工具接口。",
+      "input": "扩展模块、SKILL.md、MCP server 能力",
+      "output": "可调用工具、行为规则、外部调用结果",
+      "boundary": "注册、模型可见、可调用和授权是不同状态；Skill 文本不自动授予权限。",
+      "source": [
+        [
+          "扩展注册",
+          "packages/coding-agent/src/core/extensions/loader.ts",
+          270
+        ],
+        [
+          "Skill 目录",
+          "packages/coding-agent/src/core/skills.ts",
+          358
+        ],
+        [
+          "MCP 注册",
+          "packages/coding-agent/src/extensions/mcp/index.ts",
+          368
+        ]
+      ]
+    },
+    {
+      "id": "validation",
+      "name": "验证、安全与服务交付",
+      "tag": "06 / 12",
+      "tech": "预测与断言 · 实际效果 · 模型评测 · 服务验收",
+      "line": "贯穿整条链：能运行、允许执行、结果正确要分别验证",
+      "x": 40,
+      "y": 464,
+      "w": 560,
+      "h": 76,
+      "chapters": [
+        6,
+        12
+      ],
+      "role": "用确定性实验检查机制，用真实效果和固定任务集评估结果；明确资源权限、隔离、任务状态和服务接口。",
+      "input": "预期、事件轨迹、文件或执行端结果、任务集",
+      "output": "通过 / 失败 / 未运行证据、Bad Case、服务验收结论",
+      "boundary": "这是贯穿各模块的检查工作，不是 loop 默认附带的自动成功判定器。",
+      "source": [
+        [
+          "确定性调度测试",
+          "packages/agent/test/agent-loop.test.ts",
+          668
+        ],
+        [
+          "安全边界",
+          "packages/coding-agent/docs/security.md",
+          1
+        ],
+        [
+          "eval harness",
+          "packages/evals/src/harness.ts",
+          238
+        ]
+      ]
+    },
+    {
+      "id": "subagents",
+      "name": "子任务与持久恢复",
+      "tag": "11",
+      "tech": "Subagent · durable（实验性）",
+      "line": "委派工作 · 保存阶段 · 回传结果",
+      "x": 704,
+      "y": 464,
+      "w": 216,
+      "h": 76,
+      "chapters": [
+        11
+      ],
+      "role": "普通示例启动独立 PI 子进程；durable 以 task、checkpoint 和 requestId 管理前台或后台子会话及恢复。",
+      "input": "独立任务说明、所有权、已保存阶段和提交 ID",
+      "output": "子任务答案、后台报告或恢复后的任务状态",
+      "boundary": "可选扩展与实验路径；独立上下文不自动隔离文件，checkpoint 不自动保证外部动作只执行一次。",
+      "source": [
+        [
+          "普通 subagent",
+          "packages/coding-agent/examples/extensions/subagent/index.ts",
+          272
+        ],
+        [
+          "durable 前台子会话",
+          "packages/coding-agent/src/experimental/durable/subagent.ts",
+          19
+        ],
+        [
+          "后台 Reporter 示例",
+          "packages/durable/test/examples/23-subagent-background.ts",
+          38
+        ]
+      ]
+    }
+  ],
+  "edgeCount": 9,
+  "interaction": "Native anchor links and CSS :target/:has; no JavaScript required",
+  "styleSource": "Existing index.html palette and system fonts"
+}

@@ -1,0 +1,236 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light dark"><title>第 11 节：Subagent 与 durable——委派、后台工作和恢复</title><style>
+.blog-back{display:block;max-width:1440px;margin:18px auto 0;padding:0 28px;font-size:14px}
+:root{color-scheme:light;--bg:#f5f3ee;--paper:#fffefa;--text:#26332e;--muted:#65736b;--line:#d9dfd6;--accent:#28664e;--code:#eef2ed;--nav:#edf1e9}
+:root[data-theme=dark]{color-scheme:dark;--bg:#151c19;--paper:#1c2520;--text:#e0e8df;--muted:#abb9ad;--line:#3b4b40;--accent:#9ed4ac;--code:#25332a;--nav:#202c24}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:28px}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.9 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}a{color:var(--accent);text-underline-offset:3px;overflow-wrap:anywhere}a:hover{text-decoration-thickness:2px}button,input{font:inherit}button{cursor:pointer;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--text);padding:7px 13px}button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+.layout{max-width:1440px;margin:0 auto;display:grid;grid-template-columns:275px minmax(0,1fr);gap:30px;padding:28px 28px 70px}.sidebar{position:sticky;top:24px;max-height:calc(100vh - 48px);overflow:auto;padding:5px 15px 20px 0;scrollbar-width:thin}.brand{font-size:20px;font-weight:700;line-height:1.5;margin-bottom:8px}.eyebrow{font-size:12px;letter-spacing:.13em;color:var(--muted)}.sidebar p{font-size:13px;color:var(--muted);margin:8px 0 18px}.nav-link{display:block;padding:10px 12px;border-radius:7px;font-size:14px;text-decoration:none;line-height:1.7}.nav-link:hover,.nav-link.current{background:var(--nav)}.nav-link[aria-current=true]{background:var(--nav);font-weight:600}.nav-tools{display:flex;gap:8px;margin:16px 0}.nav-tools button{font-size:13px}.nav-search{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:7px;background:var(--paper);color:var(--text);margin:0 0 13px}.main{min-width:0}.hero{padding:34px 44px;background:var(--paper);border:1px solid var(--line);border-radius:12px;margin-bottom:24px}.hero h1{font-size:30px;line-height:1.5;margin:8px 0 12px}.hero p{margin:9px 0}.meta{display:flex;gap:8px 18px;flex-wrap:wrap;font-size:13px;color:var(--muted)}.downloads{display:flex;gap:20px;flex-wrap:wrap;font-size:14px;margin-top:18px}.notice{border-left:3px solid var(--accent);padding:8px 14px;background:var(--nav);margin:18px 0 0;font-size:14px}
+.chapter{padding:35px 44px 40px;background:var(--paper);border:1px solid var(--line);border-radius:12px;margin-bottom:26px;overflow-wrap:break-word}.chapter h1{font-size:27px;line-height:1.55;margin:0 0 24px}.chapter h2{font-size:22px;line-height:1.65;margin:42px 0 16px;padding-top:8px;border-top:1px solid var(--line)}.chapter h3{font-size:18px;line-height:1.7;margin:28px 0 12px}.chapter h4{font-size:16px;margin:22px 0 10px}p{margin:14px 0}ul,ol{padding-left:1.55em}li{margin:6px 0}blockquote{border-left:3px solid var(--accent);margin:20px 0;padding:1px 18px;color:var(--muted);background:var(--nav);border-radius:0 7px 7px 0}blockquote p{margin:12px 0}code{font: .88em/1.65 ui-monospace,SFMono-Regular,Consolas,monospace;background:var(--code);padding:2px 5px;border-radius:4px;overflow-wrap:anywhere}pre{background:var(--code);padding:18px 20px;border:1px solid var(--line);border-radius:9px;overflow-x:auto;max-width:100%;font-size:14px;line-height:1.75;tab-size:2}pre code{padding:0;background:transparent;white-space:pre;overflow-wrap:normal;word-break:normal;font-size:inherit}.table-wrap{overflow-x:auto;margin:22px 0;border:1px solid var(--line);border-radius:8px}table{border-collapse:collapse;width:100%;min-width:440px;font-size:14px;line-height:1.75}th,td{padding:11px 14px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}th{background:var(--nav);font-weight:600}tr:last-child td{border-bottom:0}hr{border:0;border-top:1px solid var(--line);margin:30px 0}strong{font-weight:650}.chapter-toc{background:var(--nav);border-radius:8px;padding:12px 16px;margin:0 0 24px}.chapter-toc summary{cursor:pointer;font-size:14px}.chapter-toc ol{columns:2;font-size:13px;line-height:1.7;margin:12px 0 3px}.chapter-toc li{break-inside:avoid;margin:5px 0}.chapter-toc a{text-decoration:none}.chapter-links{display:flex;flex-wrap:wrap;gap:16px;margin:25px 0 0;font-size:13px;color:var(--muted);border-top:1px solid var(--line);padding-top:17px}.mobile-head{display:none}.footer{color:var(--muted);font-size:13px;padding:8px 8px 0}.back-top{position:fixed;right:20px;bottom:20px;font-size:13px;box-shadow:0 2px 12px #0001}.read-progress{position:fixed;top:0;left:0;height:3px;background:var(--accent);width:0;z-index:10}.source-tag{font-size:12px;color:var(--muted)}
+@media(max-width:900px){.layout{grid-template-columns:1fr;padding:15px 14px 60px;gap:15px}.sidebar{position:static;max-height:none;display:none;padding:16px;background:var(--paper);border:1px solid var(--line);border-radius:10px}.sidebar.open{display:block}.mobile-head{display:flex;justify-content:space-between;align-items:center;padding:14px 16px 0}.hero,.chapter{padding:24px}.hero h1{font-size:26px}.chapter h1{font-size:24px}.chapter h2{font-size:21px}.chapter-toc ol{columns:1}.back-top{bottom:12px;right:12px}}
+@media(max-width:480px){body{font-size:15px}.hero,.chapter{padding:19px 17px}.hero h1{font-size:24px}.chapter h1{font-size:23px}pre{padding:14px;font-size:12px}.table-wrap{margin:18px 0}.chapter h2{font-size:19px}.meta{font-size:12px}}
+@media print{body{background:white;color:#111;font-size:11pt}.layout{display:block;padding:0}.sidebar,.mobile-head,.nav-tools,.back-top,.read-progress,.downloads,.chapter-links,.chapter-toc{display:none!important}.hero,.chapter{border:none;padding:0;border-radius:0}.chapter{break-before:page}pre{white-space:pre-wrap;overflow-wrap:anywhere;border:1px solid #ddd;font-size:9pt}pre code{white-space:pre-wrap;overflow-wrap:anywhere}table{min-width:0}.table-wrap{overflow:visible}a{color:#111}h1,h2,h3{break-after:avoid}tr{break-inside:avoid}}
+.nav-link[hidden]{display:none}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+
+.pi-overview{position:relative;margin:0 0 28px;border:1px solid var(--line);border-radius:10px;background:var(--paper);padding:24px;min-width:0;max-width:100%;color:var(--text)}.overview-target{position:absolute;top:0;left:0;width:1px;height:1px;scroll-margin-top:20px}.overview-head{margin:0 0 16px}.overview-head .overview-kicker{font:12px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:.1em;color:var(--muted)}.overview-head h2{font-size:25px;line-height:1.5;margin:6px 0 9px;border:0;padding:0}.overview-head p{font-size:14px;line-height:1.8;color:var(--muted);margin:7px 0}.overview-head a{font-size:13px}.overview-panel{display:none;grid-template-columns:minmax(0,1.45fr) minmax(220px,1fr);gap:20px;border:1px solid var(--line);border-radius:8px;padding:18px 20px;margin-bottom:18px;min-height:210px;background:var(--nav)}.overview-panel[data-detail="loop"]{display:grid}.pi-overview:has(.overview-target:target) .overview-panel{display:none}.pi-overview:has(#pi-map-session:target) .overview-panel[data-detail="session"]{display:grid}.pi-overview:has(#pi-map-session:target) [data-map-node="session"] .node-outline{stroke:var(--accent);stroke-width:2.4;fill:var(--nav)}
+.pi-overview:has(#pi-map-loop:target) .overview-panel[data-detail="loop"]{display:grid}.pi-overview:has(#pi-map-loop:target) [data-map-node="loop"] .node-outline{stroke:var(--accent);stroke-width:2.4;fill:var(--nav)}
+.pi-overview:has(#pi-map-model:target) .overview-panel[data-detail="model"]{display:grid}.pi-overview:has(#pi-map-model:target) [data-map-node="model"] .node-outline{stroke:var(--accent);stroke-width:2.4;fill:var(--nav)}
+.pi-overview:has(#pi-map-history:target) .overview-panel[data-detail="history"]{display:grid}.pi-overview:has(#pi-map-history:target) [data-map-node="history"] .node-outline{stroke:var(--accent);stroke-width:2.4;fill:var(--nav)}
+.pi-overview:has(#pi-map-tools:target) .overview-panel[data-detail="tools"]{display:grid}.pi-overview:has(#pi-map-tools:target) [data-map-node="tools"] .node-outline{stroke:var(--accent);stroke-width:2.4;fill:var(--nav)}
+.pi-overview:has(#pi-map-extensions:target) .overview-panel[data-detail="extensions"]{display:grid}.pi-overview:has(#pi-map-extensions:target) [data-map-node="extensions"] .node-outline{stroke:var(--accent);stroke-width:2.4;fill:var(--nav)}
+.pi-overview:has(#pi-map-validation:target) .overview-panel[data-detail="validation"]{display:grid}.pi-overview:has(#pi-map-validation:target) [data-map-node="validation"] .node-outline{stroke:var(--accent);stroke-width:2.4;fill:var(--nav)}
+.pi-overview:has(#pi-map-subagents:target) .overview-panel[data-detail="subagents"]{display:grid}.pi-overview:has(#pi-map-subagents:target) [data-map-node="subagents"] .node-outline{stroke:var(--accent);stroke-width:2.4;fill:var(--nav)}
+.overview-panel h3{margin:0 0 7px;font-size:19px;line-height:1.6}.overview-panel p{margin:6px 0;font-size:14px;line-height:1.8}.overview-io{display:grid;grid-template-columns:38px minmax(0,1fr);gap:4px 8px;font-size:13px;line-height:1.75;margin:12px 0 0}.overview-io dt{color:var(--muted)}.overview-io dd{margin:0}.overview-chapter-links{display:flex;gap:8px;flex-wrap:wrap;margin:3px 0 12px}.overview-chapter-links a{display:inline-block;background:var(--paper);border:1px solid var(--line);border-radius:5px;padding:5px 10px;font-size:13px;text-decoration:none}.overview-sources{list-style:none;padding:0;margin:0;font-size:12px;line-height:1.8}.overview-sources li{margin:7px 0}.overview-sources code{background:none;padding:0;font-size:11px;overflow-wrap:anywhere}.overview-diagram-container{width:100%;max-width:100%;overflow-x:auto;overscroll-behavior-x:contain;border:1px solid var(--line);border-radius:8px;background:var(--paper)}.pi-overview svg{width:100%;min-width:960px;display:block;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}.pi-overview svg text{fill:var(--text)}.pi-overview svg .svg-muted{fill:var(--muted)}.pi-overview svg .svg-mono{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}.pi-overview svg .node-outline{fill:var(--paper);stroke:var(--line);stroke-width:1.4}.pi-overview svg .node-state{fill:var(--code)}.pi-overview svg .node-optional{stroke-dasharray:5 4}.pi-overview svg .node-focal{stroke:var(--accent);stroke-width:2;fill:var(--nav)}.pi-overview svg a:hover .node-outline,.pi-overview svg a:focus-visible .node-outline{stroke:var(--accent);stroke-width:2.4}.pi-overview svg a:focus-visible{outline:none}.pi-overview svg .edge{fill:none;stroke:var(--muted);stroke-width:1.5}.pi-overview svg .edge-return{stroke-dasharray:5 4}.pi-overview svg .label-mask{fill:var(--paper)}.pi-overview svg .type-tag{fill:var(--code);stroke:var(--line);stroke-width:.8}.overview-chapter-index{display:flex;gap:7px;flex-wrap:wrap;margin-top:15px;font-size:12px;line-height:1.6}.overview-chapter-index a{border:1px solid var(--line);padding:5px 8px;border-radius:5px;text-decoration:none;color:var(--muted)}.overview-chapter-index a:hover{color:var(--accent);border-color:var(--accent)}.overview-note{font-size:12px;line-height:1.8;color:var(--muted);margin:13px 0 0}.overview-bounds{border-left:3px solid var(--accent);padding-left:11px;color:var(--muted)}
+@media(max-width:1000px){.overview-panel{grid-template-columns:1fr;min-height:0;gap:14px}.overview-panel-side{border-top:1px solid var(--line);padding-top:12px}}
+@media(max-width:600px){.pi-overview{padding:17px}.overview-head h2{font-size:22px}.overview-panel{padding:15px}.overview-panel h3{font-size:17px}.overview-head p{font-size:13px}}
+@media print{.pi-overview{break-before:page;padding:0;border:0}.overview-diagram-container{overflow:visible;border:0}.pi-overview svg{min-width:0;width:100%}.overview-panel{display:block!important;break-inside:avoid;background:none;min-height:0}.overview-chapter-index,.overview-head>a{display:none}.overview-target{display:none}}
+</style></head><body><a class="blog-back" href="../../../index.html">← Agent 笔记 · 所有文章</a><div class="read-progress" aria-hidden="true"></div><div class="mobile-head"><span>PI · 源码伴读</span><button data-menu aria-expanded="false" aria-controls="chapter-nav">章节目录</button></div><div class="layout"><aside class="sidebar" id="chapter-nav"><div class="eyebrow">SOURCE WALKTHROUGH</div><div class="brand">PI Agent Harness</div><p>从一次请求到执行、历史和恢复。<br>按 01 → 12 顺序阅读。</p><input class="nav-search" data-search aria-label="筛选章节" placeholder="筛选章节标题"><nav aria-label="章节目录"><a class="nav-link" href="../pi-overview.html">总览 · 各部分怎样配合</a><a class="nav-link" href="01-%E5%87%86%E5%A4%87%E4%B8%8E%E6%9E%B6%E6%9E%84.html">01 · 准备与架构——先认清对象和职责</a><a class="nav-link" href="02-Agent-Loop.html">02 · Agent Loop——工具执行后，为什么还要请求模型？</a><a class="nav-link" href="03-%E6%A8%A1%E5%9E%8B%E5%8D%8F%E8%AE%AE%E4%B8%8E%E6%B5%81.html">03 · 模型协议与流——从数据片段到完整消息</a><a class="nav-link" href="04-%E5%B7%A5%E5%85%B7%E4%B8%8E%E4%BB%A3%E7%A0%81%E4%BF%AE%E6%94%B9.html">04 · 工具与代码修改——从模型意图到真实副作用</a><a class="nav-link" href="05-%E8%B0%83%E5%BA%A6%E4%B8%8E%E6%94%B6%E5%B0%BE.html">05 · 调度与收尾——并行、队列、停止、取消与重试</a><a class="nav-link" href="06-%E9%A2%84%E6%B5%8B%E4%B8%8E%E9%AA%8C%E8%AF%81.html">06 · 预测与验证——怎样用测试检查自己读懂了没有</a><a class="nav-link" href="07-%E4%BC%9A%E8%AF%9D%E4%B8%8E%E5%8E%86%E5%8F%B2.html">07 · 会话与历史——保存过的内容，为什么模型未必看得见</a><a class="nav-link" href="08-%E4%B8%8A%E4%B8%8B%E6%96%87%E5%8E%8B%E7%BC%A9.html">08 · 上下文压缩——预算、切点、信息损失与缓存</a><a class="nav-link" href="09-Extension%E4%B8%8ESkill.html">09 · Extension 与 Skill——怎样增加工具和工作方法</a><a class="nav-link" href="10-MCP%E5%8F%91%E7%8E%B0%E4%B8%8E%E8%B0%83%E7%94%A8.html">10 · MCP——外部工具怎样进入 PI 的执行循环</a><a class="nav-link current" href="11-Subagent%E4%B8%8EDurable.html">11 · Subagent 与 durable——委派、后台工作和恢复</a><a class="nav-link" href="12-%E5%AE%89%E5%85%A8%E8%AF%84%E6%B5%8B%E4%B8%8E%E6%9C%8D%E5%8A%A1.html">12 · 安全、评测与服务——怎样判断 Agent 真正完成了任务</a></nav><div class="nav-tools"><button data-theme-toggle>切换明暗</button><button onclick="window.print()">打印</button></div><p>源码：<a href="https://github.com/earendil-works/pi/tree/eb326d265ae0b88489a6d10319307780df827cdf/" target="_blank" rel="noopener noreferrer">eb326d2</a><br>包版本：1.0.4<br>本地整理：2026-10-26</p></aside><main class="main"><header class="hero"><div class="eyebrow">PI STUDY NOTES / 01—12</div><h1>第 11 节：Subagent 与 durable——委派、后台工作和恢复</h1><p>逐段看代码怎样接收输入、请求模型、执行工具、保存历史，并处理取消、重试和恢复。</p><div class="meta"><span>12 节完整讲解</span><span>固定提交源码引用</span><span>解释 · 例子 · 练习 · 面试追问</span></div><div class="downloads"><a href="../PI-Agent-Harness-01-12.md" download>下载 Markdown 合订本</a><a href="../README.md">阅读说明</a></div><div class="notice">静态源码伴读。示意轨迹、待执行练习与实际运行结果分别说明。本文提供源码分析与待执行练习，不将源码阅读作为模型实测或生产验收。</div></header><section class="chapter" data-chapter="11"><h1 id="chapter-11" tabindex="-1">第 11 节：Subagent 与 durable——委派、后台工作和恢复</h1><details class="chapter-toc"><summary>本节小节目录 · 13 项</summary><ol><li><a href="#c11-s1">一、先判断什么任务值得委派</a></li><li><a href="#c11-s2">二、普通 subagent：工具函数启动另一个 PI 进程</a></li><li><a href="#c11-s3">三、子上下文独立，文件系统仍可能共享</a></li><li><a href="#c11-s4">四、single、parallel、chain 分别怎么执行</a></li><li><a href="#c11-s5">五、父进程怎样收集子进程结果</a></li><li><a href="#c11-s6">六、durable 为什么引入 Task 和 checkpoint</a></li><li><a href="#c11-s7">七、durable 前台 subagent 怎样避免重复创建</a></li><li><a href="#c11-s8">八、后台 subagent 为什么多了 Anchor 和 Reporter</a></li><li><a href="#c11-s9">九、Reporter 的两个阶段怎样跨重启继续</a></li><li><a href="#c11-s10">十、为什么 replay:safe 必须谨慎</a></li><li><a href="#c11-s11">十一、普通 core 和 durable 的 hook 契约也要分别看</a></li><li><a href="#c11-s12">十二、三条路径对照</a></li><li><a href="#c11-s13">十三、四个纸面故障练习</a></li></ol></details>
+<p>前十节一直追普通 AgentSession。现在把一个任务交给另一个 Agent，先要确定：它收到哪些输入，在哪里执行，父任务是否等待，用户取消时谁停，进程重启后怎样找回工作。</p>
+<p>当前仓库有不同实现。本节分别读普通子进程扩展示例、实验性 durable 前台子会话、durable 后台示例。它们不是普通核心默认同时启用的功能。<code>pi-durable</code> 明确标记为 Experimental，以下结论限定在提交 <code>eb326d2</code>；未运行示例或真实模型。</p>
+<h2 id="c11-s1" tabindex="-1">一、先判断什么任务值得委派</h2>
+<p>假设要研究登录模块：一项独立工作查 token 刷新实现，另一项查测试覆盖。如果两项都有明确入口和可核对的输出，独立上下文可以减少互相干扰，执行也可能重叠。</p>
+<p>如果任务是“先取得 A 的结果，再据此决定 B 的输入”，拆成并行代理不一定有帮助；如果两个代理同时修改同一文件，还要额外处理冲突。</p>
+<p>委派描述至少应包含：目标、入口或资料、允许动作、期望结果、未知信息和停止条件。子代理收到一句“继续上面的任务”，但没有父对话，就缺少必要输入。</p>
+<p>先把任务契约写清，再决定是否需要多代理。并发数量和模型数量本身不是任务质量指标。</p>
+<h2 id="c11-s2" tabindex="-1">二、普通 subagent：工具函数启动另一个 PI 进程</h2>
+<p>打开 <a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/coding-agent/examples/extensions/subagent/index.ts#L272-L425">runSingleAgent</a>。普通示例给子进程准备的参数包括：</p>
+<pre><code class="language-ts">const args = [&quot;--mode&quot;, &quot;json&quot;, &quot;-p&quot;, &quot;--no-session&quot;];
+</code></pre>
+<p>随后补模型、思考等级、工具集合和系统提示等配置，再加入 <code>Task: ...</code> 文本，用 spawn 启动：</p>
+<pre><code class="language-ts">const proc = spawn(invocation.command, invocation.args, {
+  cwd: cwd ?? defaultCwd,
+  shell: false,
+  stdio: [&quot;ignore&quot;, &quot;pipe&quot;, &quot;pipe&quot;],
+});
+</code></pre>
+<p>这里可以对应前面的三层通信：父 PI 把任务交给子进程；子 PI 自己调用模型；子 PI 通过 stdout JSONL 把消息交回父进程。</p>
+<p><code>shell:false</code> 表示这次 spawn 不先经过一层 shell 解析命令串，不表示子进程的工具从此不能运行 shell。<code>--no-session</code> 表示该调用使用的会话持久化方式受到限制，也不代表子进程没有其他文件或业务副作用。</p>
+<h2 id="c11-s3" tabindex="-1">三、子上下文独立，文件系统仍可能共享</h2>
+<p>普通示例给子代理传任务文本和选定配置，并没有自动复制父对话的全部 transcript。子代理必须从任务描述和自己能访问的资料开始。</p>
+<p>与此同时，cwd 默认可能就是父工作目录。子进程在操作系统层面通常仍有启动用户的权限。独立消息历史、独立进程、独立工作目录、独立权限是不同概念。</p>
+<pre><code class="language-text">子代理 A：消息历史独立 ─┐
+                      ├─ 可能都读写同一个项目目录
+子代理 B：消息历史独立 ─┘
+</code></pre>
+<p>第五节的同进程文件修改队列，不能自动协调两个不同 PI 进程。若两个子代理需要写入，宿主还要安排文件所有权、独立 checkout 或合并流程。</p>
+<h2 id="c11-s4" tabindex="-1">四、single、parallel、chain 分别怎么执行</h2>
+<p>普通 <a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/coding-agent/examples/extensions/subagent/index.ts#L450-L713">subagent 示例</a> 支持三种请求形式。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>模式</th>
+<th>行为</th>
+<th>父工具何时拿到完整结果</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>single</td>
+<td>执行一个子任务</td>
+<td>子进程结束后</td>
+</tr>
+<tr>
+<td>parallel</td>
+<td>多个子任务在并发限制内运行</td>
+<td>整批完成后</td>
+</tr>
+<tr>
+<td>chain</td>
+<td>按步骤执行，后项可引用前项输出</td>
+<td>整条链完成后</td>
+</tr>
+</tbody></table></div>
+<p>当前 parallel 单次调用最多 8 个任务、4 个并发。这个上限属于该示例的一次调用，不能推广成“所有递归代理总共最多 4 个”。</p>
+<p>chain 使用 <code>{previous}</code> 文本替换，将上一项最终输出写入下一项任务。它传的是选定文本，不是自动共享上一项的全部内存、事件和消息。</p>
+<p>如果前一项摘要漏了关键条件，后一项不会因为名为 chain 就自动知道。要让交接可核对，应明确输出格式和证据位置。</p>
+<h2 id="c11-s5" tabindex="-1">五、父进程怎样收集子进程结果</h2>
+<p>父进程持续读 stdout，按换行组装记录，再 JSON.parse。它从 message_end 收集完成消息，累加模型用量，保留 stopReason、errorMessage 和 stderr，并通过 onUpdate 向父工具报告进展。</p>
+<p>子进程 close 后，结果才完整返回。看到中途文本或工具进度，不能提前判定成功。</p>
+<p>这个示例的取消处理向子进程发送信号。阅读 <code>proc.kill()</code> 时，要查它实际管理哪个 PID、有没有等待退出、有没有管理后代进程。不能仅凭发出 SIGTERM 就宣称整个进程树已停，或者文件改动已回滚。</p>
+<p>这些都是普通进程包装需要面对的问题；业务执行状态仍要单独确认。</p>
+<h2 id="c11-s6" tabindex="-1">六、durable 为什么引入 Task 和 checkpoint</h2>
+<p>普通 JSONL 会话重建的是历史和模型上下文。进程在一次外部调用中间退出时，恢复程序还需要知道：哪项工作等待中，已经提交了什么，下一阶段在哪里。</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/durable/README.md#L79-L120">durable 文档</a> 将 Task 定义为可保存 checkpoint 的状态机。任务按阶段执行，阶段提交保存状态，重启后由调度器继续处理。</p>
+<p>可以用一个教学状态机理解：</p>
+<pre><code class="language-text">phase=prepare：准备输入
+    ↓ 保存下一阶段
+phase=execute：调用外部能力
+    ↓ 保存结果
+phase=report：报告结果
+    ↓
+terminal：完成或失败
+</code></pre>
+<p>它不等于把 JavaScript 栈、打开的 socket 和所有内存原样冻住。恢复从持久状态和阶段处理函数继续，外部动作是否可重复执行还要另外判断。</p>
+<h2 id="c11-s7" tabindex="-1">七、durable 前台 subagent 怎样避免重复创建</h2>
+<p>看 <a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/coding-agent/src/experimental/durable/subagent.ts#L19-L55">实验性 Subagent 扩展</a>。每个工具调用对应一个 task，代码先在事务里按 <code>ownerTaskId</code> 查已有子会话：</p>
+<pre><code class="language-ts">const existing = (await tx.scanConversations(
+  { ownerTaskId: api.taskId }, 1
+)).items[0];
+if (existing !== undefined) return existing.id;
+</code></pre>
+<p>找不到才创建。创建时复制父会话的 Agent 配置，并移除 Subagent 自身扩展，防止该子会话继续递归委派；父 transcript 不自动复制。</p>
+<p>提交任务时用稳定 ID：</p>
+<pre><code class="language-ts">requestId: `subagent:${api.taskId}`
+</code></pre>
+<p>崩溃后同一个 task 重跑，可以找到之前的子会话，并用同一个 requestId 找回已有提交，减少重复投递。</p>
+<p>随后 wait 子任务答案，读取最终文本返回父工具。它仍是前台等待：父工具没有拿到子任务答案前不会正常完成。子会话本身可以留存，之后仍可进入继续对话。</p>
+<h2 id="c11-s8" tabindex="-1">八、后台 subagent 为什么多了 Anchor 和 Reporter</h2>
+<p>前台方式适合“我需要它的答案才能继续”。后台方式希望父 Agent 先回答用户，子代理继续工作，完成后再回来报告。</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/durable/test/examples/23-subagent-background.ts#L38-L207">后台示例</a> 增加了三类状态：</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>对象</th>
+<th>保存什么或负责什么</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Subagents 文档</td>
+<td>名称到子会话的对应关系、已报告答案、reporter task</td>
+</tr>
+<tr>
+<td>Anchor task</td>
+<td>给子会话一个后台所有者，定义等待与取消的边界</td>
+</tr>
+<tr>
+<td>Reporter task</td>
+<td>向子会话投递任务，等答案，再报告给父会话</td>
+</tr>
+</tbody></table></div>
+<p>这里的 ownership 会影响 abort 和 idle 等待的范围。普通父会话取消和等待不会自动越过后台边界；宿主仍可用包含 background 的取消操作停止更大范围。</p>
+<p>因此“父 Agent 已 idle”与“它启动的后台任务全部完成”不是同一个判断。</p>
+<h2 id="c11-s9" tabindex="-1">九、Reporter 的两个阶段怎样跨重启继续</h2>
+<p>Reporter 有两个 checkpoint：</p>
+<pre><code class="language-text">deliver：向子会话提交消息并等待回答
+report：把选定回答作为 follow-up 提交给父会话
+</code></pre>
+<p>deliver 使用 <code>subagent:${reporter.id}</code> 作为请求 ID。拿到答案后，在一次提交里决定报告内容，并把答案 ID 记入已报告列表，然后保存 phase=report。</p>
+<p>report 再用 <code>subagent-report:${reporter.id}</code> 向父会话提交 follow-up。这样恢复时可以再次执行阶段代码，但不会仅因重复提交就无条件新增同一条消息。</p>
+<pre><code class="language-text">父工具返回 Started
+父模型继续回答，随后 idle
+子会话继续工作
+Reporter 等到答案
+向父会话投递 follow-up
+父会话再次活动，处理子任务结果
+</code></pre>
+<p>这个闭合过程需要持久任务和状态，单纯在内存里 <code>setTimeout</code> 一个回调不能替代。示例展示了设计和演示代码，本轮未运行其重启实验。</p>
+<h2 id="c11-s10" tabindex="-1">十、为什么 replay:safe 必须谨慎</h2>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/durable/src/harness/tool.ts#L45-L118">durable ToolTask</a> 在真实 execute 前保存调用意图和重放策略。崩溃恢复时检查：</p>
+<pre><code class="language-ts">if (savedReplay === &quot;safe&quot; &amp;&amp; currentTool.replay === &quot;safe&quot;) {
+  // 允许重跑
+} else {
+  // 返回 interrupted，说明动作可能部分发生
+}
+</code></pre>
+<p>必须保存时和当前实现都声明 safe，才允许恢复重跑；否则不盲目执行。这能避免部署后策略变化使旧调用被随意重放。</p>
+<p>“safe” 是工具作者的契约声明，不能让任意外部写入自动变幂等。例如再次读取文件通常可接受，但再次执行“停止子代理”可能误停它后来开始的新任务。后台示例因此把管理工具声明为 unsafe。</p>
+<p>稳定 requestId 能帮助提交去重，但不保证任意 HTTP 请求只执行一次。若支付服务不支持同一业务 ID 去重，durable checkpoint 也无法消除“支付成功、结果保存前进程退出”的窗口。</p>
+<h2 id="c11-s11" tabindex="-1">十一、普通 core 和 durable 的 hook 契约也要分别看</h2>
+<p>第 04、09 节讲到普通 core 在 beforeToolCall 后不会自动复验被原地修改的 args。而当前 durable ToolTask 在 beforeTool hooks 结束后又调用了一次 validate，再保存最终参数并执行。</p>
+<p>见 <a target="_blank" rel="noopener noreferrer" href="https://github.com/earendil-works/pi/blob/eb326d265ae0b88489a6d10319307780df827cdf/packages/durable/src/harness/tool.ts#L62-L91">durable 参数复验</a>。这不是前文矛盾，而是两个实现的接口约束不同。解释源码时，应说明正在谈普通 Agent Loop 还是实验性 durable Harness。</p>
+<h2 id="c11-s12" tabindex="-1">十二、三条路径对照</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>问题</th>
+<th>普通子进程示例</th>
+<th>durable 前台</th>
+<th>durable 后台示例</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>子任务形式</td>
+<td>另一个 PI 进程</td>
+<td>task-owned conversation</td>
+<td>后台所有权下的 conversation</td>
+</tr>
+<tr>
+<td>父工具是否等待答案</td>
+<td>是</td>
+<td>是</td>
+<td>启动/投递后先返回</td>
+</tr>
+<tr>
+<td>父 transcript 自动复制</td>
+<td>否</td>
+<td>否</td>
+<td>否</td>
+</tr>
+<tr>
+<td>结果回来方式</td>
+<td>JSONL 收集后返回</td>
+<td>wait 后读答案</td>
+<td>Reporter follow-up</td>
+</tr>
+<tr>
+<td>重启恢复</td>
+<td>不能仅凭该进程包装保证</td>
+<td>task/checkpoint/requestId 参与</td>
+<td>同时恢复后台状态和报告阶段</td>
+</tr>
+<tr>
+<td>工作区自动安全隔离</td>
+<td>未提供这种保证</td>
+<td>取决于执行环境</td>
+<td>取决于执行环境</td>
+</tr>
+</tbody></table></div>
+<h2 id="c11-s13" tabindex="-1">十三、四个纸面故障练习</h2>
+<ol>
+<li>子会话已创建，父任务保存返回前退出。恢复如何找回同一个子会话？沿 ownerTaskId 查询解释。</li>
+<li>子任务消息已提交，但 wait 尚未返回。恢复如何避免再提交一份？解释稳定 requestId。</li>
+<li>答案已经选好，向父会话报告前退出。恢复从哪个 phase 继续，怎样避免重复报告？解释 checkpoint 和报告请求 ID。</li>
+<li>外部动作成功，但工具结果尚未持久化。为什么仍不能承诺业务 exactly-once？指出外部执行端的责任。</li>
+</ol>
+<p>若以后真正比较多代理效果，要固定任务、模型和预算，计入重复检索、子代理用量、父代理汇总损失与等待时间。任务成功率没有改善时，并发更多也可能只是更贵。</p>
+<p>第 12 节将这些机制放进安全边界、评测和服务验收里。</p>
+<div class="chapter-links"><a href="10-MCP%E5%8F%91%E7%8E%B0%E4%B8%8E%E8%B0%83%E7%94%A8.html">← 第 10 节</a><a href="12-%E5%AE%89%E5%85%A8%E8%AF%84%E6%B5%8B%E4%B8%8E%E6%9C%8D%E5%8A%A1.html">第 12 节 →</a><a href="11-Subagent%E4%B8%8EDurable.md" download>本节 Markdown</a><a href="../index.html">返回合订本</a></div></section><footer class="footer">本系列按固定版本源码整理。源码链接固定到研究提交；本地源码若更新，请按函数名复核。HTML 内嵌样式和脚本，正文可离线阅读。</footer></main></div><button class="back-top" data-top aria-label="返回顶部">↑ 顶部</button><script>
+const root=document.documentElement;
+try{root.dataset.theme=localStorage.getItem('pi-study-theme')||'light'}catch{}
+document.querySelectorAll('[data-theme-toggle]').forEach(b=>b.addEventListener('click',()=>{root.dataset.theme=root.dataset.theme==='dark'?'light':'dark';try{localStorage.setItem('pi-study-theme',root.dataset.theme)}catch{}}));
+document.querySelector('[data-menu]')?.addEventListener('click',e=>{const expanded=document.querySelector('.sidebar').classList.toggle('open');e.currentTarget.setAttribute('aria-expanded',String(expanded))});
+document.querySelector('[data-search]')?.addEventListener('input',e=>{const q=e.target.value.trim().toLowerCase();document.querySelectorAll('.nav-link').forEach(a=>a.hidden=!a.textContent.toLowerCase().includes(q))});
+document.querySelector('[data-top]')?.addEventListener('click',()=>window.scrollTo({top:0,behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth'}));
+function progress(){const total=document.documentElement.scrollHeight-innerHeight;document.querySelector('.read-progress').style.width=(total>0?scrollY/total*100:100)+'%'}
+addEventListener('scroll',progress,{passive:true});addEventListener('resize',progress);progress();
+const observer=new IntersectionObserver(entries=>{for(const entry of entries)if(entry.isIntersecting){const id=entry.target.id;document.querySelectorAll('.nav-link[href^="#"]').forEach(a=>a.setAttribute('aria-current',String(a.getAttribute('href')==='#'+id))) }},{rootMargin:'-5% 0px -75% 0px'});
+document.querySelectorAll('.chapter>h1').forEach(h=>observer.observe(h));
+</script></body></html>
